@@ -66,4 +66,37 @@ TESTE DE REGISTRO DUPLICADO
 }
 (venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 
 
-
+LOGOUT ROUTE 
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3001/login -H "Content-Type:application/json" -d '{"email":"test1@example.com","password":"test123"}'
+{
+  "email": "test1@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InRlc3QxQGV4YW1wbGUuY29tIiwiZXhwIjoxNzYxMDc0NDQ3fQ.u8--Q2DcO4Tz7Fu_lofJRO4t2hdAmGB536sneO7qY5U",
+  "user_id": 2
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3001/profile -H "Authorization: Bearer $TOKEN"
+{
+  "email": "test1@example.com",
+  "user_id": 2
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ echo "Token:$TOKEN"
+Token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InRlc3QxQGV4YW1wbGUuY29tIiwiZXhwIjoxNzYxMDczMDQ1fQ.RQQu1BVVh63A0crWE4aX1-SzdjBO9R8uU3qkTLeNIoM
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3001/logout -H "Authorization: Bearer $TOKEN"
+{
+  "message": "Logout successful",
+  "timestamp": "2025-10-21T18:21:56.000610",
+  "user_id": 2
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3001/profile -H "Authorization: Bearer $TOKEN"
+{
+  "error": "Token has been invalidated. Please login again."
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InRlc3QxQGV4YW1wbGUuY29tIiwiZXhwIjoxNzYxMDczMDQ1fQ.RQQu1BVVh63A0crWE4aX1-SzdjBO9R8uU3qkTLeNIoM
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3001/profile -H "Authorization: Bearer $TOKEN"
+{
+  "error": "Token has been invalidated. Please login again."
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3001/logout -H "Authorization: Bearer $TOKEN"
+{
+  "error": "Token has been invalidated. Please login again."
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 

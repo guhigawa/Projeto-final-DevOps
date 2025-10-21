@@ -6,7 +6,8 @@ from pymysql import Error
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "fallback_secret_key")
-
+token_blacklist = set()
+blacklist_expiry = {}
 
 #config
 app.config["MYSQL_HOST"] = os.environ.get("MYSQL_HOST", "localhost")
@@ -61,6 +62,49 @@ def token_required(f):
         return f(current_user_id, *args, **kwargs)
     return decorated
 
+@app.before_request
+def check_blacklisted_token():
+    """
+    Middleware to check if the incoming request has a blacklisted token
+    """
+    cleanup_expired_tokens()
+
+    # Public routes that do not require token validation
+    public_routes = ['/login', '/register', '/health', '/health/detailed', '/metrics']
+    
+    if request.path in public_routes:
+        return
+    
+    # Protected routes - check for blacklisted token
+    auth_header = request.headers.get('Authorization')
+    
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(' ')[1]
+        
+        if token in token_blacklist:
+            logging.warning("Access attempt with blacklisted token", 
+                          extra={"endpoint": request.path, "method": request.method})
+            return jsonify({
+                "error": "Token has been invalidated. Please login again."
+            }), 401
+    
+
+# Function to clean up expired tokens from the blacklist
+def cleanup_expired_tokens():
+    """Remove expired tokens from the blacklist to free up memory"""
+    current_time = time.time()
+    tokens_to_remove = []
+    
+    for token, exp_time in blacklist_expiry.items():
+        if exp_time < current_time:
+            tokens_to_remove.append(token)
+    
+    for token in tokens_to_remove:
+        token_blacklist.discard(token)
+        blacklist_expiry.pop(token, None)
+    
+    if tokens_to_remove:
+        logging.info(f"Cleaned up {len(tokens_to_remove)} expired tokens from blacklist")
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -123,10 +167,6 @@ def login():
         password = auth.password
         auth_method = "basic"
 
-    #elif data.get("email") and data.get("password"):
-        #user_email = data.get("email")
-        #password = data.get("password","")
-        #auth_method = "json"
     elif request.is_json:
         try:
             data = request.get_json()
@@ -295,6 +335,53 @@ def get_user_by_id(current_user_id, user_id):
         return jsonify({"error": f"User retrieval error:{str(e)}"}), 500
     finally:
         connection.close()
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    """"Endpoint for logout - invalidating JWT token, requires Header Authorization with Bearer token"""
+
+    #Getting authorization header
+    auth_header = request.headers.get('Authorization')
+    
+    #validating toke presence
+    if not auth_header:
+        logging.warning("Logout attempt without authorization header")
+        return jsonify({"error": "Authorization header is missing"}), 401 #401 = Unauthorized
+
+    if not auth_header.startswith("Bearer "):
+        logging.warning("Logout attempt with invalid authorization format")
+        return jsonify({"error": "Bearer toke required"}), 401 #401 = Unauthorized
+    
+    #Extracting token
+    token = auth_header.split(" ")[1]
+
+    try:
+        #Decoding token to get expiration time
+        decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        
+        user_id = decoded_token.get("user_id")
+        email = decoded_token.get("email")
+        exp = decoded_token.get("exp")
+
+        token_blacklist.add(token)
+
+        if exp:
+            blacklist_expiry[token] = exp
+
+        logging.info("User logged out successfully", extra={"user_id": user_id, 
+                                                            "email": email
+                                                            })
+        return jsonify({"message": "Logout successful",
+                        "user_id": user_id,
+                        "timestamp": datetime.datetime.utcnow().isoformat()
+                        }), 200
+    except jwt.ExpiredSignatureError:
+        logging.warning("Logout attempt with expired token")
+        return jsonify({"error": "Token has already expired"}), 401 #401 = Unauthorized
+    except jwt.InvalidTokenError:
+        logging.warning("Logout attempt with invalid token")
+        return jsonify({"error": "Invalid token"}), 401 #401 = Unauthorized
+
 
 #Health check endpoint
 @app.route("/health", methods=["GET"])
