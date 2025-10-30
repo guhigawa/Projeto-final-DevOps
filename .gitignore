@@ -25,5 +25,6 @@ Thumbs.db
 *.tmp
 *.temp
 docs/_build/
+tests/evidence/
 
 
