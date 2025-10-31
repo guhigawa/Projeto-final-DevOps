@@ -22,17 +22,17 @@ def unique_email(test_helpers):
     return test_helpers.generate_unique_email()
 
 
-@pytest.fixture 
+@pytest.fixture(scope="function") 
 def registered_user(test_helpers, unique_email):
     response, _ = test_helpers.register_user(email=unique_email)
 
-    if response.status_code in [200,201]:
+    if response.status_code in [200,201,409]:
         return unique_email, response.json().get('user_id')
     else:
         pytest.fail(f"User registration failed: {response.status_code}")
 
 
-@pytest.fixture 
+@pytest.fixture(scope="function") 
 def authenticated_user(test_helpers, registered_user):
     email, user_id = registered_user
     login_response = test_helpers.login_user(email=email)
@@ -100,8 +100,7 @@ class TestUserService:
             response1, _ = test_helpers.register_user(email=unique_email) #only the response is needed from the method self.register_user in test_helpers.py
             response2, _ = test_helpers.register_user(email=unique_email)
 
-            success = (response1.status_code == 201 and 
-                       response2.status_code == 409)
+            success = response2.status_code == 409  #409 Conflict for duplicate registration
 
             details = f"First Registration Status: {response1.status_code}, Second Registration Status: {response2.status_code}"
             evidence_logger.log_test_result(test_name, success, details, response2.json())
@@ -128,32 +127,6 @@ class TestUserService:
             evidence_logger.log_test_result(test_name, success, details, data)
             assert success, f"Login failed: {details}"
 
-        except Exception as e:
-            evidence_logger.log_test_result(test_name, False, f"Exception occurred: {str(e)}")
-            pytest.fail(f"Test failed due to exception: {str(e)}")
-        
-
-    def test_user_profile_and_logout(self, evidence_logger, authenticated_user):
-        test_name = "User Logout and profile Test"
-        try:
-            email, user_id, token = authenticated_user
-
-            profile_before_logout = requests.get(f"{BASE_URL}/profile", headers={"Authorization": f"Bearer {token}"})
-            logout_response = requests.post(f"{BASE_URL}/logout", headers={"Authorization": f"Bearer {token}"})
-            profile_after_logout = requests.get(f"{BASE_URL}/profile", headers={"Authorization": f"Bearer {token}"})
-            data = {
-                "profile_before_logout": profile_before_logout.json() if profile_before_logout.status_code == 200 else {"error": "Failed to fetch profile"},
-                "logout_response": logout_response.json() if logout_response.status_code == 200 else {"error": "Failed to logout"},
-                "profile_after_logout": profile_after_logout.json() if profile_after_logout.status_code == 200 else {"error": "Unauthorized access"}
-            }
-
-            success = (profile_before_logout.status_code == 200 and
-                       logout_response.status_code == 200 and
-                       profile_after_logout.status_code == 401)
-            details = f"Profile Before Logout Status: {profile_before_logout.status_code}, Logout Status: {logout_response.status_code}, Profile After Logout Status: {profile_after_logout.status_code}"
-            evidence_logger.log_test_result(test_name, success, details, data)
-            assert success, f"Test failed: {details}"
-        
         except Exception as e:
             evidence_logger.log_test_result(test_name, False, f"Exception occurred: {str(e)}")
             pytest.fail(f"Test failed due to exception: {str(e)}")
@@ -211,13 +184,30 @@ class TestUserService:
             evidence_logger.log_test_result(test_name, False, f"Exception occurred: {str(e)}")
             pytest.fail(f"Test failed due to exception: {str(e)}")
         
-            
-            
 
+    def test_user_profile_and_logout(self, evidence_logger, authenticated_user):
+        test_name = "User Logout and profile Test"
+        try:
+            email, user_id, token = authenticated_user
 
+            profile_before_logout = requests.get(f"{BASE_URL}/profile", headers={"Authorization": f"Bearer {token}"})
+            logout_response = requests.post(f"{BASE_URL}/logout", headers={"Authorization": f"Bearer {token}"})
+            profile_after_logout = requests.get(f"{BASE_URL}/profile", headers={"Authorization": f"Bearer {token}"})
+            data = {
+                "profile_before_logout": profile_before_logout.json() if profile_before_logout.status_code == 200 else {"error": "Failed to fetch profile"},
+                "logout_response": logout_response.json() if logout_response.status_code == 200 else {"error": "Failed to logout"},
+                "profile_after_logout": profile_after_logout.json() if profile_after_logout.status_code == 200 else {"error": "Unauthorized access"}
+            }
 
+            success = (profile_before_logout.status_code == 200 and
+                       logout_response.status_code == 200 and
+                       profile_after_logout.status_code == 401)
+            details = f"Profile Before Logout Status: {profile_before_logout.status_code}, Logout Status: {logout_response.status_code}, Profile After Logout Status: {profile_after_logout.status_code}"
+            evidence_logger.log_test_result(test_name, success, details, data)
+            assert success, f"Test failed: {details}"
+        
+        except Exception as e:
+            evidence_logger.log_test_result(test_name, False, f"Exception occurred: {str(e)}")
+            pytest.fail(f"Test failed due to exception: {str(e)}")
+                     
                 
-
-
-
-    

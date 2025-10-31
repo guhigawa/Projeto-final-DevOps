@@ -1,6 +1,7 @@
 import requests, json, time
 
 class TestHelpers:
+    __test__ = False  # Prevent pytest from collecting this class as a test case
 
     def __init__(self, base_url):
         self.base_url = base_url
