@@ -1,0 +1,108 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ mysql -u root 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 17
+Server version: 8.0.43-0ubuntu0.22.04.2 (Ubuntu)
+
+Copyright (c) 2000, 2025, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> source user-service/init.sql
+Query OK, 0 rows affected, 1 warning (0,01 sec)
+
+Query OK, 0 rows affected, 1 warning (0,00 sec)
+
+Query OK, 1 row affected, 1 warning (0,00 sec)
+
+Query OK, 0 rows affected (0,01 sec)
+
+Query OK, 0 rows affected (0,00 sec)
+
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+Query OK, 0 rows affected, 1 warning (0,01 sec)
+
+Query OK, 0 rows affected, 1 warning (0,00 sec)
+
+mysql> SELECT user, host FROM mysql.user WHERE user = 'auth_user'
+    -> 
+    -> 
+    -> ;
++-----------+-----------+
+| user      | host      |
++-----------+-----------+
+| auth_user | %         |
+| auth_user | localhost |
++-----------+-----------+
+2 rows in set (0,00 sec)
+
+mysql> USE auth,
+ERROR 1049 (42000): Unknown database 'auth,'
+mysql> USE auth;
+Database changed
+mysql> SELECT * FROM users;
++----+-----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| id | email                             | password                                                                                                                                                           |
++----+-----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|  1 | guhigawa@gmail.com                | admin123                                                                                                                                                           |
+|  2 | test1@example.com                 | scrypt:32768:8:1$MZ7aQqc04ikqhco8$c98d4867304d4b92ca6a6c3d7b0173c7dcad740f3921578fa28bb22982444c14e7ff1e544ba6eb33258fb7b0a9f0c278676b4bf5b4fe268e30fe7858936f33d5 |
+|  3 | test_1761316260@example.com       | scrypt:32768:8:1$fJ1ZTlB47kHpcloe$6e5c62dff3a45da2960839fd5c29dd4364222c575f9b542a169b1594c1c34b735844fa079ddd9dfd62e28b544d2429344771dff28826750be204873422f25041 |
+|  4 | test_1761316261@example.com       | scrypt:32768:8:1$8WPWjoB28fTlYZCz$2a01b701f896d96f10452a35b9c684f5d15eb1cd94bf369276f908802b5433101e756401921c32dae5057ee97e19211732f1f24574e671c0e72ebf559aa44358 |
+|  5 | test_1761834061@example.com       | scrypt:32768:8:1$bYonJ5z5K38k28SG$f5ec721bbf4a3620ec6c93165beacb57185cfd7b6258b44e48dd53bfc3016202d2e40d0bc6ef76c154771f4ee9a73aa085e4630f12fa8b3a2ffbb887b5669181 |
+|  6 | test_1761835082@example.com       | scrypt:32768:8:1$SuG9IHE8KsQsgT5u$77c2d5ca664420d8d6facd0e4c454f33f897f8f95bb060a158d91842af0e257ba9dba77f28a2a0e5da9fee9c4c1eb3c791cd92efa528c6c8c673d283d7658b52 |
+|  7 | test_1761835105@example.com       | scrypt:32768:8:1$6FMdNEOS5812oKem$3d5adee35745a647b08a5daa0a0cbdc4bd3aa22426a69eb09164d5581b3693dda4485f2fce357f3ee5c35c7718a30fa976905f9178614320d333d6df25b204e6 |
+|  8 | test_1761835170@example.com       | scrypt:32768:8:1$hzzdqrLsS8jRyJx7$892bd488a0bc74068645efff4b15558f57bc2e91f56a499bd65e4afc4b1012a09ae3efdb874a7c26d79f15c1759561be2138d24ee2eb8fdea6d93cb47b090105 |
+|  9 | test_1761835255@example.com       | scrypt:32768:8:1$Gw9EH7nYI6qXAMey$e502aa6d7022b46d1cd8862f80e7d7e07f35f65c2b173a8ea4158e9ca6a27872739863c875a6bd594503a17dada79ec5e16e2e278a464ece15d9258c50e6b41e |
+| 10 | test_1761835751@example.com       | scrypt:32768:8:1$eb75EtetFrlgUZno$afd47cbed19e8f6ea9c91ca52d63b6781b03922a438fd694a10d805464fcf75506bc4798c1d9976cdcf40300c4e1dfadd32e0c4490b60312078330967907fcc7 |
+| 11 | test_1761835794@example.com       | scrypt:32768:8:1$5nvQuVS1uOO1mlhc$8f3f663d5994869631ddb0149c322a3374c7ea58615ea84c61b0c1b8132fb1b1b39556227d7c12846532c733e5b0ff7a93768c9f2bc6a7d9651609330d1dfad2 |
+| 12 | test_1761835854@example.com       | scrypt:32768:8:1$ObO3IFQzvUx6IHTQ$0d8a00137792cd33fdd8ceb3e989ebd7410fad3408721d4b18036733ce76906a8c44e74682c0bb50963b7641dfa09459b20e0a0e59e151e38c6a5cf5b8b9b499 |
+| 13 | test_1761836071@example.com       | scrypt:32768:8:1$hTmLRwOsZZ4fLvF0$a2d09e5133c13fdafa3a4631da63f5261a354e9a525da15b9c25cf44c8bfbe6c2a1e304e5371285c42aaa995c733b5449d95ae811b6187edee8367c7eb8bf2c2 |
+| 14 | test_1761836209@example.com       | scrypt:32768:8:1$5mdIxceoOpmCquhO$55f49fb87e62a08c9d568206d8d4e9a0a13e7e4ac0c108e60a0d6f020e02aea6ebfaf156c2321ec26525bbfc8eacf72273f27badb4b2d71da48b5a03e025402b |
+| 15 | test_1761836375@example.com       | scrypt:32768:8:1$NILQjzJWd1EpPVJH$93e5c0b2ae3681a182539bb00c55c6f147d33470febd315e6071cc2c92bcc3b772fe65295a92697c9feb29e37d523bc1b519d36031a45530b70cfccbc347f3fa |
+| 16 | updatetest_1761836565@example.com | scrypt:32768:8:1$JQNWx4FHaFxuwKV2$bf94df5147365db72540721178639e3adea100c1b39f1753c37272ef25f25b641eaaacbff10d308cb63f6f41dd887ca7a31f89546d4a4263f4ddcf5a76bfaa3b |
+| 17 | updatetest_1761837296@example.com | scrypt:32768:8:1$UfJIy5MQhLhoh87c$a5bf00a8a5e9b097ab9fc6a27bac705804e991b952c557bdfa65390eb6b4ff5e4708f104dc9b96b73b81945a36c9e9ef0de9249b8b1f788a4851f584b1bd57c5 |
+| 18 | updatetest_1761840884@example.com | scrypt:32768:8:1$BeVd8Cgaxxk8jtMn$67c9c6c736e3617f07fff672669f74a57ac07a4800037b71b11ed612df781ea0a35b4c53c6ba60fbe368d914eff0c593b2987afd5113802f17c99466a733f18a |
+| 19 | updatetest_1761842854@example.com | scrypt:32768:8:1$y8rsBgmhI6dwC5DA$56d2153355a343abffd2644d47df0fdfa0c12671ee4f9fa70762631babfeee6f1e0aad924aa6b250d6084cdf0d4de34a8c20b267041c24e28b31b710db736291 |
+| 20 | test_1761912262@example.com       | scrypt:32768:8:1$b4dH6din0pZxmFCg$3f0df0947684e6e6f5713ed856008f88bc0fcfd782521aa776115596212417330a99ae5d6bf2db99de24d6b480b6bec221a303216171e8b174145637e8924cf2 |
+| 21 | test_1761912433@example.com       | scrypt:32768:8:1$VHzLWEmFYywjlkFf$9df98f52c38d19bc7fb1b9d7a8ab4677ce708f78f502fc4f977abb98e2e527553c29be6f046e32e118962c78076035db18de562d2d50350f8927427b4f9d99c5 |
+| 22 | test_1761913442@example.com       | scrypt:32768:8:1$RdbiWQly9T1TYh92$cafb629472154e3deea64d8f45d9347e30c9c40165ee5f5282498d1ddee14b4f61d38231b57a367e1e759e1176456245415a5802c75ffc4ca66549166b6f7fc5 |
+| 23 | test_1761913443@example.com       | scrypt:32768:8:1$ZGwMz0NAeEzu2Vj5$dd59be2cdcd3876d81526fd6ec83f3abcf7911b16d22883dedf5438875de20e8271a19b59b988cb9b7b6da4aee330dda1b78bc92d86a37c9aa1ed547f13082ad |
+| 24 | test_1761913473@example.com       | scrypt:32768:8:1$bq3BS1VnxXJFYTtz$42648d64e8704694a9c8933f398f3469dfd6b07ce89836967a8b639c50d2aeebae2da92fc3277c90927c736b1b2951cb61465568bcf95dc7ffbd5c0dd3e82dbc |
+| 25 | test_1761913482@example.com       | scrypt:32768:8:1$QJGiO7NL6ws7CWLN$bce843ff461225d70e93247b2017ef9dd598d207202c029fc7e7cce3a53530f0d96723267d77af7337d7bd54131d64455737315acd9717e6fdca563862afbcc3 |
+| 26 | updatetest_1761913527@example.com | scrypt:32768:8:1$bV2XrZea6ssbRFb0$fc56d7728e9fbeed533c8b0337b5cc18b916a55cb8b3b79813c1324c3b6401dc5d7d5bc5ee738e1df3c48bbe6b41a272393763b74c32be0c3193ea91b0c1107f |
+| 27 | test_1761913535@example.com       | scrypt:32768:8:1$N96Rg6A0YvSgJwhS$6e3cbe37ab76be07cab7c1108916dba013045361e7110a3ed76576b7a75cfb2398b2efe908e74bd1542730a8b65ebf25f1ceb5f409cb32ae7145051946b874fe |
+| 28 | test_1761913676@example.com       | scrypt:32768:8:1$qbiiHUDMrmpymA2c$a47e97ff0c5da57748b6d6112380ab5e9f0efc0865b60520289113483608314d5e61fb6500f3fb084344a3f1899cac1130853918c3755de1025e87400a3861be |
+| 29 | test_1761913677@example.com       | scrypt:32768:8:1$otoXJGeb2PFYTfkz$4daca7f79480c602c99edb93e50b98c2133b257848fe8c0125c64891ca28817522ef6e98a316d8db4d48e51def49af1b252a359cc04d5290fb6cd06ff7009b23 |
+| 30 | test_1761913702@example.com       | scrypt:32768:8:1$chMsEHjfUNshSSFi$2c4175e75284ecbaf9c80f25ff2b3bfd2ecffa6f9a72c5db1badc647ae35501dbf29c175ee167ee9e63b1c99ca3d6f3a873c6ad77a4bf40a9b71716cb996ee68 |
+| 31 | test_1761913922@example.com       | scrypt:32768:8:1$e7cyV2IPSxtdzqJW$c9089915d43939512916fe3a58dc59bf069e07e684a196a2ad726a886d4c4f07c4f2925ac77c707264a7409f257d6afceca4e710dc5446bcf11ae175a596ec4f |
+| 32 | updatetest_1761918259@example.com | scrypt:32768:8:1$gvUpJa1BDyl1ez8y$d5b891afacb585c45e8a30ed9f8893d6ff3821bdf62227c9ea60d02d1d7fe44f0a4db2d307886f2a0f49113b412c302b538a0997a154963d131421a473802c9d |
+| 33 | test_1761918260@example.com       | scrypt:32768:8:1$zsBakL1qNIznJ2RJ$dc1c4133310f8bdc3d0daa62599526e054b4ed5c7d12b8784dc594089685c9b58ddddb151d2caa50b7dc7bf7dcb5f9034bfe980554570658544ccdcca298e286 |
++----+-----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+33 rows in set (0,00 sec)
+
+mysql> SHOW GRANTS FOR 'auth_user'@'%';
++-----------------------------------------------------+
+| Grants for auth_user@%                              |
++-----------------------------------------------------+
+| GRANT USAGE ON *.* TO `auth_user`@`%`               |
+| GRANT ALL PRIVILEGES ON `auth`.* TO `auth_user`@`%` |
++-----------------------------------------------------+
+2 rows in set (0,00 sec)
+
+mysql> SHOW GRANTS FOR 'auth_user'@'localhost'
+    -> ;
++-------------------------------------------------------------+
+| Grants for auth_user@localhost                              |
++-------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `auth_user`@`localhost`               |
+| GRANT ALL PRIVILEGES ON `auth`.* TO `auth_user`@`localhost` |
++-------------------------------------------------------------+
+2 rows in set (0,00 sec)
+
+mysql> 
