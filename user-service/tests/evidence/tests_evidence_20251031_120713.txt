@@ -1,0 +1,14 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2025-10-31 12:07:13
+Projeto: Authentication Service - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2025-10-31 12:07:13] - Duplicate User Registration Test - PASS
+Details: First Registration Status: 201, Second Registration Status: 409
+response:{
+  "error": "User already exists"
+}
+----------------------------------------

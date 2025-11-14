@@ -1,0 +1,24 @@
+================================================================================
+TESTS EVIDENCE - PRODUCT SERVICE
+================================================================================
+Date and Time: 2025-11-14 11:49:35
+Projeto:WebApp Final Project - Product service
+test suite: Integration Tests for Product Service
+================================================================================
+
+[2025-11-14 11:49:35] - Get user item list - PASS
+Details: Status: 200, Products found: 1, Target product found: False
+response:{
+  "products": [
+    {
+      "created_at": "Fri, 14 Nov 2025 11:49:35 GMT",
+      "created_by": 55,
+      "description": "Descritivo teste 2025-11-14 11:49:35",
+      "id": 8,
+      "name": "test_2025-11-14 11:49:35",
+      "price": 268.19,
+      "quantity": 8
+    }
+  ]
+}
+----------------------------------------

@@ -1,0 +1,15 @@
+================================================================================
+TESTS EVIDENCE - PRODUCT SERVICE
+================================================================================
+Date and Time: 2025-11-13 10:00:12
+Projeto:WebApp Final Project - Product service
+test suite: Integration Tests for Product Service
+================================================================================
+
+[2025-11-13 10:00:12] - Get user item list - PASS
+Details: Get user items list status:200
+response:{
+  "message": "No products found",
+  "products": []
+}
+----------------------------------------

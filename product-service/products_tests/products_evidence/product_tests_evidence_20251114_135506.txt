@@ -1,0 +1,15 @@
+================================================================================
+TESTS EVIDENCE - PRODUCT SERVICE
+================================================================================
+Date and Time: 2025-11-14 13:55:06
+Projeto:WebApp Final Project - Product service
+test suite: Integration Tests for Product Service
+================================================================================
+
+[2025-11-14 13:55:06] - Delete product item - PASS
+Details: Product ID: 13, Delete status: 200
+response:{
+  "deleted_product_id": 13,
+  "message": "Product deleted successfully"
+}
+----------------------------------------

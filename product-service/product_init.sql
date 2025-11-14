@@ -1,3 +1,4 @@
+CREATE USER IF NOT EXISTS 'product_user'@'%' IDENTIFIED BY 'prodpass123';
 CREATE USER IF NOT EXISTS 'product_user'@'localhost' IDENTIFIED BY 'prodpass123';
 
 CREATE database IF NOT EXISTS products;
@@ -6,7 +7,7 @@ GRANT ALL PRIVILEGES ON products.* TO 'product_user'@'localhost';
 
 USE products;
 
-CREATE TABLE items(
+CREATE TABLE IF NOT EXISTS items(
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     quantity int NOT NULL DEFAULT 0,

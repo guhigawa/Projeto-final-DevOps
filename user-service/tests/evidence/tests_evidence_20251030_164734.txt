@@ -1,0 +1,20 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2025-10-30 16:47:34
+Projeto: Authentication Service - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2025-10-30 16:47:35] - Update User Profile Test - PASS
+Details: Status Code: 200, New Email: updatetest_1761842854@example.com, Email in Profile: updatetest_1761842854@example.com
+response:{
+  "update_response": {
+    "message": "Profile updated successfully"
+  },
+  "profile_data": {
+    "email": "updatetest_1761842854@example.com",
+    "user_id": 19
+  }
+}
+----------------------------------------

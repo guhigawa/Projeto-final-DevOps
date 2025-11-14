@@ -1,0 +1,25 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2025-10-24 16:06:37
+Projeto: Authentication Service - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2025-10-24 16:06:37] - Detailed Health Check - FAIL
+Details: Status: healthy, DB Connection: True, DB Query: True
+response:{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "user-service",
+  "status": "healthy",
+  "timestamp": "2025-10-24T15:06:37.625712"
+}
+----------------------------------------
+[2025-10-24 16:06:37] - Detailed Health Check - FAIL
+Details: Exception occurred: Expected status code 400 but got 200
+assert False
+----------------------------------------

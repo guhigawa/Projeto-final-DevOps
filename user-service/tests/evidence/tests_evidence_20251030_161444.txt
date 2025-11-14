@@ -1,0 +1,11 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2025-10-30 16:14:44
+Projeto: Authentication Service - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2025-10-30 16:14:44] - Update User Profile Test - FAIL
+Details: Exception occurred: 'bool' object has no attribute 'json'
+----------------------------------------

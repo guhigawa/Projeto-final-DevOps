@@ -1,0 +1,11 @@
+================================================================================
+TESTS EVIDENCE - PRODUCT SERVICE
+================================================================================
+Date and Time: 2025-11-13 09:44:41
+Projeto:WebApp Final Project - Product service
+test suite: Integration Tests for Product Service
+================================================================================
+
+[2025-11-13 09:44:41] - Registration and login of test user for product test - FAIL
+Details: Exception ccurred: 'dict' object has no attribute 'json'
+----------------------------------------

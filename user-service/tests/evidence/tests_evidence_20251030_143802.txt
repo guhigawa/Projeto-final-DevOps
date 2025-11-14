@@ -1,0 +1,20 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2025-10-30 14:38:02
+Projeto: Authentication Service - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2025-10-30 14:38:02] - User registration test - FAIL
+Details: Email: test_1761835082@example.com, Status Code: 201, User ID: 6
+response:{
+  "email": "test_1761835082@example.com",
+  "message": "User registered successfully",
+  "user_id": 6
+}
+----------------------------------------
+[2025-10-30 14:38:02] - User registration test - FAIL
+Details: Exception occurred: Registration failedEmail: test_1761835082@example.com, Status Code: 201, User ID: 6
+assert False
+----------------------------------------

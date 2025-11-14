@@ -1,0 +1,14 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2025-10-31 12:25:35
+Projeto: Authentication Service - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2025-10-31 12:25:35] - Update User Profile Test - FAIL
+Details: Profile update failed with status: 401
+response:{
+  "error": "Token has been invalidated. Please login again."
+}
+----------------------------------------

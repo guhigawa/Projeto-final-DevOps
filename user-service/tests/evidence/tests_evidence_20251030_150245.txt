@@ -1,0 +1,18 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2025-10-30 15:02:45
+Projeto: Authentication Service - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2025-10-30 15:02:46] - Update User Profile Test - FAIL
+Details: Status Code: 200, New Email: None
+response:{
+  "message": "Profile updated successfully"
+}
+----------------------------------------
+[2025-10-30 15:02:46] - Update User Profile Test - FAIL
+Details: Exception occurred: Profile update failed: Status Code: 200, New Email: None
+assert False
+----------------------------------------

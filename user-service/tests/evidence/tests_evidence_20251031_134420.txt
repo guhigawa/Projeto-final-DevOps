@@ -1,0 +1,25 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2025-10-31 13:44:20
+Projeto: Authentication Service - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2025-10-31 13:44:20] - User Logout and profile Test - PASS
+Details: Profile Before Logout Status: 200, Logout Status: 200, Profile After Logout Status: 401
+response:{
+  "profile_before_logout": {
+    "email": "test_1761918260@example.com",
+    "user_id": 33
+  },
+  "logout_response": {
+    "message": "Logout successful",
+    "timestamp": "2025-10-31T13:44:20.300416",
+    "user_id": 33
+  },
+  "profile_after_logout": {
+    "error": "Unauthorized access"
+  }
+}
+----------------------------------------

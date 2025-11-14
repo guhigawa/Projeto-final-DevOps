@@ -5,7 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from pymysql import Error
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'product_fallback_secret')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback_secret_key')
 
 
 app.config["MYSQL_HOST"] = os.environ.get("MYSQL_HOST", "localhost")
@@ -17,7 +17,7 @@ app.config["MYSQL_PORT"] = os.environ.get("MYSQL_PORT","3306")
 def setup_structured_logging():
     logging.basicConfig(
         level=logging.INFO,
-        format='{"timestamp": "%(asctime)s", "level": "%(levelname)s", "service": "user-service", "message": "%(message)s"}',
+        format='{"timestamp": "%(asctime)s", "level": "%(levelname)s", "service": "product-service", "message": "%(message)s"}',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 setup_structured_logging()
@@ -35,7 +35,7 @@ def get_db_connection():
         )
         return connection
     except Error as e:
-        logging.error(f"Error connecting to prducts database: {e}")
+        logging.error(f"Error connecting to products database: {e}")
         return None
 
 
@@ -66,7 +66,7 @@ def token_required(f):
 @token_required
 def create_product(current_user_id):
     data = request.get_json()
-    logging.info("product creation request received", extra={"name" : data.get("name"),"price":data.get("price") if data else "No data"})
+    logging.info("product creation request received", extra={"product_name" : data.get("name"),"price":data.get("price") if data else "No data"})
     
     if not data or not data.get("name") or not data.get("price"):
         logging.warning("Product creation failed - missing fields")
@@ -97,14 +97,16 @@ def create_product(current_user_id):
     try:
         with connection.cursor() as cursor:
             cursor.execute("INSERT INTO items (name, price,quantity, description, created_by) VALUES (%s, %s, %s, %s, %s)",
-                           (name, price, data.get("description"), current_user_id))
+                           (name, price, quantity, data.get("description"), current_user_id))
             
-            product_id = cursor.lastrowid
+            id = cursor.lastrowid
             connection.commit()
-            logging.info(f"Product created", extra ={"product_id": product_id, "name": name})
+            logging.info("Product created", extra ={"product_id": id, "product_name": name})
             return jsonify({"message": "Product created successfully", 
-                            "product_id": product_id,
-                            "product_name":name}), 201
+                            "id": id,
+                            "product_name":name,
+                            "description": data.get("description")
+                            }), 201
         
     except Error as e:
         logging.error("Product creation error:", extra={"error": str(e)})
@@ -112,8 +114,277 @@ def create_product(current_user_id):
     
     finally:
         connection.close()
+
+
+@app.route("/products", methods=["GET"])
+@token_required
+def get_products(current_user_id):
+    token = request.headers.get('Authorization')
+    if token and token.startswith("Bearer "):
+        token = token[7:]
+    data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+    user_email = data['email']
+    logging.info("product list request received", extra={"user_id": current_user_id, "user_email":user_email})
+
+    connection = get_db_connection()
+    if not connection:
+        logging.error("Database connection failed")
+        return jsonify({"error": "Database connection failed"}), 500
+    
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id, name, price, quantity, description, created_at, created_by FROM items WHERE created_by = %s",(current_user_id,))
+            products = cursor.fetchall()
+
+            #Json doesn't accept Decimal types, convert to float
+            for product in products:
+                if 'price' in product and product['price'] is not None:
+                    product['price'] = float(product['price'])
+
+            if not products:
+                logging.info("No products_found", extra={"user_id": current_user_id})
+                return jsonify({"message": "No products found", "products": []}), 200
+            
+            logging.info(f"Products retrieved:{len(products)}", extra={"user_id": current_user_id, "product_count": len(products)})
+            return jsonify({"products": products}), 200
+        
+    except Error as e:
+        logging.error("Error retrieving products", extra={"error": str(e)})
+        return jsonify({"error": "Failed to retrieve products"}), 500
+    
+    finally:
+        connection.close()
+
+
+@app.route("/products", methods=["PUT"])
+@token_required
+def update_product(current_user_id):
+    data = request.json
+    logging.info("Product update request received", extra={"product_id": data.get("id"),"product_name": data.get("name") if data else "No data"})
+
+    if not data or not data.get("id"):
+        logging.warning("Product update failed - missing item ID")
+        return jsonify({"error": "Product ID of the item to be changed is required",
+                        "example request":{"id":"1",
+                                           "name":"New Product Name",
+                                           "price": "19.99",
+                                           "description": "Updated description",
+                                           "quantity":"5"
+                                           }
+                      }), 400
+    
+    target_id = data["id"]
+    new_product_name = None
+    product_name = data.get("name")
+    if product_name is not None:
+        new_product_name = str(product_name).strip()
+    
+    new_price = data.get("price")
+    if new_price is not None:
+        try:
+            price_value = float(new_price)
+            if price_value <= 0:
+                return jsonify({"error": "Price must be greater than 0"}), 400
+        except (ValueError, TypeError) as e:
+            logging.warning("Product update failed - invalid price format", extra={"product_id": target_id})
+            return jsonify({"error": f"Invalid price format: {str(e)}"}), 400
+        
+    new_description = data.get("description")
+    new_quantity = data.get("quantity")
+
+    if new_quantity is not None:
+        try:
+            quantity_value = int(new_quantity)
+            if quantity_value < 0:
+                return jsonify({"error": "Quantity cannot be negative"}), 400
+        except (ValueError, TypeError) as e:
+            logging.warning("Product update failed - invalid quantity format", extra={"product_id": target_id})
+            return jsonify({"error":"invalid format"})
+        
+    if not any([new_product_name, new_price, new_description, new_quantity]):
+        logging.warning("Product update failed - no fields to update", extra={"product_id": data["id"]})
+        return jsonify({"error": "At least one field (name, price, description, quantity) must be provided for update"}), 400
     
 
+    connection = get_db_connection()
+
+    if not connection:
+        logging.error("Database connection failed during producto update")
+        return jsonify({"Error": "Database connection failed"}), 500
+    
+    
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM items WHERE id = %s AND created_by = %s",(target_id,current_user_id))
+            selected_product = cursor.fetchone()
+            if not selected_product:
+                return jsonify({"error":"product not found or access denied"}),404
+
+            if new_product_name is not None:# Allow empty name
+                cursor.execute("UPDATE items SET name = %s WHERE id = %s AND created_by = %s",(new_product_name, target_id, current_user_id))
+
+            if new_price is not None:# Allow zero price check above
+                cursor.execute("UPDATE items SET price = %s WHERE id = %s AND created_by = %s",(new_price, target_id, current_user_id))
+                
+            if new_description is not None:# Allow empty description
+                cursor.execute("UPDATE items SET description = %s WHERE id = %s AND created_by = %s",(new_description, target_id, current_user_id))
+
+            if new_quantity is not None:# Allow zero quantity
+                cursor.execute("UPDATE items SET quantity = %s WHERE id = %s AND created_by = %s",(new_quantity, target_id, current_user_id))
+                
+            connection.commit()
+
+            logging.info("Product updated succesfully", extra={"product_id":target_id})
+            return jsonify({"message":"Product updated successfully"}), 200
+    
+    except Error as e:
+        logging.error("Error updating product", extra={"error": str(e), "product_id": target_id})
+        return jsonify({"error": "Failed to update product"}), 500
+    
+    finally:
+        connection.close()
+
+
+@app.route("/products", methods=["DELETE"])
+@token_required
+def delete_product(current_user_id):
+    data = request.get_json()
+    logging.info("Product deletion request received", extra={"product_id": data.get("id") if data else "No data"})
+
+    if not data or not data.get("id"):
+        logging.warning("Product deletion failed - missing item ID")
+        return jsonify({"error": "Product ID of the item to be deleted required",
+                        "example request":{"id":"1"}
+                        })
+    
+    target_id = data["id"]
+    connection = get_db_connection()
+
+    if not connection:
+        logging.error("Database connection failed during product deletion")
+        return jsonify({"error": "Database connection failed"}), 500
+    
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM items WHERE id = %s AND created_by =%s",(target_id, current_user_id))
+            product = cursor.fetchone()
+            if not product:
+                logging.warning("Product deletion failed - product not found", extra={"product_id": target_id})
+                return jsonify({"error": "Product not found"}), 404
+
+            cursor.execute("DELETE FROM items WHERE id = %s AND created_by = %s",(target_id, current_user_id))
+            connection.commit()
+            
+            #verification to see how many lines were deleted
+            if cursor.rowcount > 0:
+                logging.info("Product deleted successfully", extra={"product_id":target_id,"product_name":product["name"]})
+                return jsonify({"message": "Product deleted successfully",
+                                "deleted_product_id":target_id
+                                }), 200
+            else:
+                logging.warning("No product was deleted", extra={"product_id":target_id, "user_id":current_user_id})
+                return jsonify({"error":"No product was deleted"}),404
+    
+    except Error as e:
+        logging.error("Error deleting product", extra={"error":str(e), "product_id":target_id, "user_id":current_user_id})
+        connection.rollback()
+        return jsonify({"error": "Failed to delete product"}),500
+    
+    finally:
+        connection.close()
+
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    try:
+        connection = get_db_connection()
+        healthy = connection is not None
+        if connection:
+            connection.close()
+        return jsonify({"status": "healthy" if healthy else "unhealthy"})
+    except:
+        return jsonify({"status": "unhealthy"}), 503
+    
+
+@app.route("/health/detailed",methods=["GET"])
+def health_detailed():
+    checks = {
+        "database_connection": False,
+        "database_query":False,
+        "service_responsive":True
+    }
+
+    try:
+        connection = get_db_connection()
+        if connection:
+            checks["database_connection"] = True
+            
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+                checks["database_query"] = True
+            connection.close()
+    
+    except Exception as e:
+        logging.error(f"Health check error: {str(e)}")
+
+    all_healthy = all(checks.values())
+    status = "healthy" if all_healthy else "unhealthy"
+
+    logging.info(f"Health check executed - Status: {status}", extra={"checks": checks})
+
+    return jsonify({"status": status,
+                    "service": "product-service", 
+                    "timestamp": datetime.datetime.utcnow().isoformat(),
+                    "checks": checks
+                        
+                    }), 200 if all_healthy else 503
+
+
+@app.route("/metrics",methods=["GET"])
+def metrics():
+    return jsonify({
+        "service": "user-service",
+        "timestamp": datetime.datetime.utcnow().isoformat(),
+        "active_endpoints": ["/product", "/health","health/detailed", "/metrics"]
+    })
+
+
+def verify_db_setup():
+    try:
+        connection = get_db_connection()
+        if not connection:
+            print(f"Failed to connect to database")
+            return False
+        
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) AS count FROM items")
+            result = cursor.fetchone()
+            item_count = result['count'] 
+
+            print(f"table items exists and has {item_count} items")
+        
+        connection.close()
+        return True
+    
+    except Exception as e:
+        print(f"Database setup verification failed: {e}")
+        return False
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3002, debug=True)
+    
+    print("Starting User Service...")
+    print("Available endpoints:")
+    print("  POST  /products     - Register new products")
+    print("  GET   /products     - Get products list (JWT required)") 
+    print("  PUT   /products     - Update products (JWT required)")
+    print(" DELETE /products     - Delete product (JWT required)")
+    print("  GET   /health       - Health check")
+    print("  GET   /health/detailed - Detailed health check")
+    print("  GET   /metrics      - Service metrics")
+
+    if verify_db_setup():
+        app.run(host="0.0.0.0",port=3002,debug=True)
+    else:
+        print("Failed to start Product Service due to database setup issues.")
     

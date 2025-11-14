@@ -1,0 +1,17 @@
+================================================================================
+TESTS EVIDENCE - PRODUCT SERVICE
+================================================================================
+Date and Time: 2025-11-13 11:45:17
+Projeto:WebApp Final Project - Product service
+test suite: Integration Tests for Product Service
+================================================================================
+
+[2025-11-13 11:45:17] - Create product item - PASS
+Details: Status:201, Product:test_2025-11-13 11:45:17, User:product_test1763034317@example.com
+response:{
+  "message": "Product created successfully",
+  "product_description": "Descritivo teste 2025-11-13 11:45:17",
+  "product_id": 6,
+  "product_name": "test_2025-11-13 11:45:17"
+}
+----------------------------------------

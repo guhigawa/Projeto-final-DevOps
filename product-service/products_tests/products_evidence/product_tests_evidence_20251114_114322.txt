@@ -1,0 +1,11 @@
+================================================================================
+TESTS EVIDENCE - PRODUCT SERVICE
+================================================================================
+Date and Time: 2025-11-14 11:43:22
+Projeto:WebApp Final Project - Product service
+test suite: Integration Tests for Product Service
+================================================================================
+
+[2025-11-14 11:43:22] - Get user item list - FAIL
+Details: Exception occurred: Object of type FixtureFunctionDefinition is not JSON serializable
+----------------------------------------
