@@ -1,0 +1,109 @@
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:3001/health
+{
+  "status": "healthy"
+}
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3001/login -u "test1@example.com:test123"
+{
+  "email": "test1@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InRlc3QxQGV4YW1wbGUuY29tIiwiZXhwIjoxNzYzNDg3OTc2fQ.efj4s3qjxnb6G3ICWf4yFE6iErnUzewPxqhDeSdhXrc",
+  "user_id": 2
+}
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ pytest user-service/tests/test_user_service.py 
+============================================================================== test session starts ===============================================================================
+platform linux -- Python 3.10.12, pytest-8.4.1, pluggy-1.6.0
+rootdir: /home/ubuntu/Downloads/Projeto_final
+collected 6 items                                                                                                                                                                
+
+user-service/tests/test_user_service.py ......                                                                                                                             [100%]
+
+=============================================================================== 6 passed in 0.88s ================================================================================
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ pytest user-service/tests/test_user_service.py -v -s
+============================================================================== test session starts ===============================================================================
+platform linux -- Python 3.10.12, pytest-8.4.1, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/ubuntu/Downloads/Projeto_final
+collected 6 items                                                                                                                                                                
+
+user-service/tests/test_user_service.py::TestUserService::test_health_check_detailed [2025-11-18 16:47:35] - Detailed Health Check - PASS
+Details: Status: healthy, DB Connection: True, DB Query: True
+response:{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "user-service",
+  "status": "healthy",
+  "timestamp": "2025-11-18T16:47:35.617503"
+}
+----------------------------------------
+
+PASSED
+user-service/tests/test_user_service.py::TestUserService::test_user_registration [2025-11-18 16:47:35] - User registration test - PASS
+Details: Email: test_1763484455@example.com, Status Code: 201, User ID: 76
+response:{
+  "email": "test_1763484455@example.com",
+  "message": "User registered successfully",
+  "user_id": 76
+}
+----------------------------------------
+
+PASSED
+user-service/tests/test_user_service.py::TestUserService::test_duplicate_user_registration [2025-11-18 16:47:35] - Duplicate User Registration Test - PASS
+Details: First Registration Status: 409, Second Registration Status: 409
+response:{
+  "error": "User already exists"
+}
+----------------------------------------
+
+PASSED
+user-service/tests/test_user_service.py::TestUserService::test_user_login [2025-11-18 16:47:36] - User Login Test - PASS
+Details: Email: test_1763484455@example.com, Status Code: 200, User ID: 76
+response:{
+  "email": "test_1763484455@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo3NiwiZW1haWwiOiJ0ZXN0XzE3NjM0ODQ0NTVAZXhhbXBsZS5jb20iLCJleHAiOjE3NjM0ODgwNTZ9.zDH2gzwwBsQHfEocZUJV8B0A6wuzGZsOocGZeUqxiPo",
+  "user_id": 76
+}
+----------------------------------------
+
+PASSED
+user-service/tests/test_user_service.py::TestUserService::test_update_profile actual email: test_1763484456@example.com
+new email: updatetest_1763484456@example.com
+Update profile response status code: 200
+email in profile: updatetest_1763484456@example.com
+expected email: updatetest_1763484456@example.com
+[2025-11-18 16:47:36] - Update User Profile Test - PASS
+Details: Status Code: 200, New Email: updatetest_1763484456@example.com, Email in Profile: updatetest_1763484456@example.com
+response:{
+  "update_response": {
+    "message": "Profile updated successfully"
+  },
+  "profile_data": {
+    "email": "updatetest_1763484456@example.com",
+    "user_id": 77
+  }
+}
+----------------------------------------
+
+PASSED
+user-service/tests/test_user_service.py::TestUserService::test_user_profile_and_logout [2025-11-18 16:47:36] - User Logout and profile Test - PASS
+Details: Profile Before Logout Status: 200, Logout Status: 200, Profile After Logout Status: 401
+response:{
+  "profile_before_logout": {
+    "email": "test_1763484456@example.com",
+    "user_id": 78
+  },
+  "logout_response": {
+    "message": "Logout successful",
+    "timestamp": "2025-11-18T16:47:36.562871",
+    "user_id": 78
+  },
+  "profile_after_logout": {
+    "error": "Unauthorized access"
+  }
+}
+----------------------------------------
+
+PASSED
+
+================================================

@@ -28,5 +28,4 @@ docs/_build/
 user-service/tests/evidence/
 product-service/products_tests/products_evidence
 generate_hashed_password.py
-documentation
 
