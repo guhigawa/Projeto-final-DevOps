@@ -25,7 +25,8 @@ Thumbs.db
 *.tmp
 *.temp
 docs/_build/
-tests/evidence/
-products_tests/products_evidence
-
+user-service/tests/evidence/
+product-service/products_tests/products_evidence
+generate_hashed_password.py
+documentation
 

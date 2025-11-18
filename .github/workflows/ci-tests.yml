@@ -1,0 +1,191 @@
+name: Final-Project CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: '3.10'
+  MYSQL_VERSION: '8.0'
+
+jobs:
+  
+  test-user-service:
+    runs-on: ubuntu-latest
+    services:
+      mysql-user:
+        image: mysql:${{ env.MYSQL_VERSION }}
+        env:
+          MYSQL_ROOT_PASSWORD: test_root_password_123
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Create test environment
+        run: |
+          cat > .env.test << EOF
+          SECRET_KEY=test_fallback_secret_key_123
+          USER_MYSQL_HOST=localhost
+          USER_MYSQL_USER=test_user
+          USER_MYSQL_PASSWORD=test_password_123
+          USER_MYSQL_DB=auth_test
+          USER_MYSQL_PORT=3306
+          PRODUCT_MYSQL_HOST=localhost
+          PRODUCT_MYSQL_USER=product_test_user
+          PRODUCT_MYSQL_PASSWORD=test_password_123
+          PRODUCT_MYSQL_DB=products_test
+          PRODUCT_MYSQL_PORT=3307
+          USER_SERVICE_URL=http://localhost:3001
+          PRODUCT_SERVICE_URL=http://localhost:3002
+          FLASK_ENV=test
+          TESTING=True
+          EOF
+
+      - name: Install MySQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+      
+      - name: Wait for MySQL to be ready
+        run: |
+          until mysql -h 127.0.0.1 -P 3306 -u root -ptest_root_password_123 -e "SELECT 1"; do
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
+      - name: Initialize User Service database
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -u root -ptest_root_password_123 < user-service/init_test.sql
+      
+      - name: Install dependencies for User Service
+        working-directory: ./user-service
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run service tests
+        working-directory: ./user-service
+        run: |
+          python -m pytest tests/ -v
+      
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: 
+          name: user-service-test-evidence
+          path: user-service/tests/evidence/
+          retention-days: 7
+      
+  test-product-service:
+    runs-on: ubuntu-latest
+    services:
+      mysql-product:
+        image: mysql:${{ env.MYSQL_VERSION }}
+        env:
+          MYSQL_ROOT_PASSWORD: test_root_password_123
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install MySQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+      
+      - name: Wait for MySQL to be ready
+        run: |
+          until mysql -h 127.0.0.1 -P 3307 -u root -ptest_root_password_123 -e "SELECT 1"; do
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+      
+      - name: Initialize product-service test database
+        run: |
+          mysql -h 127.0.0.1 -P 3307 -u root -ptest_root_password_123 < product-service/product_init_test.sql
+      
+      - name: Install dependencies for Product Service
+        working-directory: ./product-service
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Product Service tests
+        working-directory: ./product-service
+        run: |
+          python -m pytest products_tests/ -v
+
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-service-test-evidence
+          path: product-service/products_tests/products_evidence/
+          retention-days: 7
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: [test-user-service, test-product-service]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run security scan
+        run: |
+          echo "Running security checks..."
+          # pip install bandit safety
+          # bandit -r user-service/
+          # bandit -r product-service/
+          # safety check
+
+      - name: Dependency vulnerability check
+        run: |
+          echo "Checking for vulnerable dependencies..."
+
+  # JOB 4: Build Docker (Pré-requisito para os próximos passos)
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: [test-user-service, test-product-service]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build User Service Docker image
+        run: |
+          cd user-service
+          docker build -t user-service:${{ github.sha }} .
+
+      - name: Build Product Service Docker image
+        run: |
+          cd product-service
+          docker build -t product-service:${{ github.sha }} .

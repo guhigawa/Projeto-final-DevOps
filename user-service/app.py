@@ -3,18 +3,63 @@ from functools import wraps
 from flask import Flask, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 from pymysql import Error
+from dotenv import dotenv_values
+from pathlib import Path
+
+# absolut pathway of the current directory
+current_dir = Path(__file__).parent
+project_root = current_dir.parent
+env_test_path = project_root / '.env.test'
+
+print(" Absolut path verified:")
+print(" .env.test:", env_test_path)
+print(" Exists:", env_test_path.exists())
+
+# Force the usage of .env.test if exists
+if env_test_path.exists():
+    env_path = str(env_test_path)  
+    print(" forced loading: .env.test")
+else:
+    env_path = '../.env'
+    print("loading: .env")
+
+print(" variables before:")
+print("   SECRET_KEY:", os.environ.get('SECRET_KEY'))
+print("   PRODUCT_MYSQL_USER:", os.environ.get('PRODUCT_MYSQL_USER'))
+
+env_vars = dotenv_values(env_path)
+print(" dotenv_values:", len(env_vars), "variables")
+
+print(" Assingning variables:")
+for key, value in env_vars.items():
+    print("   ok", key, "=", value)
+    os.environ[key] = value
+
+print(" Variables after:")
+print("   SECRET_KEY:", os.environ.get('SECRET_KEY'))
+print("   PRODUCT_MYSQL_USER:", os.environ.get('PRODUCT_MYSQL_USER'))
+print("   PRODUCT_MYSQL_DB:", os.environ.get('PRODUCT_MYSQL_DB'))
+
+print("Configuring Flask")
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "fallback_secret_key")
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+print(" Flask SECRET_KEY:", app.config['SECRET_KEY'])
 token_blacklist = set()
 blacklist_expiry = {}
 
 #config
-app.config["MYSQL_HOST"] = os.environ.get("MYSQL_HOST", "localhost")
-app.config["MYSQL_USER"] = os.environ.get("MYSQL_USER","auth_user")
-app.config["MYSQL_PASSWORD"] = os.environ.get("MYSQL_PASSWORD","password123")
-app.config["MYSQL_DB"] = os.environ.get("MYSQL_DB","auth")
-app.config["MYSQL_PORT"] = os.environ.get("MYSQL_PORT","3306")
+app.config["MYSQL_HOST"] = os.environ.get("USER_MYSQL_HOST")
+app.config["MYSQL_USER"] = os.environ.get("USER_MYSQL_USER")
+app.config["MYSQL_PASSWORD"] = os.environ.get("USER_MYSQL_PASSWORD")
+app.config["MYSQL_DB"] = os.environ.get("USER_MYSQL_DB")
+app.config["MYSQL_PORT"] = os.environ.get("USER_MYSQL_PORT")
+
+print("  MYSQL configuration")
+print("   HOST:", app.config['MYSQL_HOST'])
+print("   USER:", app.config['MYSQL_USER'])
+print("   DB:", app.config['MYSQL_DB'])
+print("   PASSWORD:", '*' * len(app.config['MYSQL_PASSWORD'] if app.config['MYSQL_PASSWORD'] else ''))
 
 #logging setup
 def setup_structured_logging():
@@ -64,9 +109,7 @@ def token_required(f):
 
 @app.before_request
 def check_blacklisted_token():
-    """
-    Middleware to check if the incoming request has a blacklisted token
-    """
+    
     cleanup_expired_tokens()
 
     # Public routes that do not require token validation
@@ -91,7 +134,7 @@ def check_blacklisted_token():
 
 # Function to clean up expired tokens from the blacklist
 def cleanup_expired_tokens():
-    """Remove expired tokens from the blacklist to free up memory"""
+    
     current_time = time.time()
     tokens_to_remove = []
     

@@ -6,7 +6,7 @@ class EvidenceLogger:
     def __init__(self, test_suite_name,base_url):
         self.test_suite_name = test_suite_name
         self.base_url = base_url
-        self.evidence_dir = "tests/evidence"
+        self.evidence_dir = "user-service/tests/evidence"
         self.setup_evidence_system()
 
     def setup_evidence_system(self):
