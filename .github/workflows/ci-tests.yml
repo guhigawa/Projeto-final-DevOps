@@ -4,39 +4,43 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 env:
   PYTHON_VERSION: '3.10'
-  MYSQL_VERSION: '8.0'
 
 jobs:
   
   test-user-service:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        mysql_version: ['8.0']
+
     services:
       mysql-user:
-        image: mysql:${{ env.MYSQL_VERSION }}
+        image: mysql:${{ matrix.mysql_version }}
         env:
           MYSQL_ROOT_PASSWORD: test_root_password_123
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping"
+          --health-cmd="mysqladmin ping -h localhost -u root -ptest_root_password_123"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+        
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       
-      - name: Create test environment
+      - name: Creating test environment
         run: |
           cat > .env.test << EOF
           SECRET_KEY=test_fallback_secret_key_123
@@ -55,61 +59,65 @@ jobs:
           FLASK_ENV=test
           TESTING=True
           EOF
-
+      
       - name: Install MySQL client
         run: |
           sudo apt-get update
           sudo apt-get install -y mysql-client
       
-      - name: Wait for MySQL to be ready
+      - name: wait for MySQL to be ready
         run: |
-          until mysql -h 127.0.0.1 -P 3306 -u root -ptest_root_password_123 -e "SELECT 1"; do
-            echo "Waiting for MySQL..."
+          until mysql -h 127.0.0.1 -P 3306 -u root -ptest_root_password_123 -e  "SELECT 1"; do echo "waiting for MySQL"
             sleep 2
           done
-
-      - name: Initialize User Service database
+      
+      - name: Initialize user-service database
         run: |
           mysql -h 127.0.0.1 -P 3306 -u root -ptest_root_password_123 < user-service/init_test.sql
-      
-      - name: Install dependencies for User Service
+
+      - name: Install dependencies for User service
         working-directory: ./user-service
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      
-      - name: Run service tests
-        working-directory: ./user-service
+
+      - name: Run service test-user-service
+        working-directory: ./user-service/tests
         run: |
-          python -m pytest tests/ -v
-      
-      - name: Upload test evidence
+          python3 -m pytest test_user_service.py -v -s
+
+      - name: Upload tests evidence
         if: always()
         uses: actions/upload-artifact@v4
-        with: 
+        with:
           name: user-service-test-evidence
           path: user-service/tests/evidence/
           retention-days: 7
-      
+  
   test-product-service:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        mysql_version: ['8.0']
+
     services:
       mysql-product:
-        image: mysql:${{ env.MYSQL_VERSION }}
+        image: mysql:${{ matrix.mysql_version }}
         env:
           MYSQL_ROOT_PASSWORD: test_root_password_123
         ports:
           - 3307:3306
         options: >-
-          --health-cmd="mysqladmin ping"
+          --health-cmd="mysqladmin ping -h localhost -u root -ptest_root_password_123"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-      
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -120,40 +128,39 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mysql-client
       
-      - name: Wait for MySQL to be ready
+      - name: wait for MySQL to be ready
         run: |
-          until mysql -h 127.0.0.1 -P 3307 -u root -ptest_root_password_123 -e "SELECT 1"; do
-            echo "Waiting for MySQL..."
+          until mysql -h 127.0.0.1 -P 3307 -u root -ptest_root_password_123 -e  "SELECT 1"; do echo "waiting for MySQL"
             sleep 2
           done
       
-      - name: Initialize product-service test database
+      - name: Initialize product-service database
         run: |
           mysql -h 127.0.0.1 -P 3307 -u root -ptest_root_password_123 < product-service/product_init_test.sql
       
-      - name: Install dependencies for Product Service
+      - name: Install dependencies for product service
         working-directory: ./product-service
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Product Service tests
-        working-directory: ./product-service
+      - name: Run service test-product-service
+        working-directory: ./product-service/products_tests
         run: |
-          python -m pytest products_tests/ -v
+          python3 -m pytest test_product_service.py -v -s
 
-      - name: Upload test evidence
+      - name: Upload tests evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: product-service-test-evidence
           path: product-service/products_tests/products_evidence/
           retention-days: 7
-
+  
   security-scan:
     runs-on: ubuntu-latest
     needs: [test-user-service, test-product-service]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -169,13 +176,12 @@ jobs:
       - name: Dependency vulnerability check
         run: |
           echo "Checking for vulnerable dependencies..."
-
-  # JOB 4: Build Docker (Pré-requisito para os próximos passos)
+  
   build-docker:
     runs-on: ubuntu-latest
     needs: [test-user-service, test-product-service]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
