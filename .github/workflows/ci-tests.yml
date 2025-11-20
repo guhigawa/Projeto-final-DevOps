@@ -88,12 +88,12 @@ jobs:
           done
 
       
-      - name: Initialize user-service database
+      - name: Initialize service database
         run: |
           mysql -h 127.0.0.1 -P 3306 -u root -ptest_root_password_123 < user-service/init_test.sql
           mysql -h 127.0.0.1 -P 3307 -u root -ptest_root_password_123 < product-service/product_init_test.sql
 
-      - name: Install dependencies for User service
+      - name: Install dependencies
         run: |
           cd user-service && pip install -r requirements.txt
           cd ../product-service && pip install -r requirements.txt 
