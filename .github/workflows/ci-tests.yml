@@ -4,39 +4,55 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 env:
   PYTHON_VERSION: '3.10'
-  MYSQL_VERSION: '8.0'
 
 jobs:
   
-  test-user-service:
-    runs-on: ubuntu-latest
+  test-all-services:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        mysql_version: ['8.0']
+
     services:
       mysql-user:
-        image: mysql:${{ env.MYSQL_VERSION }}
+        image: mysql:${{ matrix.mysql_version }}
         env:
           MYSQL_ROOT_PASSWORD: test_root_password_123
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping"
+          --health-cmd="mysqladmin ping -h localhost -u root -ptest_root_password_123"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-
+      
+      mysql-product:
+        image: mysql:${{ matrix.mysql_version }}
+        env:
+          MYSQL_ROOT_PASSWORD: test_root_password_123
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -ptest_root_password_123"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+        
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       
-      - name: Create test environment
+      - name: Creating test environment files
         run: |
           cat > .env.test << EOF
           SECRET_KEY=test_fallback_secret_key_123
@@ -61,104 +77,53 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mysql-client
       
-      - name: Wait for MySQL to be ready
+      - name: wait for MySQL to be ready
         run: |
-          until mysql -h 127.0.0.1 -P 3306 -u root -ptest_root_password_123 -e "SELECT 1"; do
-            echo "Waiting for MySQL..."
+          until mysql -h 127.0.0.1 -P 3306 -u root -ptest_root_password_123 -e  "SELECT 1"; do echo "waiting for MySQL"
             sleep 2
           done
 
-      - name: Initialize User Service database
+          until mysql -h 127.0.0.1 -P 3307 -u root -ptest_root_password_123 -e  "SELECT 1"; do echo "waiting for MySQL"
+            sleep 2
+          done
+
+      
+      - name: Initialize service database
         run: |
           mysql -h 127.0.0.1 -P 3306 -u root -ptest_root_password_123 < user-service/init_test.sql
-      
-      - name: Install dependencies for User Service
-        working-directory: ./user-service
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      
-      - name: Run service tests
-        working-directory: ./user-service
-        run: |
-          python -m pytest tests/ -v
-      
-      - name: Upload test evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with: 
-          name: user-service-test-evidence
-          path: user-service/tests/evidence/
-          retention-days: 7
-      
-  test-product-service:
-    runs-on: ubuntu-latest
-    services:
-      mysql-product:
-        image: mysql:${{ env.MYSQL_VERSION }}
-        env:
-          MYSQL_ROOT_PASSWORD: test_root_password_123
-        ports:
-          - 3307:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-      
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install MySQL client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mysql-client
-      
-      - name: Wait for MySQL to be ready
-        run: |
-          until mysql -h 127.0.0.1 -P 3307 -u root -ptest_root_password_123 -e "SELECT 1"; do
-            echo "Waiting for MySQL..."
-            sleep 2
-          done
-      
-      - name: Initialize product-service test database
-        run: |
           mysql -h 127.0.0.1 -P 3307 -u root -ptest_root_password_123 < product-service/product_init_test.sql
+
+      - name: Install dependencies
+        run: |
+          cd user-service && pip install -r requirements.txt
+          cd ../product-service && pip install -r requirements.txt 
+
+      - name: Start user-service
+        working-directory: ./user-service
+        run: |
+          echo "Starting user-service"
+          python3 app.py &
+          FLASK_PID_USER=$! #cli command to store the last executed command in the background into the variable FLASK_PID
+          echo $FLASK_PID_USER > user_service.pid 
+          echo "User-service PID: $FLASK_PID_USER"
+          sleep 30
+
+      - name: Start product-service
+        working-directory: ./product-service
+        run: |
+          echo "Starting product-service"
+          python3 product_app.py &
+          FLASK_PID_PRODUCT=$! #cli command to store the last executed command in the background into the variable FLASK_PID
+          echo FLASK_PID_PRODUCT > product-service.pid
+          echo "Flask PID product-service: $FLASK_PID_PRODUCT"
+          sleep 30
       
-      - name: Install dependencies for Product Service
-        working-directory: ./product-service
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run Product Service tests
-        working-directory: ./product-service
-        run: |
-          python -m pytest products_tests/ -v
-
-      - name: Upload test evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: product-service-test-evidence
-          path: product-service/products_tests/products_evidence/
-          retention-days: 7
-
-  security-scan:
-    runs-on: ubuntu-latest
-    needs: [test-user-service, test-product-service]
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run security scan
+      -  name: Verification if both services are running
+         run: |
+          curl -f http://localhost:3001/health && echo "User Service: OK"
+          curl -f http://localhost:3002/health && echo "Product Service: OK"
+        
+      - name: Run security scan  
         run: |
           echo "Running security checks..."
           # pip install bandit safety
@@ -166,24 +131,45 @@ jobs:
           # bandit -r product-service/
           # safety check
 
-      - name: Dependency vulnerability check
+      - name: Run test-user-service
+        working-directory: ./user-service/tests
         run: |
-          echo "Checking for vulnerable dependencies..."
+          python3 -m pytest test_user_service.py -v -s
+      
+      - name: Run test-product-service
+        working-directory: ./product-service/products_tests
+        run: |
+          python3 -m pytest test_product_service.py -v -s
+      
+      - name: Stop Flask services  
+        if: always()
+        run: |
+          echo "Stopping Flask services..."
+          pkill -f "python3 app.py" || true
+          pkill -f "python3 product_app.py" || true
+          echo "Flask services stopped"
 
-  # JOB 4: Build Docker (Pré-requisito para os próximos passos)
+      - name: Upload tests evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests evidence
+          path: |
+            user-service/tests/evidence/
+            product-service/products_tests/products_evidence/
+          retention-days: 7
+  
   build-docker:
-    runs-on: ubuntu-latest
-    needs: [test-user-service, test-product-service]
+    runs-on: ${{ matrix.os }}
+    needs: test-all-services
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build User Service Docker image
-        run: |
-          cd user-service
-          docker build -t user-service:${{ github.sha }} .
+      - name: Set up Docker buildx
+        uses: docker/docker-buildx-action@v2
 
       - name: Build Product Service Docker image
         run: |
