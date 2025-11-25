@@ -1,9 +1,9 @@
-import requests, random, time
+import requests, os, time
 
 class ProductAuthHelpers:
-    user_url = "http://localhost:3001"
-    def __init__(self, user_service_url=user_url):
-        self.user_service_url = user_service_url
+    
+    def __init__(self):
+        self.user_service_url = os.getenv("USER_SERVICE_URL","http://localhost:3001")
 
     
     def create_test_user(self):

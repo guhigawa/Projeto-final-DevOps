@@ -6,6 +6,8 @@ CREATE database IF NOT EXISTS auth;
 GRANT ALL PRIVILEGES ON auth.* TO 'auth_user'@'%';
 GRANT ALL PRIVILEGES ON auth.* TO 'auth_user'@'localhost'; #Dando permissão ao user criado para acessar o database auth
 
+FLUSH PRIVILEGES;
+
 USE auth;
 
 CREATE TABLE IF NOT EXISTS users(

@@ -1,0 +1,16 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose exec product-service python -m pytest products_tests/test_product_service.py -v
+WARN[0000] /home/ubuntu/Downloads/Projeto_final/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /product-service
+collected 6 items                                                                                                                                                                               
+
+products_tests/test_product_service.py::TestProductService::test_health_check_detailed PASSED                                                                                             [ 16%]
+products_tests/test_product_service.py::TestProductService::test_create_user_test PASSED                                                                                                  [ 33%]
+products_tests/test_product_service.py::TestProductService::test_create_item PASSED                                                                                                       [ 50%]
+products_tests/test_product_service.py::TestProductService::test_get_items PASSED                                                                                                         [ 66%]
+products_tests/test_product_service.py::TestProductService::test_update_item PASSED                                                                                                       [ 83%]
+products_tests/test_product_service.py::TestProductService::test_delete_item PASSED                                                                                                       [100%]
+
+======================================================================================= 6 passed in 0.57s =======================================================================================

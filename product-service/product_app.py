@@ -9,58 +9,32 @@ from pathlib import Path
 import importlib
 importlib.reload(os)
 
+def load_env_files():
+    current_dir = Path(__file__).parent
 
-# absolut pathway of the current directory
-current_dir = Path(__file__).parent
-project_root = current_dir.parent
-env_test_path = project_root / '.env.test'
+    env_test_path = current_dir.parent / '.env.test'
+    if env_test_path.exists():
+        env_vars= dotenv_values(str(env_test_path))
+        for key, values in env_vars.items():
+            os.environ[key] = values
+        return
+    
+    root_env_path = current_dir.parent / '.env'
+    if root_env_path.exists():
+        env_vars = dotenv_values(str(root_env_path))
+        for key, values in env_vars.items():
+            os.environ[key] = values
+        return
 
-print(" Absolut path verified:")
-print(" .env.test:", env_test_path)
-print(" Exists:", env_test_path.exists())
-
-# Force the usage of .env.test if exists
-if env_test_path.exists():
-    env_path = str(env_test_path)  
-    print(" forced loading: .env.test")
-else:
-    env_path = '../.env'
-    print("loading: .env")
-
-print(" variables before:")
-print("   SECRET_KEY:", os.environ.get('SECRET_KEY'))
-print("   PRODUCT_MYSQL_USER:", os.environ.get('PRODUCT_MYSQL_USER'))
-
-env_vars = dotenv_values(env_path)
-print(" dotenv_values:", len(env_vars), "variables")
-
-print(" Assingning variables:")
-for key, value in env_vars.items():
-    print("   ok", key, "=", value)
-    os.environ[key] = value
-
-print(" Variables after:")
-print("   SECRET_KEY:", os.environ.get('SECRET_KEY'))
-print("   PRODUCT_MYSQL_USER:", os.environ.get('PRODUCT_MYSQL_USER'))
-print("   PRODUCT_MYSQL_DB:", os.environ.get('PRODUCT_MYSQL_DB'))
-
-print("Configuring Flask")
+load_env_files()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-print(" Flask SECRET_KEY:", app.config['SECRET_KEY'])
-
-app.config["MYSQL_HOST"] = os.environ.get("PRODUCT_MYSQL_HOST")
-app.config["MYSQL_USER"] = os.environ.get("PRODUCT_MYSQL_USER")
-app.config["MYSQL_PASSWORD"] = os.environ.get("PRODUCT_MYSQL_PASSWORD")
-app.config["MYSQL_DB"] = os.environ.get("PRODUCT_MYSQL_DB")
-app.config["MYSQL_PORT"] = os.environ.get("PRODUCT_MYSQL_PORT")
-
-print("  MYSQL configuration")
-print("   HOST:", app.config['MYSQL_HOST'])
-print("   USER:", app.config['MYSQL_USER'])
-print("   DB:", app.config['MYSQL_DB'])
-print("   PASSWORD:", '*' * len(app.config['MYSQL_PASSWORD'] if app.config['MYSQL_PASSWORD'] else ''))
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') 
+app.config["MYSQL_HOST"] = os.environ.get("MYSQL_HOST") or os.environ.get("PRODUCT_MYSQL_HOST") 
+app.config["MYSQL_USER"] = os.environ.get("MYSQL_USER") or os.environ.get("PRODUCT_MYSQL_USER")
+app.config["MYSQL_PASSWORD"] = os.environ.get("MYSQL_PASSWORD") or os.environ.get("PRODUCT_MYSQL_PASSWORD")
+app.config["MYSQL_DB"] = os.environ.get("MYSQL_DATABASE") or os.environ.get("PRODUCT_MYSQL_DB")
+app.config["MYSQL_PORT"] = os.environ.get("MYSQL_PORT") or os.environ.get("PRODUCT_MYSQL_PORT")
 
 def setup_structured_logging():
     logging.basicConfig(

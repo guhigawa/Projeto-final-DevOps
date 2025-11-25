@@ -1,9 +1,19 @@
+DROP USER IF EXISTS 'product_user'@'%';
+DROP USER IF EXISTS 'product_user'@'localhost';
+
+
 CREATE USER IF NOT EXISTS 'product_user'@'%' IDENTIFIED BY 'prodpass123';
 CREATE USER IF NOT EXISTS 'product_user'@'localhost' IDENTIFIED BY 'prodpass123';
 
 CREATE database IF NOT EXISTS products;
 
+GRANT ALL PRIVILEGES ON products.* TO 'product_user'@'%';
 GRANT ALL PRIVILEGES ON products.* TO 'product_user'@'localhost';
+
+GRANT PROCESS ON *.* TO 'product_user'@'%';
+GRANT PROCESS ON *.* TO 'product_user'@'localhost';
+
+FLUSH PRIVILEGES;
 
 USE products;
 

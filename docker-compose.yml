@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+
+  mysql-user:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${USER_MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${USER_MYSQL_DB}
+    ports:
+      - "${USER_PORT}:${USER_MYSQL_PORT}"
+    volumes:
+      - mysql_user_data:/var/lib/mysql
+      - ./user-service/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${USER_MYSQL_PASSWORD}"]
+      timeout: 10s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+    restart: unless-stopped
+  
+  mysql-product:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${PRODUCT_MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${PRODUCT_MYSQL_DB}
+    ports:
+      - "${PRODUCT_PORT}:${PRODUCT_MYSQL_PORT}"
+    volumes:
+      - mysql_product_data:/var/lib/mysql
+      - ./product-service/product_init.sql:/docker-entrypoint-initdb.d/01-product_init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${PRODUCT_MYSQL_PASSWORD}"]
+      timeout: 10s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+    restart: unless-stopped
+
+  user-service:
+    build: ./user-service
+    ports:
+      - "3001:3001"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - MYSQL_HOST=mysql-user
+      - MYSQL_USER=${USER_MYSQL_USER}
+      - MYSQL_PASSWORD=${USER_MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${USER_MYSQL_DB}
+      - MYSQL_PORT=${USER_MYSQL_PORT}
+    depends_on:
+      mysql-user:
+          condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+  
+  product-service:
+    build: ./product-service
+    ports:
+      - "3002:3002"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - MYSQL_HOST=mysql-product
+      - MYSQL_USER=${PRODUCT_MYSQL_USER}
+      - MYSQL_PASSWORD=${PRODUCT_MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${PRODUCT_MYSQL_DB}
+      - MYSQL_PORT=${PRODUCT_MYSQL_PORT}
+      - USER_SERVICE_URL=http://user-service:3001
+    depends_on:
+      - mysql-product
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s  
+    restart: unless-stopped
+  
+
+
+volumes:
+  mysql_user_data:
+  mysql_product_data:
