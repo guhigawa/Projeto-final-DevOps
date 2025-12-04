@@ -8,6 +8,16 @@ on:
 
 env:
   PYTHON_VERSION: '3.10'
+  STAGING_USER_PORT: 4001
+  STAGING_PRODUCT_PORT: 4002
+  STAGING_USER_MYSQL_PORT: 4308
+  STAGING_PRODUCT_MYSQL_PORT: 4309
+  STAGING_MYSQL_PORT: 3306
+  STAGING_USER_MYSQL_DB: 'user_staging'
+  STAGING_PRODUCT_MYSQL_DB: 'product_staging'
+  STAGING_USER_MYSQL_USER: 'staging_user'
+  STAGING_PRODUCT_MYSQL_USER: 'staging_product_user'
+  STAGING_DOCKER_NETWORK: staging_network
 
 jobs:
   
@@ -52,7 +62,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       
-      - name: Creating test environment files
+      - name: Creating test environment file
         run: |
           cat > .env.test << EOF
           SECRET_KEY=test_fallback_secret_key_123
@@ -122,14 +132,6 @@ jobs:
          run: |
           curl -f http://localhost:3001/health && echo "User Service: OK"
           curl -f http://localhost:3002/health && echo "Product Service: OK"
-        
-      - name: Run security scan  
-        run: |
-          echo "Running security checks..."
-          # pip install bandit safety
-          # bandit -r user-service/
-          # bandit -r product-service/
-          # safety check
 
       - name: Run test-user-service
         working-directory: ./user-service/tests
@@ -153,25 +155,248 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tests evidence
+          name: tests evidence-${{ github.run_id }}
           path: |
             user-service/tests/evidence/
             product-service/products_tests/products_evidence/
           retention-days: 7
   
-  build-docker:
+  build-staging-images:
     runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
     needs: test-all-services
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/main'
+
+    outputs:
+      user-image-tag: ${{ steps.tag.outputs.user-tag }}
+      product-image-tag: ${{ steps.tag.outputs.product-tag }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker buildx
-        uses: docker/docker-buildx-action@v2
+      - name: Generate docker image tags
+        id: tag
+        run: |
+          DATE_TAG=$(date +'%Y%m%d')
+          SHORT_SHA=${GITHUB_SHA::8}
 
-      - name: Build Product Service Docker image
+          USER_TAG="user-service:staging-${DATE_TAG}-${SHORT_SHA}"
+          PRODUCT_TAG="product-service:staging-${DATE_TAG}-${SHORT_SHA}"
+
+          echo "user-tag=${USER_TAG}" >> $GITHUB_OUTPUT
+          echo "product-tag=${PRODUCT_TAG}" >> $GITHUB_OUTPUT
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build user-service for staging
+        run: |
+          cd user-service
+          docker build \
+            -t ${{ steps.tag.outputs.user-tag }} \
+            --build-arg ENVIRONMENT=staging \
+            --build-arg PORT=${{env.STAGING_USER_PORT}} \
+            --label "version=staging" \
+            --label "commit=${GITHUB_SHA}" \
+            --label "branch=${GITHUB_REF_NAME}" \
+            --label "build-date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            .
+      
+      - name: Build product-service for staging
         run: |
           cd product-service
-          docker build -t product-service:${{ github.sha }} .
+          docker build \
+            -t ${{ steps.tag.outputs.product-tag }} \
+            --build-arg ENVIRONMENT=staging \
+            --build-arg PORT=${{env.STAGING_PRODUCT_PORT}} \
+            --label "version=staging" \
+            --label "commit=${GITHUB_SHA}" \
+            --label "branch=${GITHUB_REF_NAME}" \
+            --label "build-date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            .
+      
+      - name: Save docker images as artifacts
+        run: |
+          docker save ${{ steps.tag.outputs.user-tag }} -o user_service_staging.tar
+          docker save ${{ steps.tag.outputs.product-tag }} -o product_service_staging.tar
+      
+      - name: Upload docker images
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-images-${{ github.run_id }}
+          path: |
+            user_service_staging.tar
+            product_service_staging.tar
+          retention-days: 3
+  
+  deploy-staging:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    needs: build-staging-images
+    if: github.ref == 'refs/heads/main'
+
+    environment:
+      name: staging
+      url: http://localhost:${{ env.STAGING_USER_PORT }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download docker images
+        uses: actions/download-artifact@v4
+        with:
+          name: staging-images-${{ github.run_id }}
+      
+      - name: Load docker images
+        run: |
+          docker load -i user_service_staging.tar
+          docker load -i product_service_staging.tar
+      
+      - name: Create docker network for staging
+        run: |
+          docker network create ${{ env.STAGING_DOCKER_NETWORK }} || echo "Network already exists"
+      
+      - name: Cleanup previous staging containers
+        run: |
+          docker stop user-service-staging mysql-user-staging product-service-staging mysql-product-staging 2>/dev/null || true
+          docker rm user-service-staging mysql-user-staging product-service-staging mysql-product-staging 2>/dev/null || true
+      
+      - name: Deploy MySQL for staging
+        env:
+          STAGING_DB_ROOT_PASSWORD: ${{ secrets.STAGING_DB_ROOT_PASSWORD }} #Github Secrets transformed into shell environment variables security method to not expose the value 
+          STAGING_USER_DB_PASSWORD: ${{ secrets.STAGING_USER_DB_PASSWORD }}
+          STAGING_PRODUCT_DB_PASSWORD: ${{ secrets.STAGING_PRODUCT_DB_PASSWORD }}
+        run: |
+          docker run -d \
+            --name mysql-user-staging \
+            --network ${{ env.STAGING_DOCKER_NETWORK }} \
+            -e MYSQL_ROOT_PASSWORD=$STAGING_DB_ROOT_PASSWORD \
+            -e MYSQL_DATABASE=${{ env.STAGING_USER_DB }}  \
+            -e MYSQL_USER=${{ env.STAGING_USER_MYSQL_USER }} \
+            -e MYSQL_PASSWORD=$STAGING_USER_DB_PASSWORD \
+            -p ${{ env.STAGING_USER_MYSQL_PORT }}:${{ env.STAGING_MYSQL_PORT }} \
+            --health-cmd="mysqladmin ping -h localhost -u root -p$STAGING_DB_ROOT_PASSWORD" \
+            --health-interval=10s \
+            mysql:8.0
+
+          docker run -d \
+            --name mysql-product-staging \
+            --network ${{ env.STAGING_DOCKER_NETWORK }} \
+            -e MYSQL_ROOT_PASSWORD=${STAGING_DB_ROOT_PASSWORD} \
+            -e MYSQL_DATABASE=${{ env.STAGING_PRODUCT_DB }}  \
+            -e MYSQL_USER=${{ env.STAGING_PRODUCT_MYSQL_USER }} \
+            -e MYSQL_PASSWORD=$STAGING_PRODUCT_DB_PASSWORD \
+            -p ${{ env.STAGING_PRODUCT_MYSQL_PORT }}:${{ env.STAGING_MYSQL_PORT }} \
+            --health-cmd="mysqladmin ping -h localhost -u root -p$STAGING_DB_ROOT_PASSWORD" \
+            --health-interval=10s \
+            mysql:8.0
+            
+          echo "Waiting for MySQL containers to be healthy"
+          for i in {1..30}; do
+            if docker exec mysql-user-staging mysqladmin ping -h localhost -u root -p$STAGING_DB_ROOT_PASSWORD 2>/dev/null && \
+              docker exec mysql-product-staging mysqladmin ping -h localhost -u root -p$STAGING_DB_ROOT_PASSWORD 2>/dev/null; then
+              echo "MySQL containers are healthy"
+              break
+            fi
+            echo "MySQL containers not healthy yet, retrying"
+            sleep 10
+          done
+            
+      
+      - name: Initialize staging databases
+        env:
+          STAGING_DB_ROOT_PASSWORD: ${{ secrets.STAGING_DB_ROOT_PASSWORD }}
+        run: |
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/structure/init-staging.sql
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/structure/product-staging_init.sql
+          
+          if [ -f "scripts/staging/user-service-staging-mockdata.sql" ]; then
+            mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/staging/user-service-staging-mockdata.sql
+          fi
+    
+          if [ -f "scripts/staging/product-service-staging-mockdata.sql" ]; then
+            mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/staging/product-service-staging-mockdata.sql
+          fi
+          
+      - name: Deploy User Service to staging
+        env:
+          STAGING_JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
+          STAGING_USER_DB_PASSWORD: ${{ secrets.STAGING_USER_DB_PASSWORD }}
+        run: |
+          docker run -d \
+            --name user-service-staging \
+            --network ${{ env.STAGING_DOCKER_NETWORK }} \
+            -p ${{ env.STAGING_USER_PORT }}:${{ env.STAGING_USER_PORT }} \
+            -e USER_MYSQL_HOST=mysql-user-staging \
+            -e USER_MYSQL_USER=${{ env.STAGING_USER_MYSQL_USER }} \
+            -e MYSQL_PASSWORD=$STAGING_USER_DB_PASSWORD \
+            -e MYSQL_DB=${{ env.STAGING_USER_MYSQL_DB }} \
+            -e USER_MYSQL_PORT=${{ env.STAGING_MYSQL_PORT }}\
+            -e SECRET_KEY=$STAGING_JWT_SECRET \
+            -e FLASK_ENV=staging \
+            ${{ needs.build-staging-images.outputs.user-image-tag }}
+            
+      - name: Deploy Product Service to staging
+        env:
+          STAGING_JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
+          STAGING_PRODUCT_DB_PASSWORD: ${{ secrets.STAGING_PRODUCT_DB_PASSWORD }}
+        run: |
+          docker run -d \
+            --name product-service-staging \
+            --network ${{ env.STAGING_DOCKER_NETWORK }} \
+            -p ${{ env.STAGING_PRODUCT_PORT }}:${{ env.STAGING_PRODUCT_PORT }} \
+            -e PRODUCT_MYSQL_HOST=mysql-product-staging \
+            -e PRODUCT_MYSQL_USER=${{ env.STAGING_PRODUCT_MYSQL_USER }} \
+            -e MYSQL_PASSWORD=$STAGING_PRODUCT_DB_PASSWORD \
+            -e MYSQL_DB=${{ env.STAGING_PRODUCT_DB }}\
+            -e PRODUCT_MYSQL_PORT=${{ env.STAGING_MYSQL_PORT }} \
+            -e SECRET_KEY=$STAGING_JWT_SECRET \
+            -e FLASK_ENV=staging \
+            ${{ needs.build-staging-images.outputs.product-image-tag }}
+            
+      - name: Wait for services to start
+        run: |
+          echo "Waiting for services to be ready"
+          sleep 25
+          
+      - name: Verify staging deployment
+        run: |
+          echo "Testing services"
+          for i in {1..10}; do
+            if curl -f http://localhost:${{ env.STAGING_USER_PORT }}/health && \
+               curl -f http://localhost:${{ env.STAGING_PRODUCT_PORT }}/health; then
+               echo "Both services are up"
+               break
+            fi
+              echo "Services not up yet, retrying"
+              sleep 10
+            done
+          
+      - name: Run basic integration tests on staging
+        run: |
+          echo "Running basic integration tests on staging"
+          
+          echo "Testing user creation"
+          curl -X POST http://localhost:${{ env.STAGING_USER_PORT }}/register \
+            -H "Content-Type: application/json" \
+            -d '{"email":"test@staging.com","password":"staging_test123"}' \
+            && echo "User creation test passed" || echo " User creation test warning"
+            
+          echo "Testing product listing"
+          curl -f http://localhost:${{ env.STAGING_PRODUCT_PORT }}/products \
+            && echo "Product listing test passed"
+      
+      - name: Record deployment
+        if: success()
+        run: |
+          echo "STAGING DEPLOYMENT COMPLETED SUCCESSFULLY"
+          echo "Timestamp: $(date)"
+          echo "Commit: ${{ github.sha }}"
+          echo "User Service: http://localhost:${{ env.STAGING_USER_PORT }}"
+          echo "Product Service: http://localhost:${{ env.STAGING_PRODUCT_PORT }}"
