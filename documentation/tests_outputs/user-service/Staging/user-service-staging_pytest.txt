@@ -1,0 +1,13 @@
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging exec user-service python -m pytest tests/ -v
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /user-service
+collected 6 items                                                                                                                                                                               
+
+tests/test_user_service.py::TestUserService::test_health_check_detailed PASSED                                                                                                            [ 16%]
+tests/test_user_service.py::TestUserService::test_user_registration PASSED                                                                                                                [ 33%]
+tests/test_user_service.py::TestUserService::test_duplicate_user_registration PASSED                                                                                                      [ 50%]
+tests/test_user_service.py::TestUserService::test_user_login PASSED                                                                                                                       [ 66%]
+tests/test_user_service.py::TestUserService::test_update_profile PASSED                                                                                                                   [ 83%]
+tests/test_user_service.py::TestUserService::test_user_profile_and_logout PASSED                                                                                                          [100%]

@@ -1,0 +1,56 @@
+docker-compose.staging.yml test
+
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging ps
+NAME                                    IMAGE                           COMMAND                  SERVICE                 CREATED              STATUS                        PORTS
+projeto_final-mysql-staging-product-1   mysql:8.0                       "docker-entrypoint.s…"   mysql-staging-product   About a minute ago   Up About a minute (healthy)   3306/tcp, 33060/tcp
+projeto_final-mysql-staging-user-1      mysql:8.0                       "docker-entrypoint.s…"   mysql-staging-user      About a minute ago   Up About a minute (healthy)   3306/tcp, 33060/tcp
+projeto_final-product-service-1         projeto_final-product-service   "python3 product_app…"   product-service         About a minute ago   Up About a minute (healthy)   0.0.0.0:4002->3002/tcp
+projeto_final-user-service-1            projeto_final-user-service      "python3 app.py"         user-service            About a minute ago   Up About a minute (healthy)   0.0.0.0:4001->3001/tcp
+
+HEALTH TESTS
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:4001/health
+{
+  "status": "healthy"
+}
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:4001/health/detailed
+{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "user-service",
+  "status": "healthy",
+  "timestamp": "2025-11-28T16:28:46.961587"
+}
+
+REGISTER ROUTE TESTS
+  -H "Content-Type: application/json" \
+  -d '{"email":"staging-user@test.com","password":"staging123"}'
+{
+  "email": "staging-user@test.com",
+  "message": "User registered successfully",
+  "user_id": 1
+}
+
+LOGIN ROUTE TEST
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:4001/login -u "staging-user@test.com:staging123"
+{
+  "email": "staging-user@test.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6InN0YWdpbmctdXNlckB0ZXN0LmNvbSIsImV4cCI6MTc2NDM1MTM4MH0.HOVX_zg6sFK_P4bfujVUyXHn3hmqpljndt7imJ0wFWk",
+  "user_id": 1
+}
+
+PROFILE TEST
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:4001/profile -H "Authorization:Bearer $TOKEN"
+{
+  "email": "staging-user@test.com",
+  "user_id": 1
+}
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:4001/profile 
+{
+  "error": "Token is missing!"
+}
+
+
+

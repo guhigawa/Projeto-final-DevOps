@@ -1,0 +1,13 @@
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging exec product-service python -m pytest products_tests/ -v
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /product-service
+collected 6 items                                                                                                                                                                               
+
+products_tests/test_product_service.py::TestProductService::test_health_check_detailed PASSED                                                                                             [ 16%]
+products_tests/test_product_service.py::TestProductService::test_create_user_test PASSED                                                                                                  [ 33%]
+products_tests/test_product_service.py::TestProductService::test_create_item PASSED                                                                                                       [ 50%]
+products_tests/test_product_service.py::TestProductService::test_get_items PASSED                                                                                                         [ 66%]
+products_tests/test_product_service.py::TestProductService::test_update_item PASSED                                                                                                       [ 83%]
+products_tests/test_product_service.py::TestProductService::test_delete_item PASSED 
