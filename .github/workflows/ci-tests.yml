@@ -196,7 +196,10 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     needs: test-all-services
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test')
+    if: |
+      github.ref == 'refs/heads/main' || 
+      startsWith(github.ref, 'refs/heads/test') ||
+      github.event_name == 'pull_request'
 
     outputs:
       user-image-tag: ${{ steps.tag.outputs.user-tag }}
@@ -267,7 +270,10 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     needs: build-staging-images
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test')
+    if: |
+      github.ref == 'refs/heads/main' || 
+      startsWith(github.ref, 'refs/heads/test') ||
+      github.event_name == 'pull_request'
 
     environment:
       name: staging
