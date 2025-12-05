@@ -65,6 +65,12 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       
+      - name: Debug branch Info
+        run: |
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "GITHUB_REF_NAME: $GITHUB_REF_NAME"
+          echo "github.ref no contexto: ${{ github.ref }}"
+
       - name: Debug Environment Info
         env:
           USER_SERVICE_PORT: ${{ env.USER_SERVICE_PORT }}
@@ -190,7 +196,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     needs: test-all-services
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test/')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test')
 
     outputs:
       user-image-tag: ${{ steps.tag.outputs.user-tag }}
@@ -261,7 +267,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     needs: build-staging-images
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test/')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test')
 
     environment:
       name: staging
