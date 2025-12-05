@@ -167,7 +167,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     needs: test-all-services
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test/staging-full-pipeline')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test/')
 
     outputs:
       user-image-tag: ${{ steps.tag.outputs.user-tag }}
@@ -238,7 +238,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     needs: build-staging-images
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test/staging-full-pipeline')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/test/')
 
     environment:
       name: staging
@@ -378,20 +378,20 @@ jobs:
               sleep 10
             done
           
-      - name: Run basic integration tests on staging
+      - name: Run test-user-service on staging
+        working-directory: ./user-service/tests
+        env:
+          STAGING_USER_PORT: ${{ env.STAGING_USER_PORT }}
         run: |
-          echo "Running basic integration tests on staging"
-          
-          echo "Testing user creation"
-          curl -X POST http://localhost:${{ env.STAGING_USER_PORT }}/register \
-            -H "Content-Type: application/json" \
-            -d '{"email":"test@staging.com","password":"staging_test123"}' \
-            && echo "User creation test passed" || echo " User creation test warning"
-            
-          echo "Testing product listing"
-          curl -f http://localhost:${{ env.STAGING_PRODUCT_PORT }}/products \
-            && echo "Product listing test passed"
+          python3 -m pytest test_user_service.py -v -s
       
+      - name: Run test-product-service
+        working-directory: ./product-service/products_tests
+        env:
+          STAGING_PRODUCT_PORT: ${{ env.STAGING_PRODUCT_PORT }}
+        run: |
+          python3 -m pytest test_product_service.py -v -s
+          
       - name: Record deployment
         if: success()
         run: |
