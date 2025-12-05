@@ -5,7 +5,19 @@ from datetime import datetime
 from helpers.test_helpers import TestHelpers
 from helpers.evidence_logger import EvidenceLogger
 
-BASE_URL = "http://localhost:3001"
+def get_service_port():
+    dev_port = os.getenv("USER_SERVICE_PORT")
+    if dev_port:
+        return dev_port
+    
+    staging_port = os.getenv("STAGING_USER_PORT")
+    if staging_port:
+        return staging_port
+    
+    return "3001"
+
+PORT = get_service_port()
+BASE_URL = f"http://localhost:{PORT}"
 
 @pytest.fixture 
 def test_helpers():
