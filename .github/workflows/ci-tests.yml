@@ -312,7 +312,7 @@ jobs:
             --name mysql-user-staging \
             --network ${{ env.STAGING_DOCKER_NETWORK }} \
             -e MYSQL_ROOT_PASSWORD=$STAGING_DB_ROOT_PASSWORD \
-            -e MYSQL_DATABASE=${{ env.STAGING_USER_DB }}  \
+            -e MYSQL_DATABASE=${{ env.STAGING_USER_MYSQL_DB }}  \
             -e MYSQL_USER=${{ env.STAGING_USER_MYSQL_USER }} \
             -e MYSQL_PASSWORD=$STAGING_USER_DB_PASSWORD \
             -p ${{ env.STAGING_USER_MYSQL_PORT }}:${{ env.STAGING_MYSQL_PORT }} \
@@ -324,7 +324,7 @@ jobs:
             --name mysql-product-staging \
             --network ${{ env.STAGING_DOCKER_NETWORK }} \
             -e MYSQL_ROOT_PASSWORD=${STAGING_DB_ROOT_PASSWORD} \
-            -e MYSQL_DATABASE=${{ env.STAGING_PRODUCT_DB }}  \
+            -e MYSQL_DATABASE=${{ env.STAGING_PRODUCT_MYSQL_DB }}  \
             -e MYSQL_USER=${{ env.STAGING_PRODUCT_MYSQL_USER }} \
             -e MYSQL_PASSWORD=$STAGING_PRODUCT_DB_PASSWORD \
             -p ${{ env.STAGING_PRODUCT_MYSQL_PORT }}:${{ env.STAGING_MYSQL_PORT }} \
@@ -389,7 +389,7 @@ jobs:
             -e PRODUCT_MYSQL_HOST=mysql-product-staging \
             -e PRODUCT_MYSQL_USER=${{ env.STAGING_PRODUCT_MYSQL_USER }} \
             -e MYSQL_PASSWORD=$STAGING_PRODUCT_DB_PASSWORD \
-            -e MYSQL_DB=${{ env.STAGING_PRODUCT_DB }}\
+            -e MYSQL_DB=${{ env.STAGING_PRODUCT_MYSQL_DB }}\
             -e PRODUCT_MYSQL_PORT=${{ env.STAGING_MYSQL_PORT }} \
             -e SECRET_KEY=$STAGING_JWT_SECRET \
             -e FLASK_ENV=staging \
