@@ -358,7 +358,7 @@ jobs:
           if [ -f "scripts/staging/product-service-staging-mockdata.sql" ]; then
             mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/staging/product-service-staging-mockdata.sql
           fi
-          
+
       - name: Deploy User Service to staging
         env:
           STAGING_JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
@@ -375,8 +375,7 @@ jobs:
             -e USER_MYSQL_PORT=${{ env.STAGING_MYSQL_PORT }}\
             -e SECRET_KEY=$STAGING_JWT_SECRET \
             -e FLASK_ENV=staging \
-            ${{ needs.build-staging-images.outputs.user-image-tag }}
-            
+            ${{ needs.build-staging-images.outputs.user-image-tag }}      
       - name: Deploy Product Service to staging
         env:
           STAGING_JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
@@ -413,19 +412,15 @@ jobs:
               sleep 10
             done
           
-      - name: Run test-user-service on staging
-        working-directory: ./user-service/tests
-        env:
-          STAGING_USER_PORT: ${{ env.STAGING_USER_PORT }}
+      - name: Run test-user-service on staging container
         run: |
-          python3 -m pytest test_user_service.py -v -s
+          echo "Runnig tests on staging user-service-staging container"
+          docker exec user-service-staging python3 -m pytest /user-service/tests/test_user_service.py -v 
       
-      - name: Run test-product-service
-        working-directory: ./product-service/products_tests
-        env:
-          STAGING_PRODUCT_PORT: ${{ env.STAGING_PRODUCT_PORT }}
+      - name: Run test-product-service on staging container
         run: |
-          python3 -m pytest test_product_service.py -v -s
+          echo "Runnig tests on staging product-service-staging container"
+          docker exec product-service-staging python3 -m pytest /product-service/products-tests/test_product_service.py -v 
           
       - name: Record deployment
         if: success()
