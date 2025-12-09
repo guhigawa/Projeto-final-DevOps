@@ -411,7 +411,28 @@ jobs:
               echo "Services not up yet, retrying"
               sleep 10
             done
-          
+      
+      - name: Debug container environment
+        run: |
+          echo "User Service debug"
+          echo "Container IP user-service-staging"
+          docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' user-service-staging
+          echo "Container IP product-service-staging"
+          docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' product-service-staging
+          echo ""
+          echo "Environment Variables"
+          docker exec user-service-staging env | grep -E "(PORT|HOST|FLASK)"
+          docker exec product-service-staging env | grep -E "(PORT|HOST|FLASK)"
+          echo ""
+          echo "Running processes:"
+          docker exec user-service-staging ps aux | grep python
+          docker exec product-service-staging ps aux | grep python
+          echo ""
+          echo "Network connections:"
+          docker exec user-service-staging netstat -tlnp 2>/dev/null || echo "netstat not available"
+          docker exec product-service-staging netstat -tlnp 2>/dev/null || echo "netstat not available"
+
+
       - name: Run test-user-service on staging container
         run: |
           echo "Runnig tests on staging user-service-staging container"
