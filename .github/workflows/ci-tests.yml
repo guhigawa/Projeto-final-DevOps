@@ -145,7 +145,7 @@ jobs:
       - name: Start product-service
         working-directory: ./product-service
         env:
-          PRODUCT_SERVICE_PORT: ${{ PRODUCT_SERVICE_PORT }}
+          PRODUCT_SERVICE_PORT: ${{ env.PRODUCT_SERVICE_PORT }}
         run: |
           echo "Starting product-service"
           python3 product_app.py &
@@ -376,7 +376,9 @@ jobs:
             -e USER_MYSQL_PORT=${{ env.STAGING_MYSQL_PORT }}\
             -e SECRET_KEY=$STAGING_JWT_SECRET \
             -e FLASK_ENV=staging \
+            -e FLASK_RUN_PORT=${{ env.STAGING_USER_PORT }} \
             ${{ needs.build-staging-images.outputs.user-image-tag }}      
+
       - name: Deploy Product Service to staging
         env:
           STAGING_JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
@@ -393,6 +395,7 @@ jobs:
             -e PRODUCT_MYSQL_PORT=${{ env.STAGING_MYSQL_PORT }} \
             -e SECRET_KEY=$STAGING_JWT_SECRET \
             -e FLASK_ENV=staging \
+            -e FLASK_RUN_PORT=${{ env.STAGING_PRODUCT_PORT }} \
             ${{ needs.build-staging-images.outputs.product-image-tag }}
             
       - name: Wait for services to start
@@ -424,7 +427,13 @@ jobs:
             echo "ls tests/integration/:"
             ls -la /user-service/tests/integration/ 2>/dev/null || echo "Not found"
           '
-          echo "=== END DEBUG ==
+          echo "=== END DEBUG ==="
+
+      - name: Verify test files exist in containers
+        run: |
+          echo "Checking if test files exist..."
+          docker exec user-service-staging ls -la /user-service/tests/integration/ || echo "User tests not found"
+          docker exec product-service-staging ls -la /product-service/products_tests/ || echo "Product tests not found"
 
       - name: Run test-user-service on staging container
         run: |
@@ -434,7 +443,7 @@ jobs:
       - name: Run test-product-service on staging container
         run: |
           echo "Runnig tests on staging product-service-staging container"
-          docker exec product-service-staging python3 -m pytest /product-service/products-tests/test_product_service.py -v 
+          docker exec product-service-staging python3 -m pytest /product-service/products_tests/test_product_service.py -v 
           
       - name: Record deployment
         if: success()
