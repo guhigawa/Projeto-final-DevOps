@@ -23,17 +23,16 @@ def get_service_port():
             print("FLASK_RUN_PORT not set")
     else:
         print("Running outside the container")
-
-    staging_port = os.getenv("STAGING_PRODUCT_PORT")
-    if staging_port:
-        print(f"Using STAGING_PRODUCT_PORT: {staging_port}")
-        return staging_port
     
     dev_port = os.getenv("PRODUCT_SERVICE_PORT")
     if dev_port:
         print(f"Using PRODUCT_SERVICE_PORT: {dev_port}")
         return dev_port
-    
+
+    staging_port = os.getenv("STAGING_PRODUCT_PORT")
+    if staging_port:
+        print(f"Using STAGING_PRODUCT_PORT: {staging_port}")
+        return staging_port  
     
     print("Using default port: 3002")
     return "3002"
