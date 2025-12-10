@@ -1,10 +1,55 @@
-import pytest, requests, random
+import pytest, requests, os
 
 from product_test_helpers.auth_helpers import ProductAuthHelpers
 from product_test_helpers.product_tester_helpers import TestProductHelpers
 from product_test_helpers.product_evidence_logger import ProductEvidenceLogger
 
-BASE_URL = "http://localhost:3002"
+#debug for actions
+
+#Verification of all possivle variables
+print("Environment Variables:")
+print(f"FLASK_RUN_PORT: {os.getenv('FLASK_RUN_PORT')}")
+print(f"STAGING_PRODUCT_PORT: {os.getenv('STAGING_PRODUCT_PORT')}")
+print(f"PRODUCT_SERVICE_PORT: {os.getenv('PRODUCT_SERVICE_PORT')}")
+print(f"Inside Docker container? {os.path.exists('/.dockerenv')}")
+
+def get_service_port():
+    if os.path.exists('/.dockerenv'):
+        flask_port = os.getenv("FLASK_RUN_PORT")
+        if flask_port:
+            print(f"Using FLASK_RUN_PORT:{flask_port}")
+            return flask_port
+        else:
+            print("FLASK_RUN_PORT not set")
+    else:
+        print("Running outside the container")
+
+    staging_port = os.getenv("STAGING_PRODUCT_PORT")
+    if staging_port:
+        print(f"Using STAGING_PRODUCT_PORT: {staging_port}")
+        return staging_port
+    
+    dev_port = os.getenv("PRODUCT_SERVICE_PORT")
+    if dev_port:
+        print(f"Using PRODUCT_SERVICE_PORT: {dev_port}")
+        return dev_port
+    
+    
+    print("Using default port: 3002")
+    return "3002"
+
+PORT = get_service_port()
+BASE_URL = f"http://localhost:{PORT}"
+
+#Connection test before running tests
+print("Checking if Product Service is up")
+try:
+    test_response = requests.get(f"http://localhost:{PORT}/health", timeout=10)
+    print(f"Connection estabilished, status code: {test_response.status_code}")
+    print(f"response: {test_response.text[:100]}") # First 100 characters of the response
+except Exception as e:
+    print(f"Failed to connect to Product Service at {BASE_URL}: {str(e)}")
+    print("Tests will fail")
 
 @pytest.fixture
 def product_test_helpers():

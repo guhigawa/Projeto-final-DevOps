@@ -74,16 +74,17 @@ jobs:
       - name: Debug Environment Info
         env:
           USER_SERVICE_PORT: ${{ env.USER_SERVICE_PORT }}
-          STAGING_USER_PORT: ${{ env.STAGING_USER_PORT }}
+          PRODUCT_SERVICE_PORT: ${{ env.PRODUCT_SERVICE_PORT }}
         run: |
           echo "User Service Port: $USER_SERVICE_PORT"
-          echo "STAGING_USER_PORT: $STAGING_USER_PORT"
+          echo "PRODUCT_SERVICE_PORT: $PRODUCT_SERVICE_PORT"
           echo "Testing will use: http://localhost:$USER_SERVICE_PORT"
+          echo "Testing will use: http://localhost:$PRODUCT_SERVICE_PORT"
       
       - name: Creating test environment file
         env:
           USER_SERVICE_PORT: ${{ env.USER_SERVICE_PORT }}
-          STAGING_USER_PORT: ${{ env.STAGING_USER_PORT }}
+          PRODUCT_SERVICE_PORT: ${{ env.PRODUCT_SERVICE_PORT }}
         run: |
           cat > .env.test << EOF
           SECRET_KEY=test_fallback_secret_key_123
@@ -144,7 +145,7 @@ jobs:
       - name: Start product-service
         working-directory: ./product-service
         env:
-          STAGING_USER_PORT: ${{ env.STAGING_USER_PORT }}
+          PRODUCT_SERVICE_PORT: ${{ PRODUCT_SERVICE_PORT }}
         run: |
           echo "Starting product-service"
           python3 product_app.py &
@@ -168,7 +169,7 @@ jobs:
       - name: Run test-product-service
         working-directory: ./product-service/products_tests
         env:
-          STAGING_USER_PORT: ${{ env.STAGING_USER_PORT }}
+          PRODUCT_SERVICE_PORT: ${{ env.PRODUCT_SERVICE_PORT }}
         run: |
           python3 -m pytest test_product_service.py -v -s
       
@@ -412,43 +413,18 @@ jobs:
               sleep 10
             done
       
-      - name: Debug Test Connection Inside container
+      - name:  Debug - Environment inside container
         run: |
-          echo "Testing connection inside container"
-          echo ""
-          
-          echo "simple connection test"
-          echo "user-service-staging"
-          docker exec user-service-staging python3 -c "
-          import os
-          import requests
-          import sys
-          
-          print ('Environmnet variables:')
-          print (f' FLASK_RUN_PORT: {os.getenv(\"FLASK_RUN_PORT")}')
-          print (f' STAGING_USER_PORT: {os.getenv(\"STAGING_USER_PORT")}')
-          
-          port = os.getenv('FLASK_RUN_PORT')
-          url = f'http://localhost:{port}/health'
-          print (f'testing URL: {url}')
-          try:
-            response = requests.get(url, timeout=10)
-            print(f'Success! Status: {response.status_code}')
-            print(f'Response: {response.text[:100]}...')
-          except requests.exceptions.ConnectionError as e:
-            print(f'connection error: {e}')
-            print('possible causes: service not running, wrong port')
-          except Exception as e:
-            print(f'Other error: {e}')
-            sys.exit(1)
-          "
-          echo ""
-          echo "fast container verification"
-          echo "status user-service-staging container"
-          docker inspect user-service-staging --format= '{{.State.Status}} (Exit: {{.State.ExitCode}})'
-          echo ""
-          echo "last 10 lines of log"
-          docker logs --tail 10 user-service-staging
+          echo "=== DEBUG: Environment inside container ==="
+          docker exec user-service-staging sh -c '
+            echo "FLASK_RUN_PORT: $FLASK_RUN_PORT"
+            echo "STAGING_USER_PORT: $STAGING_USER_PORT"
+            echo "USER_SERVICE_PORT: $USER_SERVICE_PORT"
+            echo "pwd: $(pwd)"
+            echo "ls tests/integration/:"
+            ls -la /user-service/tests/integration/ 2>/dev/null || echo "Not found"
+          '
+          echo "=== END DEBUG ==
 
       - name: Run test-user-service on staging container
         run: |
