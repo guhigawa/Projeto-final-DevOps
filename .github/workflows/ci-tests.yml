@@ -349,22 +349,33 @@ jobs:
         env:
           STAGING_DB_ROOT_PASSWORD: ${{ secrets.STAGING_DB_ROOT_PASSWORD }}
         run: |
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/structure/init-staging.sql
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/structure/product-staging_init.sql
+          echo "Database initialization"
+
+          echo "Making sure databases exists"
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD -e "CREATE DATABASE IF NOT EXISTS ${{ env.STAGING_USER_MYSQL_DB }};" 2>/dev/null || echo "Database already exists"
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD -e "CREATE DATABASE IF NOT EXISTS ${{ env.STAGING_PRODUCT_MYSQL_DB }};" 2>/dev/null || echo "Database already exists"
+
+          echo "Executing scripts to create tables"
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/structure/init-staging.sql 2>&1 | grep -v "Using a password" || echo "users table created"
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/structure/product-staging_init.sql 2>&1 | grep -v "Using a password" || echo "items table created"
           
+          echo "Executing scripts to start mockdata in tables created"
           if [ -f "scripts/staging/user-service-staging-mockdata.sql" ]; then
-            mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/staging/user-service-staging-mockdata.sql
+            mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/staging/user-service-staging-mockdata.sql 2>&1 | grep -v "Using a password"
           fi
     
           if [ -f "scripts/staging/product-service-staging-mockdata.sql" ]; then
-            mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/staging/product-service-staging-mockdata.sql
+            mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/staging/product-service-staging-mockdata.sql 2>&1 | grep -v "Using a password"
           fi
+
+          echo "Database initialization complete"
 
       - name: Deploy User Service to staging
         env:
           STAGING_JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
           STAGING_USER_DB_PASSWORD: ${{ secrets.STAGING_USER_DB_PASSWORD }}
         run: |
+          echo "Deploying user service"
           docker run -d \
             --name user-service-staging \
             --network ${{ env.STAGING_DOCKER_NETWORK }} \
@@ -372,7 +383,7 @@ jobs:
             -e USER_MYSQL_HOST=mysql-user-staging \
             -e USER_MYSQL_USER=${{ env.STAGING_USER_MYSQL_USER }} \
             -e MYSQL_PASSWORD=$STAGING_USER_DB_PASSWORD \
-            -e MYSQL_DB=${{ env.STAGING_USER_MYSQL_DB }} \
+            -e MYSQL_DATABASE=${{ env.STAGING_USER_MYSQL_DB }} \
             -e USER_MYSQL_PORT=${{ env.STAGING_MYSQL_PORT }}\
             -e SECRET_KEY=$STAGING_JWT_SECRET \
             -e FLASK_ENV=staging \
@@ -384,6 +395,7 @@ jobs:
           STAGING_JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
           STAGING_PRODUCT_DB_PASSWORD: ${{ secrets.STAGING_PRODUCT_DB_PASSWORD }}
         run: |
+          echo "Deploying product service"
           docker run -d \
             --name product-service-staging \
             --network ${{ env.STAGING_DOCKER_NETWORK }} \
@@ -391,7 +403,7 @@ jobs:
             -e PRODUCT_MYSQL_HOST=mysql-product-staging \
             -e PRODUCT_MYSQL_USER=${{ env.STAGING_PRODUCT_MYSQL_USER }} \
             -e MYSQL_PASSWORD=$STAGING_PRODUCT_DB_PASSWORD \
-            -e MYSQL_DB=${{ env.STAGING_PRODUCT_MYSQL_DB }}\
+            -e MYSQL_DATABASE=${{ env.STAGING_PRODUCT_MYSQL_DB }}\
             -e PRODUCT_MYSQL_PORT=${{ env.STAGING_MYSQL_PORT }} \
             -e SECRET_KEY=$STAGING_JWT_SECRET \
             -e FLASK_ENV=staging \
@@ -424,16 +436,66 @@ jobs:
             echo "STAGING_USER_PORT: $STAGING_USER_PORT"
             echo "USER_SERVICE_PORT: $USER_SERVICE_PORT"
             echo "pwd: $(pwd)"
-            echo "ls tests/integration/:"
-            ls -la /user-service/tests/integration/ 2>/dev/null || echo "Not found"
+            echo "ls tests/:"
+            ls -la /user-service/tests/ 2>/dev/null || echo "Not found"
           '
           echo "=== END DEBUG ==="
 
       - name: Verify test files exist in containers
         run: |
           echo "Checking if test files exist..."
-          docker exec user-service-staging ls -la /user-service/tests/integration/ || echo "User tests not found"
+          docker exec user-service-staging ls -la /user-service/tests/ || echo "User tests not found"
           docker exec product-service-staging ls -la /product-service/products_tests/ || echo "Product tests not found"
+
+      - name: Pre-Test Verification
+        run: |
+          echo "=== PRE-TEST VERIFICATION ==="
+    
+  
+          echo "1. Service health:"
+          curl -s http://localhost:${{ env.STAGING_USER_PORT }}/health | jq . || echo "User service health check"
+          curl -s http://localhost:${{ env.STAGING_PRODUCT_PORT }}/health | jq . || echo "Product service health check"
+    
+    
+          echo ""
+          echo "2. Testing database connection from user-service container:"
+          docker exec user-service-staging python3 -c "
+          import os
+          import pymysql
+          import sys
+
+          print('Variables in container:')
+          print(f'  MYSQL_DATABASE: {os.getenv(\"MYSQL_DATABASE\")}')
+          print(f'  USER_MYSQL_DB: {os.getenv(\"USER_MYSQL_DB\")}')
+          print(f'  MYSQL_DB: {os.getenv(\"MYSQL_DB\")}')
+
+          try:
+            conn = pymysql.connect(
+                host=os.getenv('USER_MYSQL_HOST'),
+                user=os.getenv('USER_MYSQL_USER'),
+                password=os.getenv('MYSQL_PASSWORD'),
+                database=os.getenv('MYSQL_DATABASE'),
+                port=int(os.getenv('USER_MYSQL_PORT', 3306))
+            )
+            print(' Database connection SUCCESS!')
+    
+            with conn.cursor() as cursor:
+                cursor.execute('SELECT DATABASE()')
+                db = cursor.fetchone()
+                print(f'  Current database: {db[0]}')
+        
+                cursor.execute('SHOW TABLES')
+                tables = cursor.fetchall()
+                print(f'  Tables in database: {[t[0] for t in tables]}')
+    
+            conn.close()
+    
+          except Exception as e:
+              print(f' Database connection FAILED: {e}')
+              sys.exit(1)
+          "
+    
+            echo "=== END VERIFICATION ==="
 
       - name: Run test-user-service on staging container
         run: |
