@@ -352,20 +352,28 @@ jobs:
           echo "Database initialization"
 
           echo "Making sure databases exists"
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD -e "CREATE DATABASE IF NOT EXISTS ${{ env.STAGING_USER_MYSQL_DB }};" 2>/dev/null || echo "Database already exists"
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD -e "CREATE DATABASE IF NOT EXISTS ${{ env.STAGING_PRODUCT_MYSQL_DB }};" 2>/dev/null || echo "Database already exists"
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD -e "CREATE DATABASE IF NOT EXISTS ${{ env.STAGING_USER_MYSQL_DB }};"
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD -e "CREATE DATABASE IF NOT EXISTS ${{ env.STAGING_PRODUCT_MYSQL_DB }};" 
+
+          echo "Granting permissions to user-service"
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }}  -u root -p$STAGING_DB_ROOT_PASSWORD -e "GRANT ALL PRIVILEGES ON ${{ env.STAGING_USER_MYSQL_DB }}.* TO '${{ env.STAGING_USER_MYSQL_USER }}'@'%'; FLUSH PRIVILEGES;"
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }}  -u root -p$STAGING_DB_ROOT_PASSWORD -e "GRANT ALL PRIVILEGES ON ${{ env.STAGING_PRODUCT_MYSQL_DB }}.* TO '${{ env.STAGING_PRODUCT_MYSQL_USER }}'@'%'; FLUSH PRIVILEGES;"
 
           echo "Executing scripts to create tables"
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/structure/init-staging.sql 2>&1 | grep -v "Using a password" || echo "users table created"
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/structure/product-staging_init.sql 2>&1 | grep -v "Using a password" || echo "items table created"
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD ${{ env.STAGING_USER_MYSQL_DB }} < scripts/structure/init-staging.sql
+          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD ${{ env.STAGING_PRODUCT_MYSQL_DB }} < scripts/structure/product-staging_init.sql
           
           echo "Executing scripts to start mockdata in tables created"
           if [ -f "scripts/staging/user-service-staging-mockdata.sql" ]; then
-            mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/staging/user-service-staging-mockdata.sql 2>&1 | grep -v "Using a password"
+            mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD ${{ env.STAGING_USER_MYSQL_DB }} < scripts/staging/user-service-staging-mockdata.sql || echo "Warning could not load mock data"
+          else
+            echo "No user mock data file found"
           fi
     
           if [ -f "scripts/staging/product-service-staging-mockdata.sql" ]; then
-            mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD < scripts/staging/product-service-staging-mockdata.sql 2>&1 | grep -v "Using a password"
+            mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD ${{ env.STAGING_PRODUCT_MYSQL_DB }} < scripts/staging/product-service-staging-mockdata.sql || echo "Warning could not load mock data"
+          else
+            echo "No user mock data file found"
           fi
 
           echo "Database initialization complete"
