@@ -7,7 +7,7 @@ from helpers.evidence_logger import EvidenceLogger
 
 #debug for actions
 
-#Verification of all possivle variables
+#Verification of all possible variables
 print("Environment Variables:")
 print(f"FLASK_RUN_PORT: {os.getenv('FLASK_RUN_PORT')}")
 print(f"STAGING_USER_PORT: {os.getenv('STAGING_USER_PORT')}")

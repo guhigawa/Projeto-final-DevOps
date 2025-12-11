@@ -6,7 +6,7 @@ from product_test_helpers.product_evidence_logger import ProductEvidenceLogger
 
 #debug for actions
 
-#Verification of all possivle variables
+#Verification of all possible variables
 print("Environment Variables:")
 print(f"FLASK_RUN_PORT: {os.getenv('FLASK_RUN_PORT')}")
 print(f"STAGING_PRODUCT_PORT: {os.getenv('STAGING_PRODUCT_PORT')}")
