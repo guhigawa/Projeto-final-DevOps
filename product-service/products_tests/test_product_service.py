@@ -81,6 +81,11 @@ def create_test_user(product_test_auth_helpers):
 
 
 class TestProductService:
+    def setup_method(self):
+        self.base_url = BASE_URL
+        self.client = requests.Session()
+        self.client.timeout = 10  # seconds
+
     def test_health_check_detailed(self, product_evidence_logger):
         test_name = "Detailed Health Check | Product Service"
         
