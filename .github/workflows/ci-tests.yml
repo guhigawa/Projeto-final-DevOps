@@ -554,7 +554,7 @@ jobs:
           USER_SERVICE_URL: "http://user-service-staging:4001"
         run: |
           echo "Runnig tests on staging product-service-staging container"
-          docker exec -e USER_SERVICE_URL=${{USER_SERVICE_URL}} product-service-staging python3 -m pytest /product-service/products_tests/test_product_service.py -v -s
+          docker exec -e USER_SERVICE_URL=$USER_SERVICE_URL product-service-staging python3 -m pytest /product-service/products_tests/test_product_service.py -v -s
           
       - name: Record deployment
         if: success()
