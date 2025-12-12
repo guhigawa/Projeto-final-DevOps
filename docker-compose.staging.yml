@@ -55,6 +55,8 @@ services:
       - MYSQL_DATABASE=${STAGING_USER_MYSQL_DB}
       - MYSQL_PORT=${STAGING_MYSQL_PORT}
       - FLASK_ENV=staging
+      - FLASK_RUN_PORT=${STAGING_USER_PORT}
+      - USER_PORT=${STAGING_USER_PORT}
     depends_on:
       mysql-staging-user:
           condition: service_healthy
@@ -83,6 +85,8 @@ services:
       - MYSQL_PORT=${STAGING_MYSQL_PORT}
       - USER_SERVICE_URL=http://user-service:${STAGING_USER_PORT}
       - FLASK_ENV=staging
+      - FLASK_RUN_PORT=${STAGING_PRODUCT_PORT}
+      - PRODUCT_PORT=${STAGING_PRODUCT_PORT}
     depends_on:
       mysql-staging-product:
           condition: service_healthy

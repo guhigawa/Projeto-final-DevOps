@@ -89,3 +89,124 @@ response:{
 PASSED
 
 ======================================================================================= 6 passed in 0.64s =======================================================================================
+
+
+#AFTER CHANGES IN TEST FILE TO ADAPT TO DETECT THE PORT
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.yml --env-file .env up -d
+WARN[0000] /home/ubuntu/Downloads/Projeto_final/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] Running 5/5
+ ✔ Network projeto_final_default              Created                                                                                                                                       0.1s 
+ ✔ Container projeto_final-mysql-product-1    Started                                                                                                                                       0.3s 
+ ✔ Container projeto_final-mysql-user-1       Healthy                                                                                                                                       5.8s 
+ ✔ Container projeto_final-user-service-1     Started                                                                                                                                       6.1s 
+ ✔ Container projeto_final-product-service-1  Started                                                                                                                                       0.6s 
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose exec user-service env | grep PORT
+WARN[0000] /home/ubuntu/Downloads/Projeto_final/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+FLASK_RUN_PORT=3001
+USER_PORT=3001
+MYSQL_PORT=3306
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose exec user-service python3 -m pytest tests/test_user_service.py -v -s
+WARN[0000] /home/ubuntu/Downloads/Projeto_final/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python3
+cachedir: .pytest_cache
+rootdir: /user-service
+collecting ... Environment Variables:
+FLASK_RUN_PORT: 3001
+STAGING_USER_PORT: None
+USER_SERVICE_PORT: None
+Inside Docker container? True
+Using FLASK_RUN_PORT:3001
+Checking if User Service is up
+Connection estabilished, status code: 200
+response: {
+  "status": "healthy"
+}
+
+collected 6 items                                                                                                                                                                               
+
+tests/test_user_service.py::TestUserService::test_health_check_detailed [2025-12-12 17:32:10] - Detailed Health Check - PASS
+Details: Status: healthy, DB Connection: True, DB Query: True
+response:{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "user-service",
+  "status": "healthy",
+  "timestamp": "2025-12-12T17:32:10.221944"
+}
+----------------------------------------
+
+PASSED
+tests/test_user_service.py::TestUserService::test_user_registration [2025-12-12 17:32:11] - User registration test - PASS
+Details: Email: test_1765560731@example.com, Status Code: 201, User ID: 43
+response:{
+  "email": "test_1765560731@example.com",
+  "message": "User registered successfully",
+  "user_id": 43
+}
+----------------------------------------
+
+PASSED
+tests/test_user_service.py::TestUserService::test_duplicate_user_registration [2025-12-12 17:32:12] - Duplicate User Registration Test - PASS
+Details: First Registration Status: 201, Second Registration Status: 409
+response:{
+  "error": "User already exists"
+}
+----------------------------------------
+
+PASSED
+tests/test_user_service.py::TestUserService::test_user_login [2025-12-12 17:32:13] - User Login Test - PASS
+Details: Email: test_1765560733@example.com, Status Code: 200, User ID: 45
+response:{
+  "email": "test_1765560733@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo0NSwiZW1haWwiOiJ0ZXN0XzE3NjU1NjA3MzNAZXhhbXBsZS5jb20iLCJleHAiOjE3NjU1NjQzMzN9.qQyD8oJhZdajjyoPJO8n2SFszQAl2ndj70Jxq-ucjyg",
+  "user_id": 45
+}
+----------------------------------------
+
+PASSED
+tests/test_user_service.py::TestUserService::test_update_profile actual email: test_1765560734@example.com
+new email: updatetest_1765560734@example.com
+Update profile response status code: 200
+email in profile: updatetest_1765560734@example.com
+expected email: updatetest_1765560734@example.com
+[2025-12-12 17:32:14] - Update User Profile Test - PASS
+Details: Status Code: 200, New Email: updatetest_1765560734@example.com, Email in Profile: updatetest_1765560734@example.com
+response:{
+  "update_response": {
+    "message": "Profile updated successfully"
+  },
+  "profile_data": {
+    "email": "updatetest_1765560734@example.com",
+    "user_id": 46
+  }
+}
+----------------------------------------
+
+PASSED
+tests/test_user_service.py::TestUserService::test_user_profile_and_logout [2025-12-12 17:32:16] - User Logout and profile Test - PASS
+Details: Profile Before Logout Status: 200, Logout Status: 200, Profile After Logout Status: 401
+response:{
+  "profile_before_logout": {
+    "email": "test_1765560735@example.com",
+    "user_id": 47
+  },
+  "logout_response": {
+    "message": "Logout successful",
+    "timestamp": "2025-12-12T17:32:16.085873",
+    "user_id": 47
+  },
+  "profile_after_logout": {
+    "error": "Unauthorized access"
+  }
+}
+----------------------------------------
+
+PASSED
+
+======================================================================================= 6 passed in 6.98s =======================================================================================
+
+

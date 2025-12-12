@@ -9,8 +9,6 @@ services:
       MYSQL_PASSWORD: ${USER_MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${USER_MYSQL_PASSWORD}
       MYSQL_DATABASE: ${USER_MYSQL_DB}
-    ports:
-      - "${USER_PORT}:${USER_MYSQL_PORT}"
     volumes:
       - mysql_user_data:/var/lib/mysql
       - ./scripts/structure/init.sql:/docker-entrypoint-initdb.d/01-init.sql
@@ -29,8 +27,6 @@ services:
       MYSQL_PASSWORD: ${PRODUCT_MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${PRODUCT_MYSQL_PASSWORD}
       MYSQL_DATABASE: ${PRODUCT_MYSQL_DB}
-    ports:
-      - "${PRODUCT_PORT}:${PRODUCT_MYSQL_PORT}"
     volumes:
       - mysql_product_data:/var/lib/mysql
       - ./scripts/structure/product_init.sql:/docker-entrypoint-initdb.d/01-product_init.sql
@@ -49,7 +45,7 @@ services:
         ENVIRONMENT: development
         PORT: ${USER_PORT}
     ports:
-      - ${USER_PORT}:${USER_PORT}"
+      - "${USER_PORT}:${USER_PORT}"
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - MYSQL_HOST=mysql-user
@@ -58,11 +54,13 @@ services:
       - MYSQL_DATABASE=${USER_MYSQL_DB}
       - MYSQL_PORT=${USER_MYSQL_PORT}
       - FLASK_ENV=development
+      - FLASK_RUN_PORT=${USER_PORT}
+      - USER_PORT=${USER_PORT}
     depends_on:
       mysql-user:
           condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${USER_PORT}/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -84,12 +82,14 @@ services:
       - MYSQL_PASSWORD=${PRODUCT_MYSQL_PASSWORD}
       - MYSQL_DATABASE=${PRODUCT_MYSQL_DB}
       - MYSQL_PORT=${PRODUCT_MYSQL_PORT}
-      - USER_SERVICE_URL=http://user-service:3001
+      - USER_SERVICE_URL=http://user-service:${USER_PORT}
       - FLASK_ENV=development
+      - FLASK_RUN_PORT=${PRODUCT_PORT}
+      - PRODUCT_PORT=${PRODUCT_PORT}
     depends_on:
       - mysql-product
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${PRODUCT_PORT}/health"]
       interval: 30s
       timeout: 10s
       retries: 3

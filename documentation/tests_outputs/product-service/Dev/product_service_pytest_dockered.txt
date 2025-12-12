@@ -14,3 +14,128 @@ products_tests/test_product_service.py::TestProductService::test_update_item PAS
 products_tests/test_product_service.py::TestProductService::test_delete_item PASSED                                                                                                       [100%]
 
 ======================================================================================= 6 passed in 0.57s =======================================================================================
+
+#AFTER CHANGES IN TEST FILE TO ADAPT TO DETECT THE PORT
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose exec product-service python -m pytest products_tests/test_product_service.py -v -s
+WARN[0000] /home/ubuntu/Downloads/Projeto_final/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /product-service
+collecting ... Environment Variables:
+FLASK_RUN_PORT: 3002
+STAGING_PRODUCT_PORT: None
+PRODUCT_SERVICE_PORT: None
+Inside Docker container? True
+Using FLASK_RUN_PORT:3002
+Checking if Product Service is up
+Connection estabilished, status code: 200
+response: {
+  "status": "healthy"
+}
+
+collected 6 items                                                                                                                                                                               
+
+products_tests/test_product_service.py::TestProductService::test_health_check_detailed [2025-12-12 17:36:06] - Detailed Health Check | Product Service - PASS
+Details: Status: healthy, DB Connection: True, DB Query: True
+response:{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "product-service",
+  "status": "healthy",
+  "timestamp": "2025-12-12T17:36:06.207488"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_service.py::TestProductService::test_create_user_test [2025-12-12 17:36:06] - Registration and login of test user for product test - PASS
+Details: Email:True, User test ID:48
+response:{
+  "email": "product_test1765560966@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo0OCwiZW1haWwiOiJwcm9kdWN0X3Rlc3QxNzY1NTYwOTY2QGV4YW1wbGUuY29tIiwiZXhwIjoxNzY1NTY0NTY2fQ.henrmQxIeofKSUgF4JRrf5tDgXQmD44DhhKFyJDuuiQ",
+  "user_id": 48,
+  "headers": {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo0OCwiZW1haWwiOiJwcm9kdWN0X3Rlc3QxNzY1NTYwOTY2QGV4YW1wbGUuY29tIiwiZXhwIjoxNzY1NTY0NTY2fQ.henrmQxIeofKSUgF4JRrf5tDgXQmD44DhhKFyJDuuiQ"
+  }
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_service.py::TestProductService::test_create_item [2025-12-12 17:36:06] - Create product item - PASS
+Details: Status:201, Product:test_2025-12-12 17:36:06, User:product_test1765560966@example.com
+response:{
+  "description": "Descritivo teste 2025-12-12 17:36:06",
+  "id": 5,
+  "message": "Product created successfully",
+  "product_name": "test_2025-12-12 17:36:06"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_service.py::TestProductService::test_get_items [2025-12-12 17:36:06] - Get user item list - PASS
+Details: Status: 200, Products found: 2, Target product found: True
+response:{
+  "products": [
+    {
+      "created_at": "Fri, 12 Dec 2025 17:36:06 GMT",
+      "created_by": 48,
+      "description": "Descritivo teste 2025-12-12 17:36:06",
+      "id": 5,
+      "name": "test_2025-12-12 17:36:06",
+      "price": 1353.68,
+      "quantity": 1
+    },
+    {
+      "created_at": "Fri, 12 Dec 2025 17:36:06 GMT",
+      "created_by": 48,
+      "description": "Descritivo teste 2025-12-12 17:36:06",
+      "id": 6,
+      "name": "test_2025-12-12 17:36:06",
+      "price": 1814.76,
+      "quantity": 5
+    }
+  ]
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_service.py::TestProductService::test_update_item DEBUG:Creating product with data:{'name': 'test_2025-12-12 17:36:06', 'price': 1941.91, 'description': 'Descritivo teste 2025-12-12 17:36:06', 'quantity': 7}
+DEBUG: POST response status: 201
+DEBUG: POST response body: {
+  "description": "Descritivo teste 2025-12-12 17:36:06",
+  "id": 7,
+  "message": "Product created successfully",
+  "product_name": "test_2025-12-12 17:36:06"
+}
+
+DEBUG: POST response JSON keys: dict_keys(['description', 'id', 'message', 'product_name'])
+DEBUG: Extracted product_id: 7
+DEBUG: Update payload: {'id': 7, 'name': 'updated_name_test', 'price': 199.99, 'description': 'Update_test description', 'quantity': 3}
+DEBUG: PUT response status: 200
+DEBUG: PUT response body: {
+  "message": "Product updated successfully"
+}
+
+[2025-12-12 17:36:06] - Update user item list - PASS
+Details: Product ID: 7, Update status: 200
+response:{
+  "message": "Product updated successfully"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_service.py::TestProductService::test_delete_item [2025-12-12 17:36:06] - Delete product item - PASS
+Details: Product ID: 8, Delete status: 200
+response:{
+  "deleted_product_id": 8,
+  "message": "Product deleted successfully"
+}
+----------------------------------------
+
+PASSED
+
+======================================================================================= 6 passed in 0.54s =======================================================================================
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 
