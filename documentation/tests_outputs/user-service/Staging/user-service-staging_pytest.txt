@@ -1,0 +1,118 @@
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging exec user-service python -m pytest tests/ -v
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /user-service
+collected 6 items                                                                                                                                                                               
+
+tests/test_user_service.py::TestUserService::test_health_check_detailed PASSED                                                                                                            [ 16%]
+tests/test_user_service.py::TestUserService::test_user_registration PASSED                                                                                                                [ 33%]
+tests/test_user_service.py::TestUserService::test_duplicate_user_registration PASSED                                                                                                      [ 50%]
+tests/test_user_service.py::TestUserService::test_user_login PASSED                                                                                                                       [ 66%]
+tests/test_user_service.py::TestUserService::test_update_profile PASSED                                                                                                                   [ 83%]
+tests/test_user_service.py::TestUserService::test_user_profile_and_logout PASSED                                                                                                          [100%]
+
+#AFTER CHANGES IN TEST FILE TO ADAPT TO DETECT THE PORT
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging exec user-service python -m pytest tests/ -v -s
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /user-service
+collecting ... Environment Variables:
+FLASK_RUN_PORT: 4001
+STAGING_USER_PORT: None
+USER_SERVICE_PORT: None
+Inside Docker container? True
+Using FLASK_RUN_PORT:4001
+Checking if User Service is up
+Connection estabilished, status code: 200
+response: {
+  "status": "healthy"
+}
+
+collected 6 items                                                                                                                                                                               
+
+tests/test_user_service.py::TestUserService::test_health_check_detailed [2025-12-12 17:40:41] - Detailed Health Check - PASS
+Details: Status: healthy, DB Connection: True, DB Query: True
+response:{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "user-service",
+  "status": "healthy",
+  "timestamp": "2025-12-12T17:40:41.413554"
+}
+----------------------------------------
+
+PASSED
+tests/test_user_service.py::TestUserService::test_user_registration [2025-12-12 17:40:42] - User registration test - PASS
+Details: Email: test_1765561242@example.com, Status Code: 201, User ID: 19
+response:{
+  "email": "test_1765561242@example.com",
+  "message": "User registered successfully",
+  "user_id": 19
+}
+----------------------------------------
+
+PASSED
+tests/test_user_service.py::TestUserService::test_duplicate_user_registration [2025-12-12 17:40:43] - Duplicate User Registration Test - PASS
+Details: First Registration Status: 201, Second Registration Status: 409
+response:{
+  "error": "User already exists"
+}
+----------------------------------------
+
+PASSED
+tests/test_user_service.py::TestUserService::test_user_login [2025-12-12 17:40:44] - User Login Test - PASS
+Details: Email: test_1765561244@example.com, Status Code: 200, User ID: 21
+response:{
+  "email": "test_1765561244@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyMSwiZW1haWwiOiJ0ZXN0XzE3NjU1NjEyNDRAZXhhbXBsZS5jb20iLCJleHAiOjE3NjU1NjQ4NDR9.TlPCInq5t8HXGdgC6fJGTgSOXxWWD_K_uG_m0WdJfIk",
+  "user_id": 21
+}
+----------------------------------------
+
+PASSED
+tests/test_user_service.py::TestUserService::test_update_profile actual email: test_1765561245@example.com
+new email: updatetest_1765561245@example.com
+Update profile response status code: 200
+email in profile: updatetest_1765561245@example.com
+expected email: updatetest_1765561245@example.com
+[2025-12-12 17:40:46] - Update User Profile Test - PASS
+Details: Status Code: 200, New Email: updatetest_1765561245@example.com, Email in Profile: updatetest_1765561245@example.com
+response:{
+  "update_response": {
+    "message": "Profile updated successfully"
+  },
+  "profile_data": {
+    "email": "updatetest_1765561245@example.com",
+    "user_id": 22
+  }
+}
+----------------------------------------
+
+PASSED
+tests/test_user_service.py::TestUserService::test_user_profile_and_logout [2025-12-12 17:40:47] - User Logout and profile Test - PASS
+Details: Profile Before Logout Status: 200, Logout Status: 200, Profile After Logout Status: 401
+response:{
+  "profile_before_logout": {
+    "email": "test_1765561247@example.com",
+    "user_id": 23
+  },
+  "logout_response": {
+    "message": "Logout successful",
+    "timestamp": "2025-12-12T17:40:47.236833",
+    "user_id": 23
+  },
+  "profile_after_logout": {
+    "error": "Unauthorized access"
+  }
+}
+----------------------------------------
+
+PASSED
+
+======================================================================================= 6 passed in 6.94s =======================================================================================
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 

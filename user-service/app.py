@@ -6,6 +6,16 @@ from pymysql import Error
 from dotenv import dotenv_values
 from pathlib import Path
 
+def get_port():
+    port = os.environ.get('FLASK_RUN_PORT','3001')
+    return int(port)
+
+
+def get_debug_mode():
+    env = os.environ.get('FLASK_ENV','development')
+    return env in ['development','staging']
+
+
 def load_env_files():
     current_dir = Path(__file__).parent
 
@@ -458,29 +468,79 @@ def metrics():
 
 
 def verify_db_setup():
-    try:
-        connection = get_db_connection()
-        if not connection:
-            print(f"Failed to connect to database")
-            return False
-        
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) AS count FROM users")
-            result = cursor.fetchone()
-            user_count = result['count'] 
+    max_retries = 15
+    retry_delay = 5  #seconds
 
-            print(f"table users exists and has {user_count} users")
-        
-        connection.close()
-        return True
-    
-    except Exception as e:
-        print(f"Database setup verification failed: {e}")
-        return False
+    for attempt in range(1,max_retries + 1):
+        connection = None
+        try: #Verify basic connectivity
+            connection = get_db_connection()
+            if not connection:
+                print(f"Database connection returned none, attempt: {attempt}")
+                raise Exception("Connection returned None")
+            
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                result = cursor.fetchone()
+                print(f"Database connection established on attempt: {attempt}")
 
+                if not result:
+                    raise Exception("Simple query SELECT 1 failed")
+                
+            print(f"Basic connectivity successful, attempt: {attempt}")
+            
+            try: #Verify 'users' table existence
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT COUNT(*) as table_exists
+                        FROM information_schema.tables
+                        WHERE table_schema = DATABASE()
+                        AND table_name = 'users'
+                        """)
+                    result = cursor.fetchone()
+
+                    if result['table_exists'] > 0:
+                        cursor.execute("SELECT COUNT(*) AS count FROM  users")
+                        user_result = cursor.fetchone()
+                        user_count = user_result['count']
+                        print(f"table 'users' exists with {user_count} records")
+                    else:
+                        print("table 'users' still not exists")
+            
+            except Exception as e:
+                print(f"Table verification failed: {e}")
+
+            finally:
+                if connection:
+                    try:
+                        connection.close()
+                    except Exception as close_err:
+                        print(f"Failed to close connection: {close_err}")
+
+            return True
+
+        except Exception as e:
+            print(f"Database setup verification attempt: {attempt} failed with error: {e}")
+
+            if attempt < max_retries:
+                print(f"attempt: {attempt} failed, retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("Max retries reached. Database setup verification failed")
+                return False
+    return False
 
 if __name__ == "__main__":
-    print("Starting User Service...")
+    port = get_port()
+    debug_mode = get_debug_mode()
+    environment = os.environ.get('FLASK_ENV','development')
+
+    print("=" * 50)
+    print(f"Starting User Service - Environment: {environment}")
+    print(f"Port: {port}")
+    print(f"Debug mode: {debug_mode}")
+    print("=" * 50)
+    
     print("Available endpoints:")
     print("  POST /register     - Register new user")
     print("  POST /login        - Login user") 
@@ -489,8 +549,9 @@ if __name__ == "__main__":
     print("  GET  /health       - Health check")
     print("  GET  /health/detailed - Detailed health check")
     print("  GET  /metrics      - Service metrics")
+    print("=" * 50)
 
     if verify_db_setup():
-        app.run(host="0.0.0.0",port=3001,debug=True)
+        app.run(host="0.0.0.0",port=port,debug=debug_mode)
     else:
         print("Failed to start User Service due to database setup issues.")
