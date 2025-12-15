@@ -65,22 +65,6 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       
-      - name: Debug branch Info
-        run: |
-          echo "GITHUB_REF: $GITHUB_REF"
-          echo "GITHUB_REF_NAME: $GITHUB_REF_NAME"
-          echo "github.ref no contexto: ${{ github.ref }}"
-
-      - name: Debug Environment Info
-        env:
-          USER_SERVICE_PORT: ${{ env.USER_SERVICE_PORT }}
-          PRODUCT_SERVICE_PORT: ${{ env.PRODUCT_SERVICE_PORT }}
-        run: |
-          echo "User Service Port: $USER_SERVICE_PORT"
-          echo "PRODUCT_SERVICE_PORT: $PRODUCT_SERVICE_PORT"
-          echo "Testing will use: http://localhost:$USER_SERVICE_PORT"
-          echo "Testing will use: http://localhost:$PRODUCT_SERVICE_PORT"
-      
       - name: Creating test environment file
         env:
           USER_SERVICE_PORT: ${{ env.USER_SERVICE_PORT }}
@@ -435,19 +419,6 @@ jobs:
               echo "Services not up yet, retrying"
               sleep 10
             done
-      
-      - name:  Debug - Environment inside container
-        run: |
-          echo "=== DEBUG: Environment inside container ==="
-          docker exec user-service-staging sh -c '
-            echo "FLASK_RUN_PORT: $FLASK_RUN_PORT"
-            echo "STAGING_USER_PORT: $STAGING_USER_PORT"
-            echo "USER_SERVICE_PORT: $USER_SERVICE_PORT"
-            echo "pwd: $(pwd)"
-            echo "ls tests/:"
-            ls -la /user-service/tests/ 2>/dev/null || echo "Not found"
-          '
-          echo "=== END DEBUG ==="
 
       - name: Verify test files exist in containers
         run: |
@@ -457,8 +428,6 @@ jobs:
 
       - name: Pre-Test Verification
         run: |
-          echo "=== PRE-TEST VERIFICATION ==="
-    
   
           echo "1. Service health:"
           curl -s http://localhost:${{ env.STAGING_USER_PORT }}/health | jq . || echo "User service health check"
@@ -502,48 +471,7 @@ jobs:
               print(f' Database connection FAILED: {e}')
               sys.exit(1)
           "
-    
-            echo "=== END VERIFICATION ==="
       
-      - name: Debug - Product Service Port Configuration
-        run: |
-          echo "=== DEBUG: Product Service Port ==="
-    
-          docker exec product-service-staging python3 -c "
-          import os
-          print('Environment variables in product-service container:')
-          print(f'  FLASK_RUN_PORT: {os.getenv(\"FLASK_RUN_PORT\")}')
-          print(f'  STAGING_PRODUCT_PORT: {os.getenv(\"STAGING_PRODUCT_PORT\")}')
-          print(f'  PRODUCT_SERVICE_PORT: {os.getenv(\"PRODUCT_SERVICE_PORT\")}')
-          print(f'  In Docker container: {os.path.exists(\"/.dockerenv\")}')
-
-          def get_service_port():
-              if os.path.exists('/.dockerenv'):
-                  flask_port = os.getenv('FLASK_RUN_PORT')
-                  if flask_port:
-                      print(f'[Inside container] Using FLASK_RUN_PORT: {flask_port}')
-                      return flask_port
-    
-              dev_port = os.getenv('PRODUCT_SERVICE_PORT')
-              if dev_port:
-                  print(f'[Outside container] Using PRODUCT_SERVICE_PORT: {dev_port}')
-                  return dev_port
-    
-              staging_port = os.getenv('STAGING_PRODUCT_PORT')
-              if staging_port:
-                  print(f'[Staging] Using STAGING_PRODUCT_PORT: {staging_port}')
-                  return staging_port
-    
-              print('[Default] Using port: 3002')
-              return '3002'
-
-          port = get_service_port()
-          print(f'\\nResult: Will connect to http://localhost:{port}')
-          print(f'Expected: Should be 4002 inside container')
-          " 
-    
-              echo "=== END DEBUG ==="
-
       - name: Run test-user-service on staging container
         run: |
           echo "Runnig tests on staging user-service-staging container"

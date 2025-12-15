@@ -5,37 +5,20 @@ from datetime import datetime
 from helpers.test_helpers import TestHelpers
 from helpers.evidence_logger import EvidenceLogger
 
-#debug for actions
-
-#Verification of all possible variables
-print("Environment Variables:")
-print(f"FLASK_RUN_PORT: {os.getenv('FLASK_RUN_PORT')}")
-print(f"STAGING_USER_PORT: {os.getenv('STAGING_USER_PORT')}")
-print(f"USER_SERVICE_PORT: {os.getenv('USER_SERVICE_PORT')}")
-print(f"Inside Docker container? {os.path.exists('/.dockerenv')}")
-
 def get_service_port():
     if os.path.exists('/.dockerenv'):
         flask_port = os.getenv("FLASK_RUN_PORT")
         if flask_port:
-            print(f"Using FLASK_RUN_PORT:{flask_port}")
             return flask_port
-        else:
-            print("FLASK_RUN_PORT not set")
-    else:
-        print("Running outside the container")
     
     dev_port = os.getenv("USER_SERVICE_PORT")
     if dev_port:
-        print(f"Using USER_SERVICE_PORT: {dev_port}")
         return dev_port
 
     staging_port = os.getenv("STAGING_USER_PORT")
     if staging_port:
-        print(f"Using STAGING_USER_PORT: {staging_port}")
         return staging_port 
     
-    print("Using default port: 3001")
     return "3001"
 
 PORT = get_service_port()
