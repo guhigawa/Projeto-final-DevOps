@@ -17,7 +17,6 @@ env:
   STAGING_PRODUCT_MYSQL_DB: 'product_staging'
   STAGING_USER_MYSQL_USER: 'staging_user'
   STAGING_PRODUCT_MYSQL_USER: 'staging_product_user'
-  STAGING_DOCKER_NETWORK: staging_network
 
 jobs:
   
@@ -174,87 +173,13 @@ jobs:
             user-service/tests/evidence/
             product-service/products_tests/products_evidence/
           retention-days: 7
-  
-  build-staging-images:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-    needs: test-all-services
-    if: |
-      github.ref == 'refs/heads/main' || 
-      startsWith(github.ref, 'refs/heads/test') ||
-      github.event_name == 'pull_request'
-
-    outputs:
-      user-image-tag: ${{ steps.tag.outputs.user-tag }}
-      product-image-tag: ${{ steps.tag.outputs.product-tag }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Generate docker image tags
-        id: tag
-        run: |
-          DATE_TAG=$(date +'%Y%m%d')
-          SHORT_SHA=${GITHUB_SHA::8}
-
-          USER_TAG="user-service:staging-${DATE_TAG}-${SHORT_SHA}"
-          PRODUCT_TAG="product-service:staging-${DATE_TAG}-${SHORT_SHA}"
-
-          echo "user-tag=${USER_TAG}" >> $GITHUB_OUTPUT
-          echo "product-tag=${PRODUCT_TAG}" >> $GITHUB_OUTPUT
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build user-service for staging
-        run: |
-          cd user-service
-          docker build \
-            -t ${{ steps.tag.outputs.user-tag }} \
-            --build-arg ENVIRONMENT=staging \
-            --build-arg PORT=${{env.STAGING_USER_PORT}} \
-            --label "version=staging" \
-            --label "commit=${GITHUB_SHA}" \
-            --label "branch=${GITHUB_REF_NAME}" \
-            --label "build-date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
-            .
-      
-      - name: Build product-service for staging
-        run: |
-          cd product-service
-          docker build \
-            -t ${{ steps.tag.outputs.product-tag }} \
-            --build-arg ENVIRONMENT=staging \
-            --build-arg PORT=${{env.STAGING_PRODUCT_PORT}} \
-            --label "version=staging" \
-            --label "commit=${GITHUB_SHA}" \
-            --label "branch=${GITHUB_REF_NAME}" \
-            --label "build-date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
-            .
-      
-      - name: Save docker images as artifacts
-        run: |
-          docker save ${{ steps.tag.outputs.user-tag }} -o user_service_staging.tar
-          docker save ${{ steps.tag.outputs.product-tag }} -o product_service_staging.tar
-      
-      - name: Upload docker images
-        uses: actions/upload-artifact@v4
-        with:
-          name: staging-images-${{ github.run_id }}
-          path: |
-            user_service_staging.tar
-            product_service_staging.tar
-          retention-days: 3
-  
+   
   deploy-staging:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
-    needs: build-staging-images
+    needs: test-all-services
     if: |
       github.ref == 'refs/heads/main' || 
       startsWith(github.ref, 'refs/heads/test') ||
@@ -268,145 +193,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download docker images
-        uses: actions/download-artifact@v4
-        with:
-          name: staging-images-${{ github.run_id }}
-      
-      - name: Load docker images
-        run: |
-          docker load -i user_service_staging.tar
-          docker load -i product_service_staging.tar
-      
-      - name: Create docker network for staging
-        run: |
-          docker network create ${{ env.STAGING_DOCKER_NETWORK }} || echo "Network already exists"
-      
-      - name: Cleanup previous staging containers
-        run: |
-          docker stop user-service-staging mysql-user-staging product-service-staging mysql-product-staging 2>/dev/null || true
-          docker rm user-service-staging mysql-user-staging product-service-staging mysql-product-staging 2>/dev/null || true
-      
-      - name: Deploy MySQL for staging
-        env:
-          STAGING_DB_ROOT_PASSWORD: ${{ secrets.STAGING_DB_ROOT_PASSWORD }} #Github Secrets transformed into shell environment variables security method to not expose the value 
-          STAGING_USER_DB_PASSWORD: ${{ secrets.STAGING_USER_DB_PASSWORD }}
-          STAGING_PRODUCT_DB_PASSWORD: ${{ secrets.STAGING_PRODUCT_DB_PASSWORD }}
-        run: |
-          docker run -d \
-            --name mysql-user-staging \
-            --network ${{ env.STAGING_DOCKER_NETWORK }} \
-            -e MYSQL_ROOT_PASSWORD=$STAGING_DB_ROOT_PASSWORD \
-            -e MYSQL_DATABASE=${{ env.STAGING_USER_MYSQL_DB }}  \
-            -e MYSQL_USER=${{ env.STAGING_USER_MYSQL_USER }} \
-            -e MYSQL_PASSWORD=$STAGING_USER_DB_PASSWORD \
-            -p ${{ env.STAGING_USER_MYSQL_PORT }}:${{ env.STAGING_MYSQL_PORT }} \
-            --health-cmd="mysqladmin ping -h localhost -u root -p$STAGING_DB_ROOT_PASSWORD" \
-            --health-interval=10s \
-            mysql:8.0
+      - name: Set up docker buildx
+        uses: docker/setup-buildx-action@v2
 
-          docker run -d \
-            --name mysql-product-staging \
-            --network ${{ env.STAGING_DOCKER_NETWORK }} \
-            -e MYSQL_ROOT_PASSWORD=${STAGING_DB_ROOT_PASSWORD} \
-            -e MYSQL_DATABASE=${{ env.STAGING_PRODUCT_MYSQL_DB }}  \
-            -e MYSQL_USER=${{ env.STAGING_PRODUCT_MYSQL_USER }} \
-            -e MYSQL_PASSWORD=$STAGING_PRODUCT_DB_PASSWORD \
-            -p ${{ env.STAGING_PRODUCT_MYSQL_PORT }}:${{ env.STAGING_MYSQL_PORT }} \
-            --health-cmd="mysqladmin ping -h localhost -u root -p$STAGING_DB_ROOT_PASSWORD" \
-            --health-interval=10s \
-            mysql:8.0
-            
-          echo "Waiting for MySQL containers to be healthy"
-          for i in {1..30}; do
-            if docker exec mysql-user-staging mysqladmin ping -h localhost -u root -p$STAGING_DB_ROOT_PASSWORD 2>/dev/null && \
-              docker exec mysql-product-staging mysqladmin ping -h localhost -u root -p$STAGING_DB_ROOT_PASSWORD 2>/dev/null; then
-              echo "MySQL containers are healthy"
-              break
-            fi
-            echo "MySQL containers not healthy yet, retrying"
-            sleep 10
-          done
-            
+      - name: Cleanup previous staging runs
+        run: |
+          docker-compose -f docker-compose.staging.yml down -v 2>/dev/null || true
       
-      - name: Initialize staging databases
+      - name: Deploy staging environment with docker-compose
         env:
+          STAGING_SECRET_KEY: ${{ secrets.STAGING_JWT_SECRET }}
+          STAGING_USER_MYSQL_PASSWORD: ${{ secrets.STAGING_USER_DB_PASSWORD }}
+          STAGING_PRODUCT_MYSQL_PASSWORD: ${{ secrets.STAGING_PRODUCT_DB_PASSWORD }}
           STAGING_DB_ROOT_PASSWORD: ${{ secrets.STAGING_DB_ROOT_PASSWORD }}
+          STAGING_USER_PORT: ${{ env.STAGING_USER_PORT }}
+          STAGING_PRODUCT_PORT: ${{ env.STAGING_PRODUCT_PORT }}
+          STAGING_MYSQL_PORT: ${{ env.STAGING_MYSQL_PORT }}
+          STAGING_USER_MYSQL_PORT: ${{ env.STAGING_USER_MYSQL_PORT }}
+          STAGING_PRODUCT_MYSQL_PORT: ${{ env.STAGING_PRODUCT_MYSQL_PORT }}
+          STAGING_USER_MYSQL_DB: ${{ env.STAGING_USER_MYSQL_DB }}
+          STAGING_PRODUCT_MYSQL_DB: ${{ env.STAGING_PRODUCT_MYSQL_DB }}
+          STAGING_USER_MYSQL_USER: ${{ env.STAGING_USER_MYSQL_USER }}
+          STAGING_PRODUCT_MYSQL_USER: ${{ env.STAGING_PRODUCT_MYSQL_USER }}
+
         run: |
-          echo "Database initialization"
+          docker-compose -f docker-compose.staging.yml up -d --build
+          sleep 30
 
-          echo "Making sure databases exists"
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD -e "CREATE DATABASE IF NOT EXISTS ${{ env.STAGING_USER_MYSQL_DB }};"
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD -e "CREATE DATABASE IF NOT EXISTS ${{ env.STAGING_PRODUCT_MYSQL_DB }};" 
-
-          echo "Granting permissions to user-service"
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }}  -u root -p$STAGING_DB_ROOT_PASSWORD -e "GRANT ALL PRIVILEGES ON ${{ env.STAGING_USER_MYSQL_DB }}.* TO '${{ env.STAGING_USER_MYSQL_USER }}'@'%'; FLUSH PRIVILEGES;"
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }}  -u root -p$STAGING_DB_ROOT_PASSWORD -e "GRANT ALL PRIVILEGES ON ${{ env.STAGING_PRODUCT_MYSQL_DB }}.* TO '${{ env.STAGING_PRODUCT_MYSQL_USER }}'@'%'; FLUSH PRIVILEGES;"
-
-          echo "Executing scripts to create tables"
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD ${{ env.STAGING_USER_MYSQL_DB }} < scripts/structure/init-staging.sql
-          mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD ${{ env.STAGING_PRODUCT_MYSQL_DB }} < scripts/structure/product-staging_init.sql
-          
-          echo "Executing scripts to start mockdata in tables created"
-          if [ -f "scripts/staging/user-service-staging-mockdata.sql" ]; then
-            mysql -h 127.0.0.1 -P ${{ env.STAGING_USER_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD ${{ env.STAGING_USER_MYSQL_DB }} < scripts/staging/user-service-staging-mockdata.sql || echo "Warning could not load mock data"
-          else
-            echo "No user mock data file found"
-          fi
-    
-          if [ -f "scripts/staging/product-service-staging-mockdata.sql" ]; then
-            mysql -h 127.0.0.1 -P ${{ env.STAGING_PRODUCT_MYSQL_PORT }} -u root -p$STAGING_DB_ROOT_PASSWORD ${{ env.STAGING_PRODUCT_MYSQL_DB }} < scripts/staging/product-service-staging-mockdata.sql || echo "Warning could not load mock data"
-          else
-            echo "No user mock data file found"
-          fi
-
-          echo "Database initialization complete"
-
-      - name: Deploy User Service to staging
-        env:
-          STAGING_JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
-          STAGING_USER_DB_PASSWORD: ${{ secrets.STAGING_USER_DB_PASSWORD }}
-        run: |
-          echo "Deploying user service"
-          docker run -d \
-            --name user-service-staging \
-            --network ${{ env.STAGING_DOCKER_NETWORK }} \
-            -p ${{ env.STAGING_USER_PORT }}:${{ env.STAGING_USER_PORT }} \
-            -e USER_MYSQL_HOST=mysql-user-staging \
-            -e USER_MYSQL_USER=${{ env.STAGING_USER_MYSQL_USER }} \
-            -e MYSQL_PASSWORD=$STAGING_USER_DB_PASSWORD \
-            -e MYSQL_DATABASE=${{ env.STAGING_USER_MYSQL_DB }} \
-            -e USER_MYSQL_PORT=${{ env.STAGING_MYSQL_PORT }}\
-            -e SECRET_KEY=$STAGING_JWT_SECRET \
-            -e FLASK_ENV=staging \
-            -e FLASK_RUN_PORT=${{ env.STAGING_USER_PORT }} \
-            ${{ needs.build-staging-images.outputs.user-image-tag }}      
-
-      - name: Deploy Product Service to staging
-        env:
-          STAGING_JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
-          STAGING_PRODUCT_DB_PASSWORD: ${{ secrets.STAGING_PRODUCT_DB_PASSWORD }}
-        run: |
-          echo "Deploying product service"
-          docker run -d \
-            --name product-service-staging \
-            --network ${{ env.STAGING_DOCKER_NETWORK }} \
-            -p ${{ env.STAGING_PRODUCT_PORT }}:${{ env.STAGING_PRODUCT_PORT }} \
-            -e PRODUCT_MYSQL_HOST=mysql-product-staging \
-            -e PRODUCT_MYSQL_USER=${{ env.STAGING_PRODUCT_MYSQL_USER }} \
-            -e MYSQL_PASSWORD=$STAGING_PRODUCT_DB_PASSWORD \
-            -e MYSQL_DATABASE=${{ env.STAGING_PRODUCT_MYSQL_DB }}\
-            -e PRODUCT_MYSQL_PORT=${{ env.STAGING_MYSQL_PORT }} \
-            -e SECRET_KEY=$STAGING_JWT_SECRET \
-            -e FLASK_ENV=staging \
-            -e FLASK_RUN_PORT=${{ env.STAGING_PRODUCT_PORT }} \
-            ${{ needs.build-staging-images.outputs.product-image-tag }}
-            
-      - name: Wait for services to start
-        run: |
-          echo "Waiting for services to be ready"
-          sleep 25
-          
       - name: Verify staging deployment
         run: |
           echo "Testing services"
@@ -416,15 +229,14 @@ jobs:
                echo "Both services are up"
                break
             fi
-              echo "Services not up yet, retrying"
-              sleep 10
-            done
+            sleep 10
+          done
 
       - name: Verify test files exist in containers
         run: |
           echo "Checking if test files exist..."
-          docker exec user-service-staging ls -la /user-service/tests/ || echo "User tests not found"
-          docker exec product-service-staging ls -la /product-service/products_tests/ || echo "Product tests not found"
+          docker-compose -f docker-compose.staging.yml exec user-service ls -la /user-service/tests/ || echo "User tests not found"
+          docker-compose -f docker-compose.staging.yml exec product-service ls -la /product-service/products_tests/ || echo "Product tests not found"
 
       - name: Pre-Test Verification
         run: |
@@ -436,23 +248,24 @@ jobs:
     
           echo ""
           echo "2. Testing database connection from user-service container:"
-          docker exec user-service-staging python3 -c "
+
+          # User Service DB Connection Test
+          echo "User service database connection test:"
+          docker-compose -f docker-compose.staging.yml exec user-service python3 -c "
           import os
           import pymysql
           import sys
 
           print('Variables in container:')
           print(f'  MYSQL_DATABASE: {os.getenv(\"MYSQL_DATABASE\")}')
-          print(f'  USER_MYSQL_DB: {os.getenv(\"USER_MYSQL_DB\")}')
-          print(f'  MYSQL_DB: {os.getenv(\"MYSQL_DB\")}')
 
           try:
             conn = pymysql.connect(
-                host=os.getenv('USER_MYSQL_HOST'),
-                user=os.getenv('USER_MYSQL_USER'),
+                host=os.getenv('MYSQL_HOST'),
+                user=os.getenv('MYSQL_USER'),
                 password=os.getenv('MYSQL_PASSWORD'),
                 database=os.getenv('MYSQL_DATABASE'),
-                port=int(os.getenv('USER_MYSQL_PORT', 3306))
+                port=int(os.getenv('MYSQL_PORT', 3306))
             )
             print(' Database connection SUCCESS!')
     
@@ -471,18 +284,89 @@ jobs:
               print(f' Database connection FAILED: {e}')
               sys.exit(1)
           "
+        
+          echo " product-service database connection test:"
+          docker-compose -f docker-compose.staging.yml exec product-service python3 -c "
+          import os
+          import pymysql
+          import sys
+          print('Variables in container:')
+          print(f'  MYSQL_DATABASE: {os.getenv(\"MYSQL_DATABASE\")}')
+          try:
+            conn = pymysql.connect(
+                host=os.getenv('MYSQL_HOST'),
+                user=os.getenv('MYSQL_USER'),
+                password=os.getenv('MYSQL_PASSWORD'),
+                database=os.getenv('MYSQL_DATABASE'),
+                port=int(os.getenv('MYSQL_PORT', 3306))
+            )
+            print(' Database connection SUCCESS!')
+    
+            with conn.cursor() as cursor:
+                cursor.execute('SELECT DATABASE()')
+                db = cursor.fetchone()
+                print(f'  Current database: {db[0]}')
+        
+                cursor.execute('SHOW TABLES')
+                tables = cursor.fetchall()
+                print(f'  Tables in database: {[t[0] for t in tables]}')
+    
+            conn.close()
+    
+          except Exception as e:
+              print(f' Database connection FAILED: {e}')
+              sys.exit(1)
+          "
+
+          echo "3. Service communication test:"
+          docker-compose -f docker-compose.staging.yml exec product-service python3 -c "
+          import os
+          import requests
+          import sys
+          user_service_url = os.getenv('USER_SERVICE_URL')
+          print(f'User Service URL: {user_service_url}')
+          try:
+              response = requests.get(f'{user_service_url}/health', timeout=5)
+              if response.status_code == 200:
+                  print(' Communication SUCCESS!')
+              else:
+                  print(f' Communication FAILED: Status code {response.status_code}')
+                  sys.exit(1)
+          except Exception as e:
+              print(f' Communication FAILED: {e}')
+              sys.exit(1)
+          "
       
+      - name: Verify databases are separate
+        run: |
+          echo "=== VERIFYING SEPARATE DATABASES ==="
+    
+          echo "Getting database names from containers..."
+    
+          USER_DB=$(docker-compose -f docker-compose.staging.yml exec -T user-service python3 -c "import os; print(os.getenv('MYSQL_DATABASE'))")
+          PRODUCT_DB=$(docker-compose -f docker-compose.staging.yml exec -T product-service python3 -c "import os; print(os.getenv('MYSQL_DATABASE'))")
+    
+          echo "User Service Database: $USER_DB"
+          echo "Product Service Database: $PRODUCT_DB"
+    
+          if [ "$USER_DB" = "$PRODUCT_DB" ]; then
+            echo " ERROR: Both services using same database!"
+            sys.exit(1)
+          else
+            echo " SUCCESS: Services using separate databases"
+          fi
+
       - name: Run test-user-service on staging container
         run: |
-          echo "Runnig tests on staging user-service-staging container"
-          docker exec user-service-staging python3 -m pytest /user-service/tests/test_user_service.py -v -s
+          echo "Running tests on staging user-service container"
+          docker-compose -f docker-compose.staging.yml exec -T user-service python3 -m pytest /user-service/tests/test_user_service.py -v -s
       
       - name: Run test-product-service on staging container
         env:
-          USER_SERVICE_URL: "http://user-service-staging:4001"
+          USER_SERVICE_URL: "http://user-service:${{ env.STAGING_USER_PORT }}"
         run: |
-          echo "Runnig tests on staging product-service-staging container"
-          docker exec -e USER_SERVICE_URL=$USER_SERVICE_URL product-service-staging python3 -m pytest /product-service/products_tests/test_product_service.py -v -s
+          echo "Running tests on staging product-service container"
+          docker-compose -f docker-compose.staging.yml exec -T product-service python3 -m pytest /product-service/products_tests/test_product_service.py -v -s
           
       - name: Record deployment
         if: success()
@@ -492,3 +376,8 @@ jobs:
           echo "Commit: ${{ github.sha }}"
           echo "User Service: http://localhost:${{ env.STAGING_USER_PORT }}"
           echo "Product Service: http://localhost:${{ env.STAGING_PRODUCT_PORT }}"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.staging.yml down -v
