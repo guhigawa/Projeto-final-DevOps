@@ -1,0 +1,104 @@
+
+services:
+  mysql-staging-user:
+    image: mysql:8.0
+    environment:
+      MYSQL_USER: ${STAGING_USER_MYSQL_USER}
+      MYSQL_PASSWORD: ${STAGING_USER_MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${STAGING_USER_MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${STAGING_USER_MYSQL_DB}
+    volumes:
+      - mysql_user_staging_data:/var/lib/mysql
+      - ./scripts/structure/init-staging.sql:/docker-entrypoint-initdb.d/01-init-staging.sql
+      - ./scripts/staging/user-service-staging-mockdata.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${STAGING_USER_MYSQL_USER}", "-p${STAGING_USER_MYSQL_PASSWORD}"]
+      timeout: 10s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+    restart: unless-stopped
+  
+  mysql-staging-product:
+    image: mysql:8.0
+    environment:
+      MYSQL_USER: ${STAGING_PRODUCT_MYSQL_USER}
+      MYSQL_PASSWORD: ${STAGING_PRODUCT_MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${STAGING_PRODUCT_MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${STAGING_PRODUCT_MYSQL_DB}
+    volumes:
+      - mysql_product_staging_data:/var/lib/mysql
+      - ./scripts/structure/product-staging_init.sql:/docker-entrypoint-initdb.d/01-product-staging_init.sql
+      - ./scripts/staging/product-service-staging-mockdata.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${STAGING_PRODUCT_MYSQL_USER}", "-p${STAGING_PRODUCT_MYSQL_PASSWORD}"]
+      timeout: 10s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+    restart: unless-stopped
+  
+  user-service:
+    build: 
+      context: ./user-service
+      args:
+        ENVIRONMENT: staging
+        PORT: ${STAGING_USER_PORT}
+
+    ports:
+      - "${STAGING_USER_PORT}:${STAGING_USER_PORT}"
+    environment:
+      - SECRET_KEY=${STAGING_SECRET_KEY}
+      - MYSQL_HOST=mysql-staging-user
+      - MYSQL_USER=${STAGING_USER_MYSQL_USER}
+      - MYSQL_PASSWORD=${STAGING_USER_MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${STAGING_USER_MYSQL_DB}
+      - MYSQL_PORT=${STAGING_MYSQL_PORT}
+      - FLASK_ENV=staging
+      - FLASK_RUN_PORT=${STAGING_USER_PORT}
+      - USER_PORT=${STAGING_USER_PORT}
+    depends_on:
+      mysql-staging-user:
+          condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${STAGING_USER_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  product-service:
+    build:
+      context: ./product-service
+      args:
+        ENVIRONMENT: staging 
+        PORT: ${STAGING_PRODUCT_PORT}
+    ports:
+      - "${STAGING_PRODUCT_PORT}:${STAGING_PRODUCT_PORT}"
+    environment:
+      - SECRET_KEY=${STAGING_SECRET_KEY}
+      - MYSQL_HOST=mysql-staging-product
+      - MYSQL_USER=${STAGING_PRODUCT_MYSQL_USER}
+      - MYSQL_PASSWORD=${STAGING_PRODUCT_MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${STAGING_PRODUCT_MYSQL_DB}
+      - MYSQL_PORT=${STAGING_MYSQL_PORT}
+      - USER_SERVICE_URL=http://user-service:${STAGING_USER_PORT}
+      - FLASK_ENV=staging
+      - FLASK_RUN_PORT=${STAGING_PRODUCT_PORT}
+      - PRODUCT_PORT=${STAGING_PRODUCT_PORT}
+    depends_on:
+      mysql-staging-product:
+          condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${STAGING_PRODUCT_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+
+volumes:
+  mysql_user_staging_data:
+  mysql_product_staging_data:

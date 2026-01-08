@@ -6,8 +6,17 @@ from pymysql import Error
 from dotenv import dotenv_values
 from pathlib import Path
 
-import importlib
-importlib.reload(os)
+#import importlib
+#importlib.reload(os)
+
+def get_port():
+    port = os.environ.get('FLASK_RUN_PORT','3002')
+    return int(port)
+
+def get_debug_mode():
+    env = os.environ.get('FLASK_ENV', 'development')
+    return env in ['development', 'staging']
+
 
 def load_env_files():
     current_dir = Path(__file__).parent
@@ -373,29 +382,79 @@ def metrics():
 
 
 def verify_db_setup():
-    try:
-        connection = get_db_connection()
-        if not connection:
-            print(f"Failed to connect to database")
-            return False
-        
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) AS count FROM items")
-            result = cursor.fetchone()
-            item_count = result['count'] 
+    max_retries = 15
+    retry_delay = 5  # seconds
 
-            print(f"table items exists and has {item_count} items")
-        
-        connection.close()
-        return True
-    
-    except Exception as e:
-        print(f"Database setup verification failed: {e}")
-        return False
+    for attempt in range(1, max_retries + 1):
+        connection = None
+        try: #Verify basic connectivity
+            connection = get_db_connection()
+            if not connection:
+                print(f"Database connection returned none, attempt: {attempt}")
+                raise Exception("Connection returned None")
+            
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                result = cursor.fetchone()
+                print(f"Database connection established on attempt: {attempt}")
+                
+                if not result:
+                    raise Exception("Simple query 1 failed")
+            
+            print (f"Basic connectivity successful, attempt: {attempt}")
+
+            try:# Verify 'items' existence
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT COUNT(*) as table_exists
+                        FROM information_schema.tables
+                        WHERE table_schema = DATABASE()
+                        AND table_name = 'items'
+                        """)
+                    result = cursor.fetchone()
+
+                    if result['table_exists'] > 0:
+                        cursor.execute("SELECT COUNT(*) AS count FROM items")
+                        product_result = cursor.fetchone()
+                        product_count = product_result['count']
+                        print(f"tabel 'items' exists with {product_count} records")
+                    else:
+                        print("table 'items' still not exists")
+                    
+            except Exception as e:
+                print(f"Table verification failed: {e}")
+            
+            finally:
+                if connection:
+                    try:
+                        connection.close()
+                    except Exception as close_err:
+                        print(f"Failed to close connection: {close_err}")
+
+            return True
+
+        except Exception as e:
+            print(f"Database setup verification attempt: {attempt} failed with error: {e}")
+
+            if attempt < max_retries:
+                print(f"attempt: {attempt} failed, retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("Max retries reached. Database setup verification failed")
+                return False
+    return False        
 
 if __name__ == "__main__":
+    port = get_port()
+    debug_mode = get_debug_mode()
+    environment = os.environ.get('FLASK_ENV','development')
+
+    print("=" * 50)
+    print(f"Starting Product Service - Environment: {environment}")
+    print(f"Port: {port}")
+    print(f"Debug mode: {debug_mode}")
+    print("=" * 50)
     
-    print("Starting User Service...")
     print("Available endpoints:")
     print("  POST  /products     - Register new products")
     print("  GET   /products     - Get products list (JWT required)") 
@@ -404,9 +463,10 @@ if __name__ == "__main__":
     print("  GET   /health       - Health check")
     print("  GET   /health/detailed - Detailed health check")
     print("  GET   /metrics      - Service metrics")
+    print("=" * 50)
 
     if verify_db_setup():
-        app.run(host="0.0.0.0",port=3002,debug=True)
+        app.run(host="0.0.0.0",port=port,debug=debug_mode)
     else:
         print("Failed to start Product Service due to database setup issues.")
     

@@ -5,7 +5,35 @@ from datetime import datetime
 from helpers.test_helpers import TestHelpers
 from helpers.evidence_logger import EvidenceLogger
 
-BASE_URL = "http://localhost:3001"
+def get_service_port():
+    if os.path.exists('/.dockerenv'):
+        flask_port = os.getenv("FLASK_RUN_PORT")
+        if flask_port:
+            return flask_port
+    
+    dev_port = os.getenv("USER_SERVICE_PORT")
+    if dev_port:
+        return dev_port
+
+    staging_port = os.getenv("STAGING_USER_PORT")
+    if staging_port:
+        return staging_port 
+    
+    return "3001"
+
+PORT = get_service_port()
+BASE_URL = f"http://localhost:{PORT}"
+
+#Connection test before running tests
+print("Checking if User Service is up")
+try:
+    test_response = requests.get(f"http://localhost:{PORT}/health", timeout=10)
+    print(f"Connection estabilished, status code: {test_response.status_code}")
+    print(f"response: {test_response.text[:100]}") # First 100 characters of the response
+except Exception as e:
+    print(f"Failed to connect to User Service at {BASE_URL}: {str(e)}")
+    print("Tests will fail")
+
 
 @pytest.fixture 
 def test_helpers():
@@ -46,7 +74,12 @@ def authenticated_user(test_helpers, registered_user):
 
 #Defining the test class for user service
 class TestUserService:
-    
+    def setup_method(self):
+        self.base_url = BASE_URL
+        self.client = requests.Session()
+        self.client.timeout = 10  # seconds
+
+        time.sleep(1)  # brief pause to avoid overwhelming the service
 
     def test_health_check_detailed(self, evidence_logger):
         test_name = "Detailed Health Check"
