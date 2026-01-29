@@ -79,7 +79,7 @@ class TestUserService:
         self.client = requests.Session()
         self.client.timeout = 10  # seconds
 
-        time.sleep(1)  # brief pause to avoid overwhelming the service
+        time.sleep(3)  # brief pause to avoid overwhelming the service
 
     def test_health_check_detailed(self, evidence_logger):
         test_name = "Detailed Health Check"
@@ -97,12 +97,29 @@ class TestUserService:
              
             evidence_logger.log_test_result(test_name, success, details, data)
             assert success, f"Expected status code {expected_status_code} but got {response.status_code}"
-            
         
         except Exception as e:
             evidence_logger.log_test_result(test_name, False, f"Exception occurred: {str(e)}")
             pytest.fail(f"Test failed due to exception: {str(e)}")
     
+
+    def test_health_check_simple(self, evidence_logger):
+        test_name = "Simple health check"
+        try:
+            response = requests.get(f"{BASE_URL}/health")
+            success = response.status_code == 200
+
+            details = f"Status code:{response.status_code}"
+            evidence_logger.log_test_result(test_name, success, details, response.json())
+            assert success
+
+        except Exception as e:
+            evidence_logger.log_test_result(test_name, False, f"Exception occurred: {str(e)}")
+            pytest.fail(f"Test failed:{str(e)}")
+        
+    
+class TestUserServiceAuthentication:
+
 
     def test_user_registration(self, test_helpers, evidence_logger, unique_email):
         test_name = "User registration test"
@@ -163,6 +180,26 @@ class TestUserService:
         except Exception as e:
             evidence_logger.log_test_result(test_name, False, f"Exception occurred: {str(e)}")
             pytest.fail(f"Test failed due to exception: {str(e)}")
+    
+
+    def test_user_login_wrong_password(self, test_helpers, evidence_logger, registered_user):
+        test_name = "Login with wrong password"
+        try:
+            email, _ = registered_user
+
+            login_response = test_helpers.login_user(email=email, password="Wrongpassword@123")
+
+            success = login_response.status_code == 401
+            details = f"Expected 401, got {login_response.status_code}"
+            evidence_logger.log_test_result(test_name, success, details, login_response.json())
+            assert success
+        
+        except Exception as e:
+            evidence_logger.log_test_result(test_name,False, details, f"Exception:{str(e)}")
+            pytest.fail(f"Test failed: {str(e)}")
+
+
+class TestUserServiceProfile:
 
 
     def test_update_profile(self, evidence_logger,authenticated_user):
@@ -216,7 +253,31 @@ class TestUserService:
         except Exception as e:
             evidence_logger.log_test_result(test_name, False, f"Exception occurred: {str(e)}")
             pytest.fail(f"Test failed due to exception: {str(e)}")
+
+
+    def test_get_user_by_id(self, evidence_logger, authenticated_user): 
+        test_name = "Get User by ID Test"
+        try:
+            email, user_id, token = authenticated_user
+
+            response = requests.get(
+                f"{BASE_URL}/users/{user_id}",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                success = data.get('user_id') == user_id and data.get('email') == email
+            
+            details = f"Status: {response.status_code}, User ID: {user_id}"
+            evidence_logger.log_test_result(test_name, success, details, response.json())
+            assert success
         
+        except Exception as e:
+            evidence_logger.log_test_result(test_name, False, f"Exception: {str(e)}")
+            pytest.fail(f"Test failed: {str(e)}")
+
 
     def test_user_profile_and_logout(self, evidence_logger, authenticated_user):
         test_name = "User Logout and profile Test"
@@ -242,5 +303,48 @@ class TestUserService:
         except Exception as e:
             evidence_logger.log_test_result(test_name, False, f"Exception occurred: {str(e)}")
             pytest.fail(f"Test failed due to exception: {str(e)}")
-                     
+
+
+class TestUserServiceSecurity:
+
+
+    def test_registration_weak_password(self, test_helpers, evidence_logger):
+        test_name = "Registration with weak password"
+        try:
+            email = test_helpers.generate_unique_email()
+
+            response, _ = test_helpers.register_user(
+                email = email,
+                password = "weak"
+            )
+
+            success = response.status_code == 400
+            details = f"Expected code 400 for weak password, got {response.status_code}"
+            evidence_logger.log_test_result(test_name, success, details, response.json())
+            assert success
+    
+        except Exception as e:
+            evidence_logger.log_test_result(test_name, False, f"Exception: {str(e)}")
+            pytest.fail(f"Test failed: {str(e)}")
+    
+
+    def test_registration_invalid_email(self, test_helpers, evidence_logger):
+        test_name = "Registration with invalid email"
+
+        try:
+            response,_ = test_helpers.register_user(
+                email = "invalid-email",
+                password = "StrongPass@123"
+            )
+
+            success = response.status_code == 400
+            details = f"Expected code 400 for invalid email, got {response.status_code}"
+
+            evidence_logger.log_test_result(test_name, success, details, response.json())
+            assert success
+        
+        except Exception as e:
+            evidence_logger.log_test_result(test_name, False, f"Exception: {str(e)}")
+            pytest.fail(f"Test failed: {str(e)}")
+
                 

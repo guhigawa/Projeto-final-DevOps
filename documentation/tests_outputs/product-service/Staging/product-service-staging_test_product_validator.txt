@@ -1,0 +1,19 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging  exec product-service bash
+root@3b559722c801:/product-service# python -m pytest products_tests/test_product_validator.py -v -s
+============================================================================== test session starts ==============================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /product-service
+collected 10 items                                                                                                                                                              
+
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_name_valid PASSED
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_name_invalid PASSED
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_price PASSED
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_price_invalid PASSED
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_quantity_valid PASSED
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_quantity_invalid PASSED
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_description PASSED
+products_tests/test_product_validator.py::TestProductValidator::test_sanitize_input PASSED
+products_tests/test_product_validator.py::TestProductValidator::test_validate_registration_object_valid PASSED
+products_tests/test_product_validator.py::TestProductValidator::test_validate_registration_object_invalid PASSED
+

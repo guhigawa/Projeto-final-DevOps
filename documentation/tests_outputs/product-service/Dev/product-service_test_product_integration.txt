@@ -1,0 +1,241 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/product-service$ docker ps -a
+CONTAINER ID   IMAGE                           COMMAND                  CREATED        STATUS                    PORTS                    NAMES
+bcf6fd65c1ba   projeto_final-user-service      "python3 app.py"         20 hours ago   Up 13 minutes (healthy)   0.0.0.0:3001->3001/tcp   projeto_final-user-service-1
+937946895f58   projeto_final-product-service   "python3 product_app…"   20 hours ago   Up 13 minutes (healthy)   0.0.0.0:3002->3002/tcp   projeto_final-product-service-1
+e794f7b8664b   mysql:8.0                       "docker-entrypoint.s…"   20 hours ago   Up 13 minutes (healthy)   3306/tcp, 33060/tcp      projeto_final-mysql-product-1
+87ef668dece9   mysql:8.0                       "docker-entrypoint.s…"   20 hours ago   Up 13 minutes (healthy)   3306/tcp, 33060/tcp      projeto_final-mysql-user-1
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/product-service$ python -m pytest products_tests/test_product_integration.py -v -s
+============================================================================== test session starts ==============================================================================
+platform linux -- Python 3.10.12, pytest-8.4.2, pluggy-1.6.0 -- /home/ubuntu/Downloads/Projeto_final/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/ubuntu/Downloads/Projeto_final/product-service
+collecting ... Environment Variables:
+FLASK_RUN_PORT: None
+STAGING_PRODUCT_PORT: None
+PRODUCT_SERVICE_PORT: None
+Inside Docker container? False
+Running outside the container
+Using default port: 3002
+Checking if Product Service is up
+Connection estabilished, status code: 200
+response: {
+  "status": "healthy"
+}
+
+collected 19 items                                                                                                                                                              
+
+products_tests/test_product_integration.py::TestProductServiceHealth::test_health_check_simple [2026-01-27 14:25:35] - Simple Health Check | Product Service - PASS
+Details: Status code: 200
+response:{
+  "status": "healthy"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceHealth::test_health_check_detailed [2026-01-27 14:25:35] - Detailed Health Check | Product Service - PASS
+Details: Status: healthy, DB Connection: True, DB Query: True
+response:{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "product-service",
+  "status": "healthy",
+  "timestamp": "2026-01-27T14:25:35.164068"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceAuthentication::test_create_user_test [2026-01-27 14:25:35] - Registration and login of test user for product test - PASS
+Details: Email:product_test0d08c3c5@example.com, User test ID:136
+response:{
+  "email": "product_test0d08c3c5@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMzYsImVtYWlsIjoicHJvZHVjdF90ZXN0MGQwOGMzYzVAZXhhbXBsZS5jb20iLCJleHAiOjE3Njk1Mjc1MzV9.v7nlstCmpBCP8vSZ0XXzdJIwt4Zw8QNv7emmXzRZ1aw",
+  "user_id": 136,
+  "headers": {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMzYsImVtYWlsIjoicHJvZHVjdF90ZXN0MGQwOGMzYzVAZXhhbXBsZS5jb20iLCJleHAiOjE3Njk1Mjc1MzV9.v7nlstCmpBCP8vSZ0XXzdJIwt4Zw8QNv7emmXzRZ1aw"
+  }
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceAuthentication::test_create_product_withouth_auth [2026-01-27 14:25:35] - Create Product without Authentication - PASS
+Details: Expected 401 without token, got 401
+response:{
+  "error": "Token is missing!"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceAuthentication::test_get_products_without_auth [2026-01-27 14:25:35] - Get Products without Authentication - PASS
+Details: Expected 401 without token, got 401
+response:{
+  "error": "Token is missing!"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceAuthentication::test_update_product_without_auth [2026-01-27 14:25:35] - Update Product without Authentication - PASS
+Details: Expected 401 without token, got 401
+response:{
+  "error": "Token is missing!"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceCRUD::test_create_item DEBUG: Product data: {'name': 'test 2026-01-27 14-25-36', 'price': 695.98, 'description': 'Descritivo teste 2026-01-27 14-25-36', 'quantity': 1}
+DEBUG: Response status: 201
+DEBUG: Response body: {
+  "description": "descritivo teste 2026-01-27 14-25-36",
+  "id": 53,
+  "message": "Product created successfully",
+  "price": 695.98,
+  "product_name": "test 2026-01-27 14-25-36",
+  "quantity": 1
+}
+
+[2026-01-27 14:25:36] - Create product item - PASS
+Details: Status:201, Product:test 2026-01-27 14-25-36, User:product_testd79d33f2@example.com
+response:{
+  "description": "descritivo teste 2026-01-27 14-25-36",
+  "id": 53,
+  "message": "Product created successfully",
+  "price": 695.98,
+  "product_name": "test 2026-01-27 14-25-36",
+  "quantity": 1
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceCRUD::test_get_items [2026-01-27 14:25:36] - Get user item list - PASS
+Details: Status: 200, Products found: 2, Target product found: True
+response:{
+  "products": [
+    {
+      "created_at": "Tue, 27 Jan 2026 14:25:36 GMT",
+      "created_by": 137,
+      "description": "descritivo teste 2026-01-27 14-25-36",
+      "id": 53,
+      "name": "test 2026-01-27 14-25-36",
+      "price": 695.98,
+      "quantity": 1
+    },
+    {
+      "created_at": "Tue, 27 Jan 2026 14:25:36 GMT",
+      "created_by": 137,
+      "description": "descritivo teste 2026-01-27 14-25-36",
+      "id": 54,
+      "name": "test 2026-01-27 14-25-36",
+      "price": 981.67,
+      "quantity": 4
+    }
+  ]
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceCRUD::test_update_item [2026-01-27 14:25:36] - Update user item list - PASS
+Details: Product ID: 55, Update status: 200
+response:{
+  "message": "Product updated successfully"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceCRUD::test_delete_item [2026-01-27 14:25:36] - Delete product item - PASS
+Details: Product ID: 56, Delete status: 200
+response:{
+  "deleted_product_id": 56,
+  "message": "Product deleted successfully"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceValidation::test_create_product_invalid_name [2026-01-27 14:25:36] - Create product with invalid data - PASS
+Details: Expected 400 for empty name, got 400
+response:{
+  "error": "missing required field: name"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceValidation::test_create_product_invalid_price [2026-01-27 14:25:36] - Create product with invalid price - PASS
+Details: Expected 400 for negative price, got 400
+response:{
+  "error": "price does not meet requirements",
+  "requirements": {
+    "errors": "Price must be at least 0.0",
+    "max_price": 9999.99,
+    "min_price": 0.0
+  }
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceValidation::test_create_product_invalid_quantity [2026-01-27 14:25:36] - Create product with invalid quantity - PASS
+Details: Expected 400 for negative quantity, got 400
+response:{
+  "error": "Invalid quantity: Quantity must be at least 0"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceValidation::test_create_product_missing_required_fields [2026-01-27 14:25:36] - Create product with missing required fields - PASS
+Details: Expected 400 for missing fields, got 400
+response:{
+  "error": "missing required field: name"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceEdgeCases::test_update_nonexistent_product [2026-01-27 14:25:36] - Update nonexistent product - PASS
+Details: Expected 404 for non-existent product id, got 404
+response:{
+  "error": "product not found or access denied"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceEdgeCases::test_delete_nonexistent_product [2026-01-27 14:25:36] - Delete nonexistent product - PASS
+Details: Expected 404 for non-existent product id, got 404
+response:{
+  "error": "Product not found"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceEdgeCases::test_get_empty_product_list [2026-01-27 14:25:37] - Get product list for user with no products - PASS
+Details: Status: 200, Products count: 0
+response:{
+  "message": "No products found",
+  "products": []
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceEdgeCases::test_create_product_with_max_values [2026-01-27 14:25:37] - Create Product with Maximum Values - PASS
+Details: Status: 201 for max values
+response:{
+  "description": "test description",
+  "id": 57,
+  "message": "Product created successfully",
+  "price": 9999.99,
+  "product_name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "quantity": 9999
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceMultiUser::test_user_cannot_access_other_user_products [2026-01-27 14:25:39] - User Cannot Access Other User's Products - PASS
+Details: User2 products count: 0, User1 product found by User2: False
+response:{
+  "user1_product_id": 58,
+  "user2_products_count": 0
+}
+----------------------------------------
+
+PASSED
+
+============================================================================== 19 passed in 3.94s ===============================================================================
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/product-service$ 

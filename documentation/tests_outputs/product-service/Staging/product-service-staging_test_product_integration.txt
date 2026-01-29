@@ -1,0 +1,235 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging  exec product-service bash
+root@3b559722c801:/product-service# python -m pytest products_tests/test_product_integration.py -v -s
+============================================================================== test session starts ==============================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /product-service
+collecting ... Environment Variables:
+FLASK_RUN_PORT: 4002
+STAGING_PRODUCT_PORT: None
+PRODUCT_SERVICE_PORT: None
+Inside Docker container? True
+Using FLASK_RUN_PORT:4002
+Checking if Product Service is up
+Connection estabilished, status code: 200
+response: {
+  "status": "healthy"
+}
+
+collected 19 items                                                                                                                                                              
+
+products_tests/test_product_integration.py::TestProductServiceHealth::test_health_check_simple [2026-01-28 18:45:38] - Simple Health Check | Product Service - PASS
+Details: Status code: 200
+response:{
+  "status": "healthy"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceHealth::test_health_check_detailed [2026-01-28 18:45:38] - Detailed Health Check | Product Service - PASS
+Details: Status: healthy, DB Connection: True, DB Query: True
+response:{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "product-service",
+  "status": "healthy",
+  "timestamp": "2026-01-28T18:45:38.759534"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceAuthentication::test_create_user_test [2026-01-28 18:45:39] - Registration and login of test user for product test - PASS
+Details: Email:product_testbc1d1e86@example.com, User test ID:27
+response:{
+  "email": "product_testbc1d1e86@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyNywiZW1haWwiOiJwcm9kdWN0X3Rlc3RiYzFkMWU4NkBleGFtcGxlLmNvbSIsImV4cCI6MTc2OTYyOTUzOX0.2VaAoLwFltMlFoFrPr4aD1lJNWl3p7MlzhSgbpp4Rfk",
+  "user_id": 27,
+  "headers": {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyNywiZW1haWwiOiJwcm9kdWN0X3Rlc3RiYzFkMWU4NkBleGFtcGxlLmNvbSIsImV4cCI6MTc2OTYyOTUzOX0.2VaAoLwFltMlFoFrPr4aD1lJNWl3p7MlzhSgbpp4Rfk"
+  }
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceAuthentication::test_create_product_withouth_auth [2026-01-28 18:45:39] - Create Product without Authentication - PASS
+Details: Expected 401 without token, got 401
+response:{
+  "error": "Token is missing!"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceAuthentication::test_get_products_without_auth [2026-01-28 18:45:39] - Get Products without Authentication - PASS
+Details: Expected 401 without token, got 401
+response:{
+  "error": "Token is missing!"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceAuthentication::test_update_product_without_auth [2026-01-28 18:45:39] - Update Product without Authentication - PASS
+Details: Expected 401 without token, got 401
+response:{
+  "error": "Token is missing!"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceCRUD::test_create_item DEBUG: Product data: {'name': 'test 2026-01-28 18-45-40', 'price': 297.62, 'description': 'Descritivo teste 2026-01-28 18-45-40', 'quantity': 6}
+DEBUG: Response status: 201
+DEBUG: Response body: {
+  "description": "descritivo teste 2026-01-28 18-45-40",
+  "id": 6,
+  "message": "Product created successfully",
+  "price": 297.62,
+  "product_name": "test 2026-01-28 18-45-40",
+  "quantity": 6
+}
+
+[2026-01-28 18:45:40] - Create product item - PASS
+Details: Status:201, Product:test 2026-01-28 18-45-40, User:product_test506b7dc1@example.com
+response:{
+  "description": "descritivo teste 2026-01-28 18-45-40",
+  "id": 6,
+  "message": "Product created successfully",
+  "price": 297.62,
+  "product_name": "test 2026-01-28 18-45-40",
+  "quantity": 6
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceCRUD::test_get_items [2026-01-28 18:45:40] - Get user item list - PASS
+Details: Status: 200, Products found: 2, Target product found: True
+response:{
+  "products": [
+    {
+      "created_at": "Wed, 28 Jan 2026 18:45:40 GMT",
+      "created_by": 28,
+      "description": "descritivo teste 2026-01-28 18-45-40",
+      "id": 6,
+      "name": "test 2026-01-28 18-45-40",
+      "price": 297.62,
+      "quantity": 6
+    },
+    {
+      "created_at": "Wed, 28 Jan 2026 18:45:40 GMT",
+      "created_by": 28,
+      "description": "descritivo teste 2026-01-28 18-45-40",
+      "id": 7,
+      "name": "test 2026-01-28 18-45-40",
+      "price": 409.43,
+      "quantity": 5
+    }
+  ]
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceCRUD::test_update_item [2026-01-28 18:45:40] - Update user item list - PASS
+Details: Product ID: 8, Update status: 200
+response:{
+  "message": "Product updated successfully"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceCRUD::test_delete_item [2026-01-28 18:45:40] - Delete product item - PASS
+Details: Product ID: 9, Delete status: 200
+response:{
+  "deleted_product_id": 9,
+  "message": "Product deleted successfully"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceValidation::test_create_product_invalid_name [2026-01-28 18:45:40] - Create product with invalid data - PASS
+Details: Expected 400 for empty name, got 400
+response:{
+  "error": "missing required field: Product name cannot be empty"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceValidation::test_create_product_invalid_price [2026-01-28 18:45:40] - Create product with invalid price - PASS
+Details: Expected 400 for negative price, got 400
+response:{
+  "error": "price does not meet requirements",
+  "requirements": {
+    "errors": "Price must be at least 0.0",
+    "max_price": 9999.99,
+    "min_price": 0.0
+  }
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceValidation::test_create_product_invalid_quantity [2026-01-28 18:45:40] - Create product with invalid quantity - PASS
+Details: Expected 400 for negative quantity, got 400
+response:{
+  "error": "Invalid quantity: Quantity must be at least 0"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceValidation::test_create_product_missing_required_fields [2026-01-28 18:45:40] - Create product with missing required fields - PASS
+Details: Expected 400 for missing fields, got 400
+response:{
+  "error": "missing required field: name"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceEdgeCases::test_update_nonexistent_product [2026-01-28 18:45:40] - Update nonexistent product - PASS
+Details: Expected 404 for non-existent product id, got 404
+response:{
+  "error": "product not found or access denied"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceEdgeCases::test_delete_nonexistent_product [2026-01-28 18:45:40] - Delete nonexistent product - PASS
+Details: Expected 404 for non-existent product id, got 404
+response:{
+  "error": "Product not found"
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceEdgeCases::test_get_empty_product_list [2026-01-28 18:45:41] - Get product list for user with no products - PASS
+Details: Status: 200, Products count: 0
+response:{
+  "message": "No products found",
+  "products": []
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceEdgeCases::test_create_product_with_max_values [2026-01-28 18:45:41] - Create Product with Maximum Values - PASS
+Details: Status: 201 for max values
+response:{
+  "description": "test description",
+  "id": 10,
+  "message": "Product created successfully",
+  "price": 9999.99,
+  "product_name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "quantity": 9999
+}
+----------------------------------------
+
+PASSED
+products_tests/test_product_integration.py::TestProductServiceMultiUser::test_user_cannot_access_other_user_products [2026-01-28 18:45:42] - User Cannot Access Other User's Products - PASS
+Details: User2 products count: 0, User1 product found by User2: False
+response:{
+  "user1_product_id": 11,
+  "user2_products_count": 0
+}
+----------------------------------------
+
+PASSED
+
+============================================================================== 19 passed in 3.95s ===============================================================================
+root@3b559722c801:/product-service# 

@@ -1,0 +1,11 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2026-01-19 15:56:39
+Projeto:WebApp Final Project - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2026-01-19 15:56:39] - Registration with weak password - FAIL
+Details: Exception: 'TestHelpers' object has no attribute 'registrate_user'
+----------------------------------------
