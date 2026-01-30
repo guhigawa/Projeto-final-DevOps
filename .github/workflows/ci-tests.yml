@@ -2,9 +2,11 @@ name: Final-Project CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:
+    
 
 env:
   PYTHON_VERSION: '3.10'
