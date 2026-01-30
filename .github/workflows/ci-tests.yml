@@ -148,14 +148,14 @@ jobs:
         env:
           USER_SERVICE_PORT: ${{ env.USER_SERVICE_PORT }}
         run: |
-          python3 -m pytest tests/ -v --cov=app --cov-report=xml:coverage.xml --cov-report=htmlcov/ --cov-report=term 
+          python3 -m pytest tests/ -v --cov=app --cov-report=xml:user-coverage.xml --cov-report=html:user-htmlcov/ --cov-report=term 
           
       - name: Run product-service tests with coverage
         working-directory: ./product-service
         env:
           PRODUCT_SERVICE_PORT: ${{ env.PRODUCT_SERVICE_PORT }}
         run: |
-          python3 -m pytest products_tests/test_product_unit.py && python3 -m pytest products_tests/ -v --cov=product_app --cov-report=xml:coverage.xml --cov-report=html:htmlcov/ --cov-report=term
+          python3 -m pytest products_tests/ -v --cov=product_app --cov-report=xml:product-coverage.xml --cov-report=html:product-htmlcov/ --cov-report=term
       
       - name: Stop Flask services  
         if: always()
@@ -173,10 +173,10 @@ jobs:
           path: |
             user-service/tests/evidence/
             product-service/products_tests/products_evidence/
-            user-service/coverage.xml
-            product-service/coverage.xml
-            user-service/htmlcov/
-            product-service/htmlcov/
+            user-service/user-coverage.xml
+            product-service/product-coverage.xml
+            user-service/user-htmlcov/
+            product-service/product-htmlcov/
           retention-days: 14
       
       - name: Generate test summary
@@ -344,7 +344,7 @@ jobs:
               sys.exit(1)
           "
 
-          echo "4. Service communication test :"#Esse trecho esta repetindo?
+          echo "4. Service communication test inside product-service container:"
           docker-compose -f docker-compose.staging.yml exec product-service python3 -c "
           import os
           import requests
