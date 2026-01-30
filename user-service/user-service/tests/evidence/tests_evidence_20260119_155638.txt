@@ -1,0 +1,17 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2026-01-19 15:56:38
+Projeto:WebApp Final Project - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2026-01-19 15:56:38] - Get User by ID - FAIL
+Details: Status: 401, User ID: None
+response:{
+  "error": "Token has been invalidated. Please login again."
+}
+----------------------------------------
+[2026-01-19 15:56:38] - Get User by ID - FAIL
+Details: Exception: assert False
+----------------------------------------

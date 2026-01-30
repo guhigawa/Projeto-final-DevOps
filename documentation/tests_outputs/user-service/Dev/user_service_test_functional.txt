@@ -1,0 +1,41 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/user-service$ python -m pytest tests/test_functional.py -v -s
+============================================================================== test session starts ==============================================================================
+platform linux -- Python 3.10.12, pytest-8.4.2, pluggy-1.6.0 -- /home/ubuntu/Downloads/Projeto_final/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/ubuntu/Downloads/Projeto_final/user-service
+collected 4 items                                                                                                                                                               
+
+tests/test_functional.py::TestUserServiceFunctional::test_complete_user_lifecycle Testing with email: func_test_1768845037538@example.com
+Register response: 201
+login response: 200
+Profile response: 200
+Update response: 200
+Logout response: 200
+Profile after logout response: 401
+Functional user lifecycle test completed successfully
+PASSED
+tests/test_functional.py::TestUserServiceFunctional::test_registration_with_weak_password short, response status: 400
+noupper123, response status: 400
+NOLOWER123, response status: 400
+NoNumber, response status: 400
+, response status: 400
+  , response status: 400
+NoSpecial123, response status: 400
+PASSED
+tests/test_functional.py::TestUserServiceFunctional::test_registration_with_invalid_email Testing invalid_email: 'plainaddress', response status: 400
+Testing invalid_email: '@domain.com', response status: 400
+Testing invalid_email: 'user@.com', response status: 400
+Testing invalid_email: 'user@domain.', response status: 400
+Testing invalid_email: '', response status: 400
+PASSED
+tests/test_functional.py::TestUserServiceFunctional::test_rapid_registration_attempts Testing rapid registration attempts to check rate limiting
+Attempt 1: Registration succeeded
+Attempt 2: Registration succeeded
+Attempt 3: Registration succeeded
+Attempt 4: Registration succeeded
+Attempt 5: Registration succeeded
+Total successful registrations out of 5 attempts: 5
+PASSED
+
+=============================================================================== 4 passed in 5.97s ===============================================================================
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/user-service$ 

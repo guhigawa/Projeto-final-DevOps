@@ -5,6 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from pymysql import Error
 from dotenv import dotenv_values
 from pathlib import Path
+from validators import Validators
 
 def get_port():
     port = os.environ.get('FLASK_RUN_PORT','3001')
@@ -138,18 +139,21 @@ def cleanup_expired_tokens():
 @app.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
-    logging.info("Registration attempt", extra={"email": data.get("email") if data else "No data"})
 
-    if not data or not data.get("email") or not data.get("password"):
-        logging.warning("Registration failed - missing fields")
-        return jsonify({"error": "Email and password are required",
-        "example_request": {"email":"userexample@email.com",
-                            "password":"securepassword123"
-                            }
-                        }), 400 #400 = Bad Request(missing or invalid data)
+    #Concealing password values from logs
+    log_data = {key:value for key, value in data.items()} if data else {} #Creating copy from data to not erase original 
+    if "password" in log_data:
+        log_data["password"] = "*" * 6
+    logging.info("Registration attempt", extra={"data": log_data})
+
+    #Input data validation
+    is_valid, validation_response = Validators.validate_registration_data(data)
+    if not is_valid:
+        logging.warning(f"Registration failed: {validation_response}")
+        return jsonify(validation_response), 400 
     
-    email = data["email"]
-    password = data["password"] 
+    email = validation_response["email"]
+    password = validation_response["password"]
 
     connection = get_db_connection()
     if not connection:
@@ -220,6 +224,9 @@ def login():
             "supported_auth_methods": ["basic_auth","json"]}), 400 #400 = Bad Request(no valid authentication method)
     
     logging.info("Login attempt", extra={"email": user_email, "auth_method": auth_method})
+
+    if 'user_email' in locals():
+        user_email = Validators.sanitize_input(user_email)
 
     if not user_email or not password:
         logging.warning("Login failed - missing credentials")
@@ -303,9 +310,22 @@ def update_profile(current_user_id):
     email = data.get("email")
     password = data.get("password")
 
+    if email:
+        is_valid_email, email_result = Validators.validate_email(email)
+        if not is_valid_email:
+            logging.warning("Profile update failed - invalid email", extra={"user_id": current_user_id, "email": email})
+            return jsonify({"error": f"Invalid email: {email_result}"}), 400
+        email = Validators.sanitize_input(email).lower() 
+    
+    if password:
+        is_valid_password, password_result = Validators.validate_password(password)
+        if not is_valid_password:
+            logging.warning("Profile update failed - invalid password", extra={"user_id": current_user_id})
+            return jsonify({"error": f"Invalid password: {password_result}, minimun lenght {Validators.MIN_PASSWORD_LENGTH}, maximum lenght {Validators.MAX_PASSWORD_LENGTH}"}), 400
+
     if not email and not password:
-        logging.warning("Profile update failed - no fields to update", extra={"user_id": current_user_id})
-        return jsonify({"error": "At least one field (email or password) must be provided"}), 400
+        logging.warning("Profile update failed - no valid fields to update", extra={"user_id": current_user_id})
+        return jsonify({"error": "No valid fields to update"}), 400
 
     connection = get_db_connection()
 
@@ -324,7 +344,7 @@ def update_profile(current_user_id):
             connection.commit()
 
         logging.info("Profile updated successfully", extra={"user_id": current_user_id})
-        return jsonify({"message": "Profile updated successfully"})
+        return jsonify({"message": "Profile updated successfully"}), 200
 
     except Exception as e:
         logging.error(f"Profile update error", extra={"user_id": current_user_id, "error": str(e)})
@@ -379,7 +399,7 @@ def logout():
 
     if not auth_header.startswith("Bearer "):
         logging.warning("Logout attempt with invalid authorization format")
-        return jsonify({"error": "Bearer toke required"}), 401 #401 = Unauthorized
+        return jsonify({"error": "Bearer token required"}), 401 #401 = Unauthorized
     
     #Extracting token
     token = auth_header.split(" ")[1]

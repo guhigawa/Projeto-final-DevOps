@@ -1,0 +1,16 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2026-01-19 16:01:33
+Projeto:WebApp Final Project - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2026-01-19 16:01:34] - User Login Test - PASS
+Details: Email: test_1768838493@example.com, Status Code: 200, User ID: 57
+response:{
+  "email": "test_1768838493@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo1NywiZW1haWwiOiJ0ZXN0XzE3Njg4Mzg0OTNAZXhhbXBsZS5jb20iLCJleHAiOjE3Njg4NDIwOTR9.MH7e0urFNRRpCF5JDL52fvOHgEaph8cXb4kXe5RNKdA",
+  "user_id": 57
+}
+----------------------------------------

@@ -1,0 +1,39 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging ps -a
+NAME                                    IMAGE                           COMMAND                  SERVICE                 CREATED         STATUS                   PORTS
+projeto_final-mysql-staging-product-1   mysql:8.0                       "docker-entrypoint.s…"   mysql-staging-product   3 minutes ago   Up 3 minutes (healthy)   3306/tcp, 33060/tcp
+projeto_final-mysql-staging-user-1      mysql:8.0                       "docker-entrypoint.s…"   mysql-staging-user      3 minutes ago   Up 3 minutes (healthy)   3306/tcp, 33060/tcp
+projeto_final-product-service-1         projeto_final-product-service   "python3 product_app…"   product-service         3 minutes ago   Up 3 minutes (healthy)   3002/tcp, 0.0.0.0:4002->4002/tcp
+projeto_final-user-service-1            projeto_final-user-service      "python3 app.py"         user-service            3 minutes ago   Up 3 minutes (healthy)   3001/tcp, 0.0.0.0:4001->4001/tcp
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging  exec user-service bash
+root@82650641dfce:/user-service# python -m pytest tests/test_unit.py -v -s
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /user-service
+collected 20 items                                                                                                                                                                              
+
+tests/test_unit.py::TestTokenRequiredDecorator::test_token_required_missing_token PASSED
+tests/test_unit.py::TestTokenRequiredDecorator::test_token_required_valid_token PASSED
+tests/test_unit.py::TestTokenRequiredDecorator::test_token_required_expired_token PASSED
+tests/test_unit.py::TestTokenRequiredDecorator::test_token_required_invalid_token PASSED
+tests/test_unit.py::TestGetDbConnection::test_get_db_connection_success PASSED
+tests/test_unit.py::TestGetDbConnection::test_get_db_connection_failure PASSED
+tests/test_unit.py::TestValidatorsIntegration::test_app_imports_validators PASSED
+tests/test_unit.py::TestAppRoutesWithMocks::test_register_route_success PASSED
+tests/test_unit.py::TestAppRoutesWithMocks::test_register_route_validation_failure PASSED
+tests/test_unit.py::TestAppRoutesWithMocks::test_login_route_success PASSED
+tests/test_unit.py::TestAppRoutesWithMocks::test_get_profile_route PASSED
+tests/test_unit.py::TestAppRoutesWithMocks::test_get_profile_by_id_route PASSED
+tests/test_unit.py::TestAppRoutesWithMocks::test_get_profile_by_id_unauthorized PASSED
+tests/test_unit.py::TestAppRoutesWithMocks::test_get_profile_route_user_id_not_found PASSED
+tests/test_unit.py::TestAppRoutesWithMocks::test_update_route_success PASSED
+tests/test_unit.py::TestAppRoutesWithMocks::test_logout_route_success PASSED
+tests/test_unit.py::TestAppRoutesWithMocks::test_logout_without_token PASSED
+tests/test_unit.py::TestHealthEndpoints::test_health_check PASSED
+tests/test_unit.py::TestHealthEndpoints::test_health_check_detailed PASSED
+tests/test_unit.py::TestHealthEndpoints::test_metrics_endpoint PASSED
+
+====================================================================================== 20 passed in 0.35s =======================================================================================
+root@82650641dfce:/user-service# 

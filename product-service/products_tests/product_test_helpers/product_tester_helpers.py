@@ -11,10 +11,10 @@ class TestProductHelpers:
 
     def generate_unique_object(self):
         timestamp = int(time.time())
-        formated_date = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+        formated_date = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H-%M-%S")
         raw_price = uniform(100.00, 3000.00)
         price = round(raw_price,2)
-        name = f"test_{formated_date}"
+        name = f"test {formated_date}"
         description = f"Descritivo teste {formated_date}" 
         quantity = randrange(1,10)
         item = {"name":name,"price":price,"description":description,"quantity":quantity}

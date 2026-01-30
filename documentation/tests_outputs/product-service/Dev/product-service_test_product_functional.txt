@@ -1,0 +1,192 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/product-service$ python -m pytest products_tests/test_product_functional.py -v -s
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.10.12, pytest-8.4.2, pluggy-1.6.0 -- /home/ubuntu/Downloads/Projeto_final/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/ubuntu/Downloads/Projeto_final/product-service
+collected 7 items                                                                                                                                                                               
+
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_complete_product_lifecycle 
+============================================================
+Starting functional test
+============================================================
+Service at http://localhost:3002 is healthy
+Service at http://localhost:3001 is healthy
+Test started at: 2026-01-28 15:08:00.875099
+
+1. Creating test user
+   User created: func_product_40d2ad6c@example.com
+
+2. Creating product
+Create response: 201
+Product created with ID: 98
+
+3. Getting product list
+Product found in list: functional product 1 at 2026-01-28 15-08-02
+
+4. Updating product
+Product updated successfully
+
+5. Verifying update
+   Update verified: updated - functional product 1 at 2026-01-28 15-08-02 - $18.15
+
+6. Deleting product
+Product deleted successfully
+
+7. Verifying deletion
+Deletion verified - product no longer in list
+
+ Complete product lifecycle test PASSED
+Duration: 1.28 seconds
+Steps: User Creation → Product Creation → Read → Update → Delete → Verification
+PASSED
+Completed test
+------------------------------------------------------------
+
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_multiple_products_management 
+============================================================
+Starting functional test
+============================================================
+Service at http://localhost:3002 is healthy
+Service at http://localhost:3001 is healthy
+Testing multiple products management
+   Created product #1: ID=99, Name='functional product 1 at 2026-01-28 15-08-03'
+   Created product #2: ID=100, Name='functional product 2 at 2026-01-28 15-08-03'
+   Created product #3: ID=101, Name='functional product 3 at 2026-01-28 15-08-03'
+   Retrieved 3 products
+Updated product ID 100
+   Deleted product #1: ID=99
+   Deleted product #2: ID=100
+   Deleted product #3: ID=101
+
+ Multiple products management test PASSED
+Created: 3 products
+Updated: 1 product
+Deleted: 3 products
+PASSED
+Completed test
+------------------------------------------------------------
+
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_product_validation_scenarios 
+============================================================
+Starting functional test
+============================================================
+Service at http://localhost:3002 is healthy
+Service at http://localhost:3001 is healthy
+Testing product validation scenarios
+ Validation test #1: 'Empty product name' correctly rejected
+ Validation test #2: 'Negative price' correctly rejected
+ Validation test #3: 'Price too high' correctly rejected
+ Validation test #4: 'Negative quantity' correctly rejected
+ Validation test #5: 'Quantity too high' correctly rejected
+ Validation test #6: 'Missing price' correctly rejected
+ Validation test #7: 'Missing name' correctly rejected
+ Validation test #8: 'Invalid price type' correctly rejected
+
+ All validation scenarios test PASSED
+   Tested: 8 validation scenarios
+PASSED
+Completed test
+------------------------------------------------------------
+
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_edge_cases 
+============================================================
+Starting functional test
+============================================================
+Service at http://localhost:3002 is healthy
+Service at http://localhost:3001 is healthy
+Testing edge cases and boundary values
+
+1. Testing zero price...
+Zero price product created: ID=102
+
+2. Testing zero quantity...
+Zero quantity product created
+
+3. Testing maximum allowed values...
+Maximum values product created: ID=104
+
+ Edge cases test PASSED
+Tested: Zero price, Zero quantity, Maximum values
+PASSED
+Completed test
+------------------------------------------------------------
+
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_user_isolation_security 
+============================================================
+Starting functional test
+============================================================
+Service at http://localhost:3002 is healthy
+Service at http://localhost:3001 is healthy
+Testing user isolation and security
+
+1. Creating two test users
+User 1: func_product_58bb13cf@example.com
+User 2: func_product_dcaaf803@example.com
+
+2. User 1 creates a product
+User 1 created product: ID=105
+
+3. User 2 tries to list products
+User 2 cannot see User 1's product
+
+4. User 2 tries to update User 1's product
+User 2 cannot update User 1's product
+
+5. User 2 tries to delete User 1's product
+User 2 cannot delete User 1's product
+
+6. Verifying User 1's product is intact
+User 1's product is still intact: functional product 1 at 2026-01-28 15-08-08
+
+ User isolation and security test PASSED
+Tested: Data isolation, Update prevention, Delete prevention
+PASSED
+Completed test
+------------------------------------------------------------
+
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_basic_performance 
+============================================================
+Starting functional test
+============================================================
+Service at http://localhost:3002 is healthy
+Service at http://localhost:3001 is healthy
+Testing basic performance with sequential operations
+
+Performance Results:
+Total operations: 12
+Successful operations: 12 (100.0%)
+Total test duration: 0.08 seconds
+Average create time: 0.007 seconds
+Operations per second: 152.32
+
+ Basic performance test PASSED
+PASSED
+Completed test
+------------------------------------------------------------
+
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_service_resilience 
+============================================================
+Starting functional test
+============================================================
+Service at http://localhost:3002 is healthy
+Service at http://localhost:3001 is healthy
+Testing service resilience
+
+1. Testing with invalid token
+   ✓ Invalid token correctly rejected
+
+2. Testing with malformed JSON
+ Malformed JSON correctly rejected
+
+3. Testing with very large request
+Oversized request correctly rejected
+
+ Service resilience test PASSED
+ Tested: Invalid tokens, Malformed JSON, Oversized requests
+PASSED
+Completed test
+------------------------------------------------------------
+
+
+====================================================================================== 7 passed in 10.30s =======================================================================================
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/product-service$ 
