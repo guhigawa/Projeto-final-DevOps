@@ -235,13 +235,15 @@ jobs:
 
       - name: Check environment secrets availability
         run: |
+          # Check STAGING_JWT_SECRET
           if [ -z "${{ secrets.STAGING_JWT_SECRET }}" ]; then 
             echo "STAGING_JWT_SECRET not available, using fallback"
             echo "STAGING_SECRET_KEY=staging_fallback_key_for_pr__$(date +%s)" >> $GITHUB_ENV
           else
             echo "STAGING_JWT_SECRET is available"
-          fi"
+          fi
           
+          # Check STAGING_USER_DB_PASSWORD
           if [ -z "${{ secrets.STAGING_USER_DB_PASSWORD }}" ]; then
             echo "STAGING_USER_DB_PASSWORD not available, using fallback"
             echo "STAGING_USER_MYSQL_PASSWORD=staging_user_pass_123" >> $GITHUB_ENV
@@ -249,6 +251,7 @@ jobs:
             echo "STAGING_USER_DB_PASSWORD is available"
           fi
           
+           # Check STAGING_PRODUCT_DB_PASSWORD
           if [ -z "${{ secrets.STAGING_PRODUCT_DB_PASSWORD }}" ]; then
             echo "STAGING_PRODUCT_DB_PASSWORD not available, using fallback"
             echo "STAGING_PRODUCT_MYSQL_PASSWORD=staging_product_pass_123" >> $GITHUB_ENV
@@ -256,12 +259,14 @@ jobs:
             echo "STAGING_PRODUCT_DB_PASSWORD is available"
           fi
 
+          echo "Secret check completed"
+
       - name: Deploy staging environment with docker-compose
         env:
-          STAGING_SECRET_KEY: ${{ secrets.STAGING_JWT_SECRET || env.STAGING_SECRET_KEY || 'staging_fallback_key_default' }}
-          STAGING_USER_MYSQL_PASSWORD: ${{ secrets.STAGING_USER_DB_PASSWORD || env.STAGING_USER_MYSQL_PASSWORD || 'staging_user_pass_123' }}
-          STAGING_PRODUCT_MYSQL_PASSWORD: ${{ secrets.STAGING_PRODUCT_DB_PASSWORD || env.STAGING_PRODUCT_MYSQL_PASSWORD || 'staging_product_pass_123' }}
-          STAGING_DB_ROOT_PASSWORD: ${{ secrets.STAGING_DB_ROOT_PASSWORD || 'staging_root_pass_123' }}
+          STAGING_SECRET_KEY: ${{ secrets.STAGING_JWT_SECRET || env.STAGING_SECRET_KEY }}
+          STAGING_USER_MYSQL_PASSWORD: ${{ secrets.STAGING_USER_DB_PASSWORD || env.STAGING_USER_MYSQL_PASSWORD }}
+          STAGING_PRODUCT_MYSQL_PASSWORD: ${{ secrets.STAGING_PRODUCT_DB_PASSWORD || env.STAGING_PRODUCT_MYSQL_PASSWORD }}
+          STAGING_DB_ROOT_PASSWORD: ${{ secrets.STAGING_DB_ROOT_PASSWORD || env.STAGING_DB_ROOT_PASSWORD || 'staging_root_pass_123' }}
           STAGING_USER_PORT: ${{ env.STAGING_USER_PORT }}
           STAGING_PRODUCT_PORT: ${{ env.STAGING_PRODUCT_PORT }}
           STAGING_MYSQL_PORT: ${{ env.STAGING_MYSQL_PORT }}
