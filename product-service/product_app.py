@@ -5,9 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from pymysql import Error
 from dotenv import dotenv_values
 from pathlib import Path
-
-#import importlib
-#importlib.reload(os)
+from product_validator import ProductValidator
 
 def get_port():
     port = os.environ.get('FLASK_RUN_PORT','3002')
@@ -99,26 +97,15 @@ def create_product(current_user_id):
     data = request.get_json()
     logging.info("product creation request received", extra={"product_name" : data.get("name"),"price":data.get("price") if data else "No data"})
     
-    if not data or not data.get("name") or not data.get("price"):
-        logging.warning("Product creation failed - missing fields")
-        return jsonify({"error": "Name and price are required",
-                        "example_request":{"name":"Test Product",
-                                           "price": "9.99",
-                                           "description": "optional description",
-                                           "quantity":"1 (if not provided, defaults to 0)"}
-                        }), 400
+    is_valid, validation_response = ProductValidator.validate_registration_object(data)
+    if not is_valid:
+        logging.warning(f"Product registration failed:{validation_response}")
+        return jsonify(validation_response), 400
     
-    try:
-        name = str(data["name"])
-        price = float(data["price"])
-        if price <= 0:
-            return jsonify({"error": "Price must bigger than 0"}), 400
-        quantity = int(data.get("quantity", 0))
-        if quantity < 0:
-            return jsonify({"error": "Quantity cannot be negative"}), 400
-    except (ValueError, TypeError) as e:
-        logging.warning("Product creation failed - invalid data types")
-        return jsonify({"error": f"Invalid data format: {str(e)}"}), 400
+    name = validation_response["product_name"]
+    price = validation_response["price"]
+    quantity = validation_response.get("quantity",0)
+    description = validation_response.get("description","")
 
     connection = get_db_connection()
     if not connection:
@@ -128,7 +115,7 @@ def create_product(current_user_id):
     try:
         with connection.cursor() as cursor:
             cursor.execute("INSERT INTO items (name, price,quantity, description, created_by) VALUES (%s, %s, %s, %s, %s)",
-                           (name, price, quantity, data.get("description"), current_user_id))
+                           (name, price, quantity, description, current_user_id))
             
             id = cursor.lastrowid
             connection.commit()
@@ -136,7 +123,9 @@ def create_product(current_user_id):
             return jsonify({"message": "Product created successfully", 
                             "id": id,
                             "product_name":name,
-                            "description": data.get("description")
+                            "description": description,
+                            "quantity": quantity,
+                            "price": price
                             }), 201
         
     except Error as e:
@@ -205,37 +194,37 @@ def update_product(current_user_id):
                       }), 400
     
     target_id = data["id"]
-    new_product_name = None
-    product_name = data.get("name")
-    if product_name is not None:
-        new_product_name = str(product_name).strip()
-    
+    new_product_name = data.get("name")
     new_price = data.get("price")
-    if new_price is not None:
-        try:
-            price_value = float(new_price)
-            if price_value <= 0:
-                return jsonify({"error": "Price must be greater than 0"}), 400
-        except (ValueError, TypeError) as e:
-            logging.warning("Product update failed - invalid price format", extra={"product_id": target_id})
-            return jsonify({"error": f"Invalid price format: {str(e)}"}), 400
-        
-    new_description = data.get("description")
     new_quantity = data.get("quantity")
+    new_description = data.get("description")
 
-    if new_quantity is not None:
-        try:
-            quantity_value = int(new_quantity)
-            if quantity_value < 0:
-                return jsonify({"error": "Quantity cannot be negative"}), 400
-        except (ValueError, TypeError) as e:
-            logging.warning("Product update failed - invalid quantity format", extra={"product_id": target_id})
-            return jsonify({"error":"invalid format"})
-        
-    if not any([new_product_name, new_price, new_description, new_quantity]):
-        logging.warning("Product update failed - no fields to update", extra={"product_id": data["id"]})
-        return jsonify({"error": "At least one field (name, price, description, quantity) must be provided for update"}), 400
+    if new_product_name:
+        is_valid_name, name_result = ProductValidator.validate_product(new_product_name)
+        if not is_valid_name:
+            logging.warning("Product name update failed - invalid product name", extra={"user_id": current_user_id, "product name": new_product_name})
+            return jsonify({"error":f"Invalid product name: {name_result}"}), 400
+        new_product_name = ProductValidator.sanitize_input(new_product_name).lower()
     
+    if new_price:
+        is_valid_price, price_result = ProductValidator.validate_product_price(new_price)
+        if not is_valid_price:
+            logging.warning("Product price update failed - invalid price", extra={"user_id": current_user_id, "product price": new_price})
+            return jsonify({"error":f"Invalid price: {price_result}"}), 400
+    
+    if new_quantity:
+        is_valid_quantity, quantity_result = ProductValidator.validate_product_quantity(new_quantity)
+        if not is_valid_quantity:
+            logging.warning("Product quantity update failed - invalid quantity", extra={"user_id": current_user_id, "product quantity": new_quantity})
+            return jsonify({"error":f"Invalid quantity: {quantity_result}"}), 400
+        
+    if new_description:
+        is_valid_description, description_result = ProductValidator.validate_product_description(new_description)
+        if not is_valid_description:
+            logging.warning("Product description update failed - invalid description", extra={"user_id": current_user_id, "product description": new_description})
+            return jsonify({"error":f"Invalid quantity: {description_result}"}), 400
+        new_description = ProductValidator.sanitize_input(description_result)
+
 
     connection = get_db_connection()
 

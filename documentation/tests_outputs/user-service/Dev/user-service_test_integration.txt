@@ -1,0 +1,149 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/user-service$ python -m pytest tests/test_integration.py  -v -s
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.10.12, pytest-8.4.2, pluggy-1.6.0 -- /home/ubuntu/Downloads/Projeto_final/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/ubuntu/Downloads/Projeto_final/user-service
+collecting ... Checking if User Service is up
+Connection estabilished, status code: 200
+response: {
+  "status": "healthy"
+}
+
+collected 11 items                                                                                                                                                                              
+
+tests/test_integration.py::TestUserService::test_health_check_detailed [2026-01-26 16:47:10] - Detailed Health Check - PASS
+Details: Status: healthy, DB Connection: True, DB Query: True
+response:{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "user-service",
+  "status": "healthy",
+  "timestamp": "2026-01-26T16:47:10.441295"
+}
+----------------------------------------
+
+PASSED
+tests/test_integration.py::TestUserService::test_health_check_simple [2026-01-26 16:47:11] - Simple health check - PASS
+Details: Status code:200
+response:{
+  "status": "healthy"
+}
+----------------------------------------
+
+PASSED
+tests/test_integration.py::TestUserServiceAuthentication::test_user_registration [2026-01-26 16:47:11] - User registration test - PASS
+Details: Email: test_1769446031@example.com, Status Code: 201, User ID: 107
+response:{
+  "email": "test_1769446031@example.com",
+  "message": "User registered successfully",
+  "user_id": 107
+}
+----------------------------------------
+
+PASSED
+tests/test_integration.py::TestUserServiceAuthentication::test_duplicate_user_registration [2026-01-26 16:47:11] - Duplicate User Registration Test - PASS
+Details: First Registration Status: 409, Second Registration Status: 409
+response:{
+  "error": "User already exists"
+}
+----------------------------------------
+
+PASSED
+tests/test_integration.py::TestUserServiceAuthentication::test_user_login [2026-01-26 16:47:11] - User Login Test - PASS
+Details: Email: test_1769446031@example.com, Status Code: 200, User ID: 107
+response:{
+  "email": "test_1769446031@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMDcsImVtYWlsIjoidGVzdF8xNzY5NDQ2MDMxQGV4YW1wbGUuY29tIiwiZXhwIjoxNzY5NDQ5NjMxfQ.axws0dSHo9KCV5hGsBnUBmM3n4YQci5SDej3RsTPNNk",
+  "user_id": 107
+}
+----------------------------------------
+
+PASSED
+tests/test_integration.py::TestUserServiceAuthentication::test_user_login_wrong_password [2026-01-26 16:47:11] - Login with wrong password - PASS
+Details: Expected 401, got 401
+response:{
+  "error": "Invalid credentials"
+}
+----------------------------------------
+
+PASSED
+tests/test_integration.py::TestUserServiceProfile::test_update_profile actual email: test_1769446031@example.com
+new email: updatetest_1769446031@example.com
+Update profile response status code: 200
+email in profile: updatetest_1769446031@example.com
+expected email: updatetest_1769446031@example.com
+[2026-01-26 16:47:11] - Update User Profile Test - PASS
+Details: Status Code: 200, New Email: updatetest_1769446031@example.com, Email in Profile: updatetest_1769446031@example.com
+response:{
+  "update_response": {
+    "message": "Profile updated successfully"
+  },
+  "profile_data": {
+    "email": "updatetest_1769446031@example.com",
+    "user_id": 107
+  }
+}
+----------------------------------------
+
+PASSED
+tests/test_integration.py::TestUserServiceProfile::test_get_user_by_id [2026-01-26 16:47:12] - Get User by ID Test - PASS
+Details: Status: 200, User ID: 108
+response:{
+  "email": "test_1769446031@example.com",
+  "user_id": 108
+}
+----------------------------------------
+
+PASSED
+tests/test_integration.py::TestUserServiceProfile::test_user_profile_and_logout [2026-01-26 16:47:12] - User Logout and profile Test - PASS
+Details: Profile Before Logout Status: 200, Logout Status: 200, Profile After Logout Status: 401
+response:{
+  "profile_before_logout": {
+    "email": "test_1769446032@example.com",
+    "user_id": 109
+  },
+  "logout_response": {
+    "message": "Logout successful",
+    "timestamp": "2026-01-26T16:47:12.381863",
+    "user_id": 109
+  },
+  "profile_after_logout": {
+    "error": "Unauthorized access"
+  }
+}
+----------------------------------------
+
+PASSED
+tests/test_integration.py::TestUserServiceSecurity::test_registration_weak_password [2026-01-26 16:47:12] - Registration with weak password - PASS
+Details: Expected code 400 for weak password, got 400
+response:{
+  "error": "password does not meet requirements",
+  "requirements": {
+    "errors": [
+      "password must be at least 8 characters long",
+      "password must contain at least one uppercase letter",
+      "password must contain at least one number",
+      "password must contain at least one special character: @#/-_&!"
+    ],
+    "max_length": 20,
+    "min_length": 8,
+    "special characters": "@#/-_&!"
+  }
+}
+----------------------------------------
+
+PASSED
+tests/test_integration.py::TestUserServiceSecurity::test_registration_invalid_email [2026-01-26 16:47:12] - Registration with invalid email - PASS
+Details: Expected code 400 for invalid email, got 400
+response:{
+  "error": "invalid email: Invalid email format"
+}
+----------------------------------------
+
+PASSED
+
+====================================================================================== 11 passed in 3.17s =======================================================================================
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/user-service$ 

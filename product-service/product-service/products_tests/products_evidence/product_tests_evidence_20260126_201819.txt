@@ -1,0 +1,19 @@
+================================================================================
+TESTS EVIDENCE - PRODUCT SERVICE
+================================================================================
+Date and Time: 2026-01-26 20:18:19
+Projeto:WebApp Final Project - Product service
+test suite: Integration Tests for Product Service
+================================================================================
+
+[2026-01-26 20:18:19] - User Cannot Access Other User's Products - FAIL
+Details: User2 products count: 5, User1 product found by User2: True
+response:{
+  "user1_product_id": 46,
+  "user2_products_count": 5
+}
+----------------------------------------
+[2026-01-26 20:18:19] - User Cannot Access Other User's Products - FAIL
+Details: Exception: User2 should not see User1's product: User2 products count: 5, User1 product found by User2: True
+assert False
+----------------------------------------

@@ -1,0 +1,15 @@
+================================================================================
+TESTS EVIDENCE - PRODUCT SERVICE
+================================================================================
+Date and Time: 2026-01-27 14:25:37
+Projeto:WebApp Final Project - Product service
+test suite: Integration Tests for Product Service
+================================================================================
+
+[2026-01-27 14:25:39] - User Cannot Access Other User's Products - PASS
+Details: User2 products count: 0, User1 product found by User2: False
+response:{
+  "user1_product_id": 58,
+  "user2_products_count": 0
+}
+----------------------------------------

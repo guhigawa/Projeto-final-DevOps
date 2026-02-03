@@ -1,0 +1,18 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/user-service$ python -m pytest tests/test_validators.py -v
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.10.12, pytest-8.4.2, pluggy-1.6.0 -- /home/ubuntu/Downloads/Projeto_final/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/ubuntu/Downloads/Projeto_final/user-service
+collected 8 items                                                                                                                                                                               
+
+tests/test_validators.py::TestValidators::test_validate_email PASSED                                                                                                                      [ 12%]
+tests/test_validators.py::TestValidators::test_validate_email_invalid PASSED                                                                                                              [ 25%]
+tests/test_validators.py::TestValidators::test_validate_password_strong PASSED                                                                                                            [ 37%]
+tests/test_validators.py::TestValidators::test_validate_password_weak PASSED                                                                                                              [ 50%]
+tests/test_validators.py::TestValidators::test_sanitize_input PASSED                                                                                                                      [ 62%]
+tests/test_validators.py::TestValidators::test_validate_registration_data_valid PASSED                                                                                                    [ 75%]
+tests/test_validators.py::TestValidators::test_validate_registration_data_invalid PASSED                                                                                                  [ 87%]
+tests/test_validators.py::TestValidators::test_validate_registration_data_password_requirements_in_response PASSED                                                                        [100%]
+
+======================================================================================= 8 passed in 0.02s =======================================================================================
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/user-service$ 

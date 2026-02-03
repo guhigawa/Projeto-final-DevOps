@@ -1,0 +1,28 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging  exec product-service bash
+root@3b559722c801:/product-service# python -m pytest products_tests/test_product_unit.py -v -s
+============================================================================== test session starts ==============================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /product-service
+collected 17 items                                                                                                                                                              
+
+products_tests/test_product_unit.py::TestProductTokenRequiredDecorator::test_token_required_missing_token PASSED
+products_tests/test_product_unit.py::TestProductTokenRequiredDecorator::test_token_required_valid_token PASSED
+products_tests/test_product_unit.py::TestProductTokenRequiredDecorator::test_token_required_expired_token PASSED
+products_tests/test_product_unit.py::TestProductTokenRequiredDecorator::test_token_required_invalid_token PASSED
+products_tests/test_product_unit.py::TestGetDbConnection::test_get_db_connection_success PASSED
+products_tests/test_product_unit.py::TestGetDbConnection::test_get_db_connection_failure PASSED
+products_tests/test_product_unit.py::TestProductValidatorsIntegration::test_product_import_validators PASSED
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_registration_route_success PASSED
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_registration_route_failure PASSED
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_get_route_success PASSED
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_get_empty PASSED
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_put_route_success PASSED
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_put_route_without_product PASSED
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_delete_route_success PASSED
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_delete_route_without_product PASSED
+products_tests/test_product_unit.py::TestProductHealthCheck::test_health_check PASSED
+products_tests/test_product_unit.py::TestProductHealthCheck::test_health_check_detailed PASSED
+
+============================================================================== 17 passed in 0.27s ===============================================================================
+root@3b559722c801:/product-service# 

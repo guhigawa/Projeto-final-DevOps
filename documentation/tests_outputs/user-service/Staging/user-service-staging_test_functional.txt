@@ -1,0 +1,54 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging  exec user-service bash
+root@f78a28ba1d31:/user-service# python -m pytest tests/test_functional.py -v -s
+============================================================================== test session starts ==============================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /user-service
+collected 4 items                                                                                                                                                               
+
+tests/test_functional.py::TestUserServiceFunctional::test_complete_user_lifecycle User-service is healthy after 0s
+Detailed health check passed
+Testing with email: func_test_1769625692935@example.com
+Register response: 201
+login response: 200
+Profile response: 200
+Update response: 200
+Logout response: 200
+Profile after logout response: 401
+Functional user lifecycle test completed successfully
+PASSEDTest completed, cleaning up
+
+tests/test_functional.py::TestUserServiceFunctional::test_registration_with_weak_password User-service is healthy after 0s
+Detailed health check passed
+short, response status: 400
+noupper123, response status: 400
+NOLOWER123, response status: 400
+NoNumber, response status: 400
+, response status: 400
+  , response status: 400
+NoSpecial123, response status: 400
+PASSEDTest completed, cleaning up
+
+tests/test_functional.py::TestUserServiceFunctional::test_registration_with_invalid_email User-service is healthy after 0s
+Detailed health check passed
+Testing invalid_email: 'plainaddress', response status: 400
+Testing invalid_email: '@domain.com', response status: 400
+Testing invalid_email: 'user@.com', response status: 400
+Testing invalid_email: 'user@domain.', response status: 400
+Testing invalid_email: '', response status: 400
+PASSEDTest completed, cleaning up
+
+tests/test_functional.py::TestUserServiceFunctional::test_rapid_registration_attempts User-service is healthy after 0s
+Detailed health check passed
+Testing rapid registration attempts to check rate limiting
+Attempt 1: Registration succeeded
+Attempt 2: Registration succeeded
+Attempt 3: Registration succeeded
+Attempt 4: Registration succeeded
+Attempt 5: Registration succeeded
+Total successful registrations out of 5 attempts: 5
+PASSEDTest completed, cleaning up
+
+
+=============================================================================== 4 passed in 5.94s ===============================================================================
+root@f78a28ba1d31:/user-service# 

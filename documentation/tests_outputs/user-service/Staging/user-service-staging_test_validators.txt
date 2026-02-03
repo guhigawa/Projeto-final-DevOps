@@ -1,0 +1,27 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging ps -a
+NAME                                    IMAGE                           COMMAND                  SERVICE                 CREATED         STATUS                   PORTS
+projeto_final-mysql-staging-product-1   mysql:8.0                       "docker-entrypoint.s…"   mysql-staging-product   3 minutes ago   Up 3 minutes (healthy)   3306/tcp, 33060/tcp
+projeto_final-mysql-staging-user-1      mysql:8.0                       "docker-entrypoint.s…"   mysql-staging-user      3 minutes ago   Up 3 minutes (healthy)   3306/tcp, 33060/tcp
+projeto_final-product-service-1         projeto_final-product-service   "python3 product_app…"   product-service         3 minutes ago   Up 3 minutes (healthy)   3002/tcp, 0.0.0.0:4002->4002/tcp
+projeto_final-user-service-1            projeto_final-user-service      "python3 app.py"         user-service            3 minutes ago   Up 3 minutes (healthy)   3001/tcp, 0.0.0.0:4001->4001/tcp
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging  exec user-service bash
+root@82650641dfce:/user-service# python -m pytest tests/test_validators.py -v
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /user-service
+collected 8 items                                                                                                                                                                               
+
+tests/test_validators.py::TestValidators::test_validate_email PASSED                                                                                                                      [ 12%]
+tests/test_validators.py::TestValidators::test_validate_email_invalid PASSED                                                                                                              [ 25%]
+tests/test_validators.py::TestValidators::test_validate_password_strong PASSED                                                                                                            [ 37%]
+tests/test_validators.py::TestValidators::test_validate_password_weak PASSED                                                                                                              [ 50%]
+tests/test_validators.py::TestValidators::test_sanitize_input PASSED                                                                                                                      [ 62%]
+tests/test_validators.py::TestValidators::test_validate_registration_data_valid PASSED                                                                                                    [ 75%]
+tests/test_validators.py::TestValidators::test_validate_registration_data_invalid PASSED                                                                                                  [ 87%]
+tests/test_validators.py::TestValidators::test_validate_registration_data_password_requirements_in_response PASSED                                                                        [100%]
+
+======================================================================================= 8 passed in 0.02s =======================================================================================
+root@82650641dfce:/user-service# 
