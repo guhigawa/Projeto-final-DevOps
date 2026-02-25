@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-product
+  namespace: projeto-final
+  labels:
+    app: mysql-product
+    component: database
+    service: product
+spec:
+  serviceName: mysql-product
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-product
+  template:
+    metadata:
+      labels:
+        app: mysql-product
+        component: database
+        service: product
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mysql-product
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: MYSQL_PRODUCT_USER_NAME
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: PRODUCT_DB_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: PRODUCT_MYSQL_DB
+        ports:
+        - containerPort: 3306
+          name: mysql-prd-port
+        volumeMounts:
+        - name: mysql-product-data
+          mountPath: /var/lib/mysql
+        - name: init-product-scripts
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - 'mysqladmin ping -h localhost -u${MYSQL_PRODUCT_USER} -p${MYSQL_PRODUCT_PASSWORD}'
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - 'mysqladmin ping -h localhost -u${MYSQL_PRODUCT_USER} -p${MYSQL_PRODUCT_PASSWORD}'
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 1
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        securityContext:
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+      volumes:
+      - name: mysql-product-data
+        persistentVolumeClaim:
+          claimName: mysql-product-pvc
+      - name: init-product-scripts
+        configMap:
+          name: mysql-product-init-scripts

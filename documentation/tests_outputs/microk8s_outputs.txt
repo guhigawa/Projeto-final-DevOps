@@ -1,0 +1,94 @@
+APPLY 00-NAMESPACE-PRODUCTION
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f 00-namespace-production.yml && microk8s get ns
+namespace/projeto-final created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f 00-namespace-production.yml && microk8s kubectl  get ns
+namespace/projeto-final unchanged
+NAME              STATUS   AGE
+default           Active   279d
+ingress           Active   279d
+kube-node-lease   Active   279d
+kube-public       Active   279d
+kube-system       Active   279d
+projeto-final     Active   32s
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ 
+
+
+CONFIGMAP
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get configmap -n projeto-final
+NAME               DATA   AGE
+kube-root-ca.crt   1      111s
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f 01-config-maps-production.yml
+configmap/pd-app-config created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get configmap -n projeto-final
+NAME               DATA   AGE
+kube-root-ca.crt   1      7m13s
+pd-app-config      12     12s
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl describe configmap pd-app-config -n projeto-final
+Name:         pd-app-config
+Namespace:    projeto-final
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+LOG_LEVEL:
+----
+INFO
+
+MYSQL_PRODUCT_USER_NAME:
+----
+production_product_user
+
+MYSQL_USER_NAME:
+----
+production_user
+
+PRODUCT_MYSQL_DB:
+----
+products_production
+
+PRODUCT_PORT:
+----
+5002
+
+USER_MYSQL_DB:
+----
+auth_production
+
+USER_MYSQL_PORT:
+----
+3306
+
+FLASK_ENV:
+----
+production
+
+PRODUCT_MYSQL_PORT:
+----
+3306
+
+USER_PORT:
+----
+5001
+
+USER_SERVICE_URL:
+----
+http://user-service.projeto-final.svc.cluster.local:5001
+
+DEBUG:
+----
+false
+
+
+BinaryData
+====
+
+Events:  <none>
+
+
+SECRETS CONFIG
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f 02-secrets-producao.yml
+secret/app-secrets created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get secret app-secrets -n projeto-final
+NAME          TYPE     DATA   AGE
+app-secrets   Opaque   4      10s 

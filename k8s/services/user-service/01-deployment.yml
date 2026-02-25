@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: projeto-final
+  labels:
+    app: user-service
+    component: backend
+    service: user
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  strategy:
+    type: RollingUpdate #used to avoid downtime when updating the app
+    rollingUpdate:
+      maxSurge: 1 #Max number of pod creation in case of updates in a pod
+      maxUnavailable: 0 #Max number of pods that can be unnavailable
+  template:
+    metadata:
+      labels:
+        app: user-service
+        component: backend
+        service: user
+    spec:
+      containers:
+      - name: user-service
+        image: localhost:32000/user-service:1.0.0
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: SECRET_KEY
+        - name: MYSQL_HOST
+          value: "mysql-user.projeto-final.svc.cluster.local" #Automatic generated in service from database DNS rule: <service-name>.<namespace>.svc.cluster.local
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: MYSQL_PRODUCT_USER_NAME
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: USER_DB_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: USER_MYSQL_DB
+        - name: MYSQL_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: USER_MYSQL_PORT
+        - name: FLASK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: FLASK_ENV
+        - name: FLASK_RUN_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: USER_PORT
+        - name: DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: DEBUG
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: LOG_LEVEL
+        ports:
+        - containerPort: 5001
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5001
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/detailed
+            port: 5001
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 1
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+        securityContext:
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true #Not allow changes in the pods disk
+       
+

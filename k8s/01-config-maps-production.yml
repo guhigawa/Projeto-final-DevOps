@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pd-app-config
+  namespace: projeto-final
+data:
+  USER_PORT: "5001"
+  USER_MYSQL_PORT: "3306"
+  USER_MYSQL_DB: "auth_production"
+  MYSQL_USER_NAME: "production_user"
+
+  PRODUCT_PORT: "5002"
+  PRODUCT_MYSQL_PORT: "3306"
+  PRODUCT_MYSQL_DB: "product_production"
+  MYSQL_PRODUCT_USER_NAME: "production_product_user"
+  USER_SERVICE_URL: "http://user-service.projeto-final.svc.cluster.local:5001"
+
+  FLASK_ENV: "production"
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"
+  

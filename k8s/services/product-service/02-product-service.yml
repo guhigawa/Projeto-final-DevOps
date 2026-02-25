@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  namespace: projeto-final
+  labels:
+    app: product-service
+    component: backend
+    service: product
+spec:
+  selector:
+    app: product-service
+  ports:
+  - port: 5002
+    targetPort: 5002
+    name: http
+    protocol: TCP
+  type: ClusterIP

@@ -1,0 +1,242 @@
+APPLY
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f databases/mysql-product/00-init-mysql-configmap.yml 
+configmap/mysql-product-init-scripts created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f databases/mysql-product/01-pvc.yml 
+persistentvolumeclaim/mysql-product-pvc created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f databases/mysql-product/02-statefulset.yml 
+statefulset.apps/mysql-product created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f databases/mysql-product/03-service.yml 
+service/mysql-product created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get all -n projeto-final
+NAME                                READY   STATUS    RESTARTS     AGE
+pod/mysql-product-0                 1/1     Running   1 (8s ago)   26s
+pod/mysql-user-0                    1/1     Running   0            56m
+pod/user-service-6b54dbc479-q42ws   1/1     Running   0            22m
+pod/user-service-6b54dbc479-smcd5   1/1     Running   0            22m
+
+NAME                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/mysql-product   ClusterIP   None             <none>        3306/TCP   17s
+service/mysql-user      ClusterIP   None             <none>        3306/TCP   56m
+service/user-service    ClusterIP   10.152.183.126   <none>        5001/TCP   22m
+
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/user-service   2/2     2            2           22m
+
+NAME                                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/user-service-6b54dbc479   2         2         2       22m
+
+NAME                             READY   AGE
+statefulset.apps/mysql-product   1/1     26s
+statefulset.apps/mysql-user      1/1     56m
+
+NAME                                                   REFERENCE                 TARGETS                                     MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/user-service-hpa   Deployment/user-service   cpu: <unknown>/70%, memory: <unknown>/80%   2         5         2          22m
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get pvc -n projeto-final
+NAME                STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS        VOLUMEATTRIBUTESCLASS   AGE
+mysql-product-pvc   Bound    pvc-9e9e7fc5-0aa8-45e6-bbc1-e3bfe74c746d   5Gi        RWO            microk8s-hostpath   <unset>                 104s
+mysql-user-pvc      Bound    pvc-cc455563-2ad4-486b-97de-50d0c549a6aa   5Gi        RWO            microk8s-hostpath   <unset>                 58m
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl logs mysql-user-0 -n projeto-final | grep -i "init"
+2026-02-19 20:20:22+00:00 [Note] [Entrypoint]: Initializing database files
+2026-02-19T20:20:22.811165Z 0 [System] [MY-013169] [Server] /usr/sbin/mysqld (mysqld 8.0.45) initializing of server in progress as process 41
+2026-02-19T20:20:22.817814Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-02-19T20:20:23.132362Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2026-02-19T20:20:25.208178Z 6 [Warning] [MY-010453] [Server] root@localhost is created with an empty password ! Please consider switching off the --initialize-insecure option.
+2026-02-19 20:20:28+00:00 [Note] [Entrypoint]: Database files initialized
+2026-02-19T20:20:28.692917Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-02-19T20:20:28.937775Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2026-02-19 20:20:35+00:00 [Note] [Entrypoint]: /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/init.sql
+[USER-DB] Database initialized successfully
+2026-02-19 20:20:37+00:00 [Note] [Entrypoint]: MySQL init process done. Ready for start up.
+2026-02-19T20:20:38.118804Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-02-19T20:20:38.333711Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+
+DATABASE VERIFICATION
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl exec -it mysql-product-0 -n projeto-final -- mysql -u root -p
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 65
+Server version: 8.0.45 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2026, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+4 rows in set (0.01 sec)
+COMO NAO MOSTROU O DATABASE DO PRODUCT SERVICE DELETAR O MYSQL-PRODUCT
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/databases$ microk8s kubectl delete statefulset mysql-product -n projeto-final 
+statefulset.apps "mysql-product" deleted
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/databases$ microk8s kubectl delete pvc mysql-product-pvc -n projeto-final
+persistentvolumeclaim "mysql-product-pvc" deleted
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/databases$ microk8s kubectl delete configmap mysql-product-init-scripts -n projeto-final
+configmap "mysql-product-init-scripts" deleted
+
+PROBLEMA IDENTIFICADO: O stateful estava com o nome da variavel da database incorreto, diferente do nome de variavel que estava no programa product_app.py
+APÓS ALTERAR O NOME DA VARIAVEL E RESETAR PVC E STATEFULSET
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl exec -it mysql-product-0 -n projeto-final -- mysql -u root -p
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 28
+Server version: 8.0.45 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2026, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| product_production |
+| sys                |
++--------------------+
+5 rows in set (0.00 sec)
+
+mysql> USE product_production;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> SHOW TABLES;
++------------------------------+
+| Tables_in_product_production |
++------------------------------+
+| items                        |
++------------------------------+
+1 row in set (0.00 sec)
+
+RESET DO STATEFUL E PVC POR CONTA DE MUDANÇA EM VARIAVEL NO STATEFUL
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get all -n projeto-final
+NAME                                   READY   STATUS             RESTARTS         AGE
+pod/mysql-product-0                    1/1     Running            0                6m18s
+pod/mysql-user-0                       1/1     Running            3 (6h13m ago)    4d22h
+pod/product-service-584d59689f-9rfvj   0/1     Running            19 (7s ago)      54m
+pod/product-service-584d59689f-jf4xp   0/1     CrashLoopBackOff   17 (3m56s ago)   54m
+pod/user-service-c67d55bb6-f45jg       1/1     Running            2 (6h11m ago)    3d22h
+pod/user-service-c67d55bb6-kw8sd       1/1     Running            2 (6h11m ago)    3d22h
+
+NAME                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/mysql-product     ClusterIP   None            <none>        3306/TCP   4d21h
+service/mysql-user        ClusterIP   None            <none>        3306/TCP   4d22h
+service/product-service   ClusterIP   10.152.183.31   <none>        5002/TCP   54m
+service/user-service      ClusterIP   10.152.183.64   <none>        5001/TCP   3d22h
+
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/product-service   0/2     2            0           54m
+deployment.apps/user-service      2/2     2            2           3d22h
+
+NAME                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/product-service-584d59689f   2         2         0       54m
+replicaset.apps/user-service-c67d55bb6       2         2         2       3d22h
+
+NAME                             READY   AGE
+statefulset.apps/mysql-product   1/1     6m18s
+statefulset.apps/mysql-user      1/1     4d22h
+
+NAME                                                      REFERENCE                    TARGETS                                     MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/product-service-hpa   Deployment/product-service   cpu: <unknown>/80%, memory: <unknown>/80%   2         5         2          54m
+horizontalpodautoscaler.autoscaling/user-service-hpa      Deployment/user-service      cpu: <unknown>/70%, memory: <unknown>/80%   2         5         2          3d22h
+
+RESET DO STATEFUL E PVC POR CONTA DE MUDANÇA EM VARIAVEL NO STATEFUL
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl delete statefulset mysql-product -n projeto-final
+statefulset.apps "mysql-product" deleted
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl delete pvc mysql-product-pvc -n projeto-final
+persistentvolumeclaim "mysql-product-pvc" deleted
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl apply -f k8s/databases/mysql-product/01-pvc.yml 
+persistentvolumeclaim/mysql-product-pvc created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl apply -f k8s/databases/mysql-product/02-statefulset.yml 
+statefulset.apps/mysql-product created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl exec -it mysql-product-0 -n projeto-final -- mysql -u root -p
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 21
+Server version: 8.0.45 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2026, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| product_production |
+| sys                |
++--------------------+
+5 rows in set (0.01 sec)
+
+mysql> USE product_production;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> SHOW TABLES;
++------------------------------+
+| Tables_in_product_production |
++------------------------------+
+| items                        |
++------------------------------+
+1 row in set (0.00 sec)
+
+mysql> EXIT
+Bye
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl get all -n projeto-final
+NAME                                   READY   STATUS             RESTARTS         AGE
+pod/mysql-product-0                    1/1     Running            0                2m6s
+pod/mysql-user-0                       1/1     Running            4 (23m ago)      5d16h
+pod/product-service-584d59689f-2whn2   0/1     CrashLoopBackOff   14 (3m54s ago)   17h
+pod/product-service-584d59689f-7xxxp   0/1     CrashLoopBackOff   14 (4m4s ago)    17h
+pod/user-service-c67d55bb6-f45jg       1/1     Running            4 (21m ago)      4d16h
+pod/user-service-c67d55bb6-kw8sd       1/1     Running            4 (21m ago)      4d16h
+
+NAME                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/mysql-product     ClusterIP   None            <none>        3306/TCP   5d15h
+service/mysql-user        ClusterIP   None            <none>        3306/TCP   5d16h
+service/product-service   ClusterIP   10.152.183.31   <none>        5002/TCP   18h
+service/user-service      ClusterIP   10.152.183.64   <none>        5001/TCP   4d16h
+
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/product-service   0/2     2            0           18h
+deployment.apps/user-service      2/2     2            2           4d16h
+
+NAME                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/product-service-584d59689f   2         2         0       18h
+replicaset.apps/user-service-c67d55bb6       2         2         2       4d16h
+
+NAME                             READY   AGE
+statefulset.apps/mysql-product   1/1     2m6s
+statefulset.apps/mysql-user      1/1     5d16h
+
+NAME                                                      REFERENCE                    TARGETS                                     MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/product-service-hpa   Deployment/product-service   cpu: <unknown>/80%, memory: <unknown>/80%   2         5         2          18h
+horizontalpodautoscaler.autoscaling/user-service-hpa      Deployment/user-service      cpu: <unknown>/70%, memory: <unknown>/80%   2         5         2          4d16h

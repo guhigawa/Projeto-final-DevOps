@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: projeto-final
+  labels:
+    app: product-service
+    component: backend
+    service: product
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: product-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: product-service
+        component: backend
+        service: product
+    spec:
+      containers:
+      - name: product-service
+        image: localhost:32000/product-service:1.0.0
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: SECRET_KEY
+        - name: MYSQL_HOST
+          value: "mysql-product.projeto-final.svc.cluster.local"
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: MYSQL_PRODUCT_USER_NAME
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: PRODUCT_DB_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: PRODUCT_MYSQL_DB
+        - name: MYSQL_PORT 
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: PRODUCT_MYSQL_PORT
+        - name: FLASK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: FLASK_ENV
+        - name: FLASK_RUN_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: PRODUCT_PORT
+        - name: DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: DEBUG
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: LOG_LEVEL
+        ports:
+          - containerPort: 5002
+            name: http
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5002
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/detailed
+            port: 5002
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 1
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+        securityContext:
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+        
