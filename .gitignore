@@ -28,4 +28,5 @@ docs/_build/
 user-service/tests/evidence/
 product-service/products_tests/products_evidence
 generate_hashed_password.py
+k8s/02-secrets-producao.yml
 

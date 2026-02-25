@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: StatefulSet 
+metadata:
+  name: mysql-user 
+  namespace: projeto-final
+  labels:
+    app: mysql-user
+    component: database
+    service: user
+spec:
+  serviceName: mysql-user 
+  replicas: 1
+  selector: 
+    matchLabels: 
+      app: mysql-user
+  template: #pod caracterization
+    metadata:
+      labels:
+        app: mysql-user
+        component: database
+        service: user
+    spec: 
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: MYSQL_USER_NAME
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: USER_DB_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: pd-app-config
+              key: USER_MYSQL_DB
+        ports: # ports doesn't accept valueFrom
+        - containerPort: 3306
+          name: mysql
+        volumeMounts: # Internal container paths where storage will be attached
+        - name: mysql-data
+          mountPath: /var/lib/mysql # Standard MySQL data directory, where the container look 
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d # Directory for automated SQL setup
+        livenessProbe: #healthchecks
+          exec:
+            command: 
+            - /bin/sh
+            - -c
+            - 'mysqladmin ping -h localhost -u${MYSQL_USER} -p${MYSQL_PASSWORD}'
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - 'mysqladmin ping -h localhost -u${MYSQL_USER} -p${MYSQL_PASSWORD}'
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 1
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        securityContext:
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+      volumes: #specification of where the volumeMounts content is based
+      - name: mysql-data #must be the same name as the name inside volumeMounts
+        persistentVolumeClaim:
+          claimName: mysql-user-pvc # The actual disk resource in the cluster
+      - name: init-scripts
+        configMap:
+          name: mysql-user-init-scripts # The source of the init.sql file

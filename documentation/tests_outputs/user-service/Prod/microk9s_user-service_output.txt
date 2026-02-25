@@ -1,0 +1,182 @@
+BUILD AND PUSH 
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ chmod +x services/user-service/00-build-push.sh
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ ./services/user-service/00-build-push.sh 
+Building and pushing User service image
+[+] Building 160.5s (11/11) FINISHED                                                                                                                                              docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                        0.0s
+ => => transferring dockerfile: 635B                                                                                                                                                        0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                         3.1s
+ => [internal] load .dockerignore                                                                                                                                                           0.0s
+ => => transferring context: 2B                                                                                                                                                             0.0s
+ => [1/6] FROM docker.io/library/python:3.11-slim@sha256:0b23cfb7425d065008b778022a17b1551c82f8b4866ee5a7a200084b7e2eafbf                                                                   6.6s
+ => => resolve docker.io/library/python:3.11-slim@sha256:0b23cfb7425d065008b778022a17b1551c82f8b4866ee5a7a200084b7e2eafbf                                                                   1.1s
+ => => sha256:8cbc47ff628d718fb76f7fca9897e4e8b607a4f543008cdee760705eecea1b24 14.36MB / 14.36MB                                                                                            2.6s
+ => => sha256:0b23cfb7425d065008b778022a17b1551c82f8b4866ee5a7a200084b7e2eafbf 10.37kB / 10.37kB                                                                                            0.0s
+ => => sha256:543d6cace00ffc96bc95d332493bb28a4332c6dd614aab5fcbd649ae8a7953d9 1.75kB / 1.75kB                                                                                              0.0s
+ => => sha256:466c0182639be3c46be2bd95edae0a22e92ff39913aeca0fc8b6c1b22942dccb 5.47kB / 5.47kB                                                                                              0.0s
+ => => sha256:0c8d55a45c0dc58de60579b9cc5b708de9e7957f4591fc7de941b67c7e245da0 29.78MB / 29.78MB                                                                                            2.6s
+ => => sha256:64faa99400e1388ed9f202917ada9fac34fd46c950d40cd4102364ee9d6ab804 1.29MB / 1.29MB                                                                                              1.3s
+ => => sha256:d85099f0969e8b2306770a12dffcda300208cc3a18b876c0ad3dc0cb51aefb9b 250B / 250B                                                                                                  1.7s
+ => => extracting sha256:0c8d55a45c0dc58de60579b9cc5b708de9e7957f4591fc7de941b67c7e245da0                                                                                                   1.6s
+ => => extracting sha256:64faa99400e1388ed9f202917ada9fac34fd46c950d40cd4102364ee9d6ab804                                                                                                   0.1s
+ => => extracting sha256:8cbc47ff628d718fb76f7fca9897e4e8b607a4f543008cdee760705eecea1b24                                                                                                   1.0s
+ => => extracting sha256:d85099f0969e8b2306770a12dffcda300208cc3a18b876c0ad3dc0cb51aefb9b                                                                                                   0.0s
+ => [internal] load build context                                                                                                                                                           0.0s
+ => => transferring context: 94.29kB                                                                                                                                                        0.0s
+ => [2/6] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*     && apt-get clean     112.2s
+ => [3/6] WORKDIR /user-service                                                                                                                                                             0.0s 
+ => [4/6] COPY requirements.txt .                                                                                                                                                           0.0s 
+ => [5/6] RUN pip install --no-cache-dir -r requirements.txt                                                                                                                               35.7s 
+ => [6/6] COPY . .                                                                                                                                                                          0.2s 
+ => exporting to image                                                                                                                                                                      2.6s 
+ => => exporting layers                                                                                                                                                                     2.6s 
+ => => writing image sha256:f7e47f9b590565123b8a8e78bd2d138e75ca69ea3498ba57a7df66cc67b91fab                                                                                                0.0s 
+ => => naming to docker.io/library/user-service:1.0.0                                                                                                                                       0.0s 
+Infer repository core for addon registry
+Addon core/registry is already enabled
+The push refers to repository [localhost:32000/user-service]
+d2f5766953dd: Pushed 
+964067838aad: Pushed 
+c1b4fbda6fcc: Pushed 
+3449ffa21859: Pushed 
+53527225c528: Pushed 
+b69aea4cac7d: Pushed 
+40b88e8d19a2: Pushed 
+dfd9efb4ec4c: Pushed 
+a8ff6f8cbdfd: Pushed 
+1.0.0: digest: sha256:49bec808e7d64c75dcec8e3910b47355e2350269b2c27a0d6195add33370b755 size: 2207
+User service image pushed
+
+APPLY
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f services/user-service/
+service/user-service created
+Error from server (BadRequest): error when creating "services/user-service/01-deployment.yml": Deployment in version "v1" cannot be handled as a Deployment: strict decoding error: unknown field "spec.strategy.rollingupdata", unknown field "spec.template.spec.containers[0].env[7].valueFrom.key", unknown field "spec.template.spec.containers[0].env[7].valueFrom.name", unknown field "spec.template.spec.containers[0].securityContext.readOnlyRootFileSystem"
+Error from server (Invalid): error when creating "services/user-service/03-hpa.yml": HorizontalPodAutoscaler.autoscaling "user-service-hpa" is invalid: spec.metrics[1].resource.target.type: Invalid value: "Utlization": must be either Utilization, Value, or AverageValue
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f services/user-service/
+deployment.apps/user-service created
+service/user-service unchanged
+horizontalpodautoscaler.autoscaling/user-service-hpa created
+
+VERIFICATION
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get pods,svc -n projeto-final -l app=user-service
+NAME                                READY   STATUS    RESTARTS   AGE
+pod/user-service-6b54dbc479-q42ws   1/1     Running   0          17s
+pod/user-service-6b54dbc479-smcd5   1/1     Running   0          17s
+
+NAME                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/user-service   ClusterIP   10.152.183.126   <none>        5001/TCP   17s
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl logs -l app=user-service -n projeto-final --tail=20
+{"timestamp": "2026-02-10 18:28:06", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-10 18:28:06", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:06] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:07", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:07] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:11", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-10 18:28:11", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:11] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:16", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-10 18:28:16", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:16] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:16", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:16] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:21", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-10 18:28:21", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:21] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:26", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-10 18:28:26", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:26] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:27", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:27] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:31", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-10 18:28:31", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:31] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:36", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-10 18:28:36", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:36] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:37", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:37] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:41", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-10 18:28:41", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:41] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:07", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:07] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:07", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-10 18:28:07", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:07] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:12", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-10 18:28:12", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:12] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:17", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:17] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:17", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-10 18:28:17", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [10/Feb/2026 18:28:17] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-10 18:28:22", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+
+RESTART AFTER ALTERING THE MYSQL SERVICE
+PODS RESTARTED ANG WERE ABLE TO CONNECT AUTOMATICALLY
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get pods,svc -n projeto-final -l app=user-service
+NAME                                READY   STATUS    RESTARTS   AGE
+pod/user-service-6b54dbc479-q42ws   1/1     Running   0          92s
+pod/user-service-6b54dbc479-smcd5   1/1     Running   0          92s
+
+NAME                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/user-service   ClusterIP   10.152.183.126   <none>        5001/TCP   92s
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl logs -l app=user-service -n projeto-final --tail=20
+{"timestamp": "2026-02-11 11:52:54", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:52:54", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:52:54] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:52:58", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:52:58] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:52:59", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:52:59", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:52:59] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:04", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:04", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:04] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:08", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:08] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:09", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:09", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:09] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:14", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:14", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:14] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:18", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:18] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:19", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:19", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:19] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:24", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:24", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:24] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:28", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:28] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:29", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:29", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:29] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:52:52", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:52:52] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:52:56", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:52:56", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:52:56] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:01", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:01", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:01] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:02", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:02] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:06", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:06", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:06] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:11", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:11", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:11] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:12", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:12] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:16", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:16", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:16] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:21", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:21", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:21] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:22", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:22] "GET /health HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:26", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:26", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:26] "GET /health/detailed HTTP/1.1" 200 -"}
+{"timestamp": "2026-02-11 11:53:31", "level": "INFO", "service": "user-service", "message": "Health check executed - Status: healthy"}
+{"timestamp": "2026-02-11 11:53:31", "level": "INFO", "service": "user-service", "message": "10.1.4.1 - - [11/Feb/2026 11:53:31] "GET /health/detailed HTTP/1.1" 200 -"}
+
+SERVICE RESTART AFTER ALTERING DEPLOYMENT MANIFEST, REMOVAL OF VOLUMEMOUNTS
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/services/user-service$ microk8s kubectl apply -f 01-deployment.yml 
+deployment.apps/user-service created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/services/user-service$ microk8s kubectl apply -f 02-service.yml 
+service/user-service created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/services/user-service$ microk8s kubectl apply -f 03-hpa.yml 
+horizontalpodautoscaler.autoscaling/user-service-hpa created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/services/user-service$ microk8s kubectl get all -n projeto-final
+NAME                               READY   STATUS    RESTARTS       AGE
+pod/mysql-product-0                1/1     Running   1 (4h1m ago)   6h32m
+pod/mysql-user-0                   1/1     Running   2 (4h1m ago)   24h
+pod/user-service-c67d55bb6-f45jg   1/1     Running   0              25s
+pod/user-service-c67d55bb6-kw8sd   1/1     Running   0              25s
+
+NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/mysql-product   ClusterIP   None            <none>        3306/TCP   23h
+service/mysql-user      ClusterIP   None            <none>        3306/TCP   24h
+service/user-service    ClusterIP   10.152.183.64   <none>        5001/TCP   19s
+
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/user-service   2/2     2            2           25s
+
+NAME                                     DESIRED   CURRENT   READY   AGE
+replicaset.apps/user-service-c67d55bb6   2         2         2       25s
+
+NAME                             READY   AGE
+statefulset.apps/mysql-product   1/1     6h32m
+statefulset.apps/mysql-user      1/1     24h
+
+NAME                                                   REFERENCE                 TARGETS                                     MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/user-service-hpa   Deployment/user-service   cpu: <unknown>/70%, memory: <unknown>/80%   2         5         0          9s
