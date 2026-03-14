@@ -1,0 +1,18 @@
+Filesystem                 Size  Used Avail Use% Mounted on
+tmpfs                      795M  2,2M  792M   1% /run
+/dev/mapper/vgubuntu-root  502G   35G  442G   8% /
+tmpfs                      3,9G  119M  3,8G   3% /dev/shm
+tmpfs                      5,0M  4,0K  5,0M   1% /run/lock
+/dev/sda2                  512M  6,1M  506M   2% /boot/efi
+shm                         64M     0   64M   0% /var/snap/microk8s/common/run/containerd/io.containerd.grpc.v1.cri/sandboxes/295c8a9018e59ab1b894c8a17546799358de7f24255b5ea139fffd3c86ca40e0/shm
+shm                         64M     0   64M   0% /var/snap/microk8s/common/run/containerd/io.containerd.grpc.v1.cri/sandboxes/67e7594c1b3b4925dd5de794aa398cc5a147b3c7d6f47b4555c81e1a57a700bf/shm
+shm                         64M     0   64M   0% /var/snap/microk8s/common/run/containerd/io.containerd.grpc.v1.cri/sandboxes/a3cd5dddf025a63ddd25c43c445f656ff24bb9503af210396d0f5f2dd1ac476e/shm
+shm                         64M     0   64M   0% /var/snap/microk8s/common/run/containerd/io.containerd.grpc.v1.cri/sandboxes/5cde2dc5227555fe4ce48a9f0c25d2e49490d7d7ef75e2521a7774edf30f6f27/shm
+shm                         64M     0   64M   0% /var/snap/microk8s/common/run/containerd/io.containerd.grpc.v1.cri/sandboxes/610b509c2bf5a595282460a81f18a93afd1b1d055fa12366dea9ec836a908074/shm
+shm                         64M     0   64M   0% /var/snap/microk8s/common/run/containerd/io.containerd.grpc.v1.cri/sandboxes/385aaeb0b599bdc53667186b935ebc07bf37edc178c3c544f0b473f92a5fb2cd/shm
+shm                         64M     0   64M   0% /var/snap/microk8s/common/run/containerd/io.containerd.grpc.v1.cri/sandboxes/98e7b7c6569268903fd5934037c3253a3cb0e3628de5ca8388807a18482a1079/shm
+shm                         64M     0   64M   0% /var/snap/microk8s/common/run/containerd/io.containerd.grpc.v1.cri/sandboxes/03c9f29f57e2407dbba53aa897843729066b0f815ab0e5a1598964a2243e3ebc/shm
+shm                         64M     0   64M   0% /var/snap/microk8s/common/run/containerd/io.containerd.grpc.v1.cri/sandboxes/099976c43fe815aa9fc9ad7e793e2ed6bdd52b36d016415e05fb99c484ef633f/shm
+shm                         64M     0   64M   0% /var/snap/microk8s/common/run/containerd/io.containerd.grpc.v1.cri/sandboxes/9c8fc7e3a8f769c8c40bb57ad29d3f8836232db97e4dc582a88c81a4e7c46af5/shm
+shm                         64M     0   64M   0% /var/snap/microk8s/common/run/containerd/io.containerd.grpc.v1.cri/sandboxes/2b4fe2c143d0997996637b91a957cda65976236b69dc034a35d50c9c978fdcd3/shm
+tmpfs                      795M  108K  794M   1% /run/user/1000

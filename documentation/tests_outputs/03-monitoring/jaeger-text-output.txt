@@ -1,0 +1,231 @@
+NAMESPACE CRETION
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl create namespace monitoring
+Error from server (AlreadyExists): namespaces "monitoring" already exists
+
+MANIFESTS 
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl apply -f monitoring/01-jaeger/
+deployment.apps/jaeger created
+service/jaeger created
+
+PODS
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl get pods -n monitoring 
+NAME                      READY   STATUS    RESTARTS   AGE
+jaeger-7db96d86d8-qqlb2   1/1     Running   0          41s
+
+SERVICE VERIFICATION
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl get svc -n monitoring
+NAME     TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)                                          AGE
+jaeger   NodePort   10.152.183.212   <none>        16686:30001/TCP,6831:32015/UDP,14268:30117/TCP   59s
+
+JAEGER RESPONSE
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:30001
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- prevent caching of this HTML by any server, Go or otherwise -->
+    <meta http-equiv="cache-control" content="max-age=0" />
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="expires" content="0" />
+    <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+    <meta http-equiv="pragma" content="no-cache" />
+
+    <!-- NOTE: The document MUST have a <base> element. package.json#homepage is set to "." as part of resolving https://github.com/jaegertracing/jaeger-ui/issues/42 and therefore static assets are linked via relative URLs. This will break on many document URLs, e.g. /trace/abc, unless a valid base URL is provided. The base href defaults to "/" but the query-service can inject an override. -->
+    <base href="/" data-inject-target="BASE_URL" />
+    <link rel="shortcut icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAu9Xm/4qEYP/ZynL/28tz/+TZqP/k2qj/5Nqn/+Laqf/j2qj/3c51/93Nc//dzXT/m5Re/7TP4/9fX1//AAAAALvV4//j0Wr/3c10/9zNc//ezXT/3M11/93Ndf/ezXT/3sx0/93NdP/dzHT/3c10/628t/+70+X/AAAAAAAAAACds8T/2Mt6/93NdP/dzXT/389v//7+/P/BsnD/3c10/9/NdP/dzXT/3c10/7vGtv+51uX/qcDR/wAAAAAAAAAAAAAAAN/NdP/dznP/vsiw/73V5/+61OX/udPn/5irtP/dzXT/3c10/93NdP/ZzHj/j5Fx/wAAAAAAAAAAAAAAANXOo//fznH/5uHJ/8i9g/87QDz/Kycn/7jP4P+6uYf/3c10/93NdP/dzXT/2sx4/5mQXf8AAAAAAAAAAAAAAADazHb//Pz8/xsdHf/9/v//0sd+/9fKev/Yynr//fz///f3///czXX/3c10/9vLeP+Vjlv/AAAAAAAAAAAAAAAA381x//Lv3v///v///v///6WbZf/dzXT////9/xcXF///////39/b/93Mdf/SxHT/oJxx/wAAAAAAAAAAAAAAANrKc//dzHT/9PLo/9zb0v/ay3r/2ct3//z89P///////////9LT0//dzHX/pJpW/+Xjzf8AAAAAAAAAAAAAAAAAAAAA0L5t/46DXP9nhHH/dZ6M/26TgP8lNCv/urGS/9jSsf/dzXT/2811/52UXP8AAAAAAAAAAAAAAAAAAAAAd6CK/3Gdiv92n43/dZ+O/3eejv9woY3/cKCO/1RsYv9pd1T/sKNe/6eaV/+elFz/AAAAAAAAAAAAAAAAAAAAANzOc//Fum//RXZf/0p7Z/9Kf2r/TYZu/zxxW/9AeGH/a5WF/22ajf9lclP/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHKfjv9yn47/cp+O/3Kfjv9yn47/c6CO/1uJdv/ay3b/xL51/2WJeP9ZfGz/AAAAAAAAAAAAAAAAAAAAAAAAAABxnoz/cp+O/3Kfjv9yn47/cp+O/3Kfjv9vkYf/pKqE/7qsXf8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGmUhP9yn47/caCO/3Gejf9tjYL/gJmi/7LEy/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAd52O/3Ggjv+uw7v/AAAAAAAAAAAAAAAA0uDj/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==">
+    <title>Jaeger UI</title>
+    <script>
+      // Jaeger UI config data is embedded by the query-service via search-replace.
+      // Please see ./README.md#configuration for details.
+
+      // TODO the JSON/JS bifurcation below could be avoided by using a single template function like:
+      // function getJaegerUiConfig() { return null; }
+
+      // Important! Do not alter the following line; query-service looks for that exact pattern.
+      // JAEGER_CONFIG_JS
+
+      function getJaegerUiConfig() {
+        if(typeof window.UIConfig === 'function') {
+          return UIConfig();
+        }
+        const DEFAULT_CONFIG = null;
+        // Important! Do not alter the following line; query-service looks for that exact pattern.
+        const JAEGER_CONFIG = DEFAULT_CONFIG;
+        return JAEGER_CONFIG;
+      }
+      // Jaeger storage compabilities data is embedded by the query-service via search-replace.
+      function getJaegerStorageCapabilities() {
+        const DEFAULT_STORAGE_CAPABILITIES = { "archiveStorage": false };
+        const JAEGER_STORAGE_CAPABILITIES = {"archiveStorage":true};
+        return JAEGER_STORAGE_CAPABILITIES;
+      }
+      // Jaeger version data is embedded by the query-service via search/replace.
+      function getJaegerVersion() {
+        const DEFAULT_VERSION = {'gitCommit':'', 'gitVersion':'', 'buildDate':''};
+        // Important! Do not alter the following line; query-service looks for that exact pattern.
+        const JAEGER_VERSION = {"gitCommit":"9866eba85aed1b0a66a77c8c6928a372edc5040f","gitVersion":"v1.52.0","buildDate":"2023-12-06T09:43:23Z"};
+        return JAEGER_VERSION;
+      }
+
+      // Workaround some legacy NPM dependencies that assume this is always defined.
+      window.global = {};
+    </script>
+    <script type="module" crossorigin src="./static/index-3FSuRbbs.js"></script>
+    <link rel="stylesheet" crossorigin href="./static/index-Xgckiay4.css">
+    <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
+    <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
+  </head>
+  <body>
+    <div id="jaeger-ui-root"></div>
+    <!--
+      This file is the main entry point for the Jaeger UI application.
+      See https://vitejs.dev/guide/#index-html-and-project-root for more information
+      on how asset references are managed by the build system.
+    -->
+    <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
+    <script nomodule crossorigin id="vite-legacy-polyfill" src="./static/polyfills-legacy-pFH7jEky.js"></script>
+    <script nomodule crossorigin id="vite-legacy-entry" data-src="./static/index-legacy-kz8U4GAq.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+  </body>
+</html>
+
+MANUAL TESTS
+USER CREATIO/LOGIN/PRODUCT CREATION/GET
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://user.local.prod/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teste@email.com","password":"Teste123@"}'
+{"email":"teste@email.com","message":"User registered successfully","user_id":1}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ TOKEN=$(curl -X POST http://user.local.prod/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teste@email.com","password":"Teste123@"}' | jq -r .token)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   257  100   207  100    50    497    120 --:--:-- --:--:-- --:--:--   617
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://product.local.prod/products \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Produto Teste","price":99.99,"quantity":10}'
+{"description":"","id":1,"message":"Product created successfully","price":99.99,"product_name":"produto teste","quantity":10}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -H "Authorization: Bearer $TOKEN" http://product.local.prod/products
+{"products":[{"created_at":"Tue, 10 Mar 2026 15:06:41 GMT","created_by":1,"description":"","id":1,"name":"produto teste","price":99.99,"quantity":10}]}
+
+BUILD AND PUSH OF THE CHANGES DONE IN THE SERVICES CODES
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ ./k8s/services/user-service/00-build-push.sh 
+Building and pushing User service image
+[+] Building 99.6s (11/11) FINISHED                                                                                                                          docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                   0.0s
+ => => transferring dockerfile: 787B                                                                                                                                   0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                    1.9s
+ => [internal] load .dockerignore                                                                                                                                      0.0s
+ => => transferring context: 2B                                                                                                                                        0.0s
+ => [1/6] FROM docker.io/library/python:3.11-slim@sha256:d6e4d224f70f9e0172a06a3a2eba2f768eb146811a349278b38fff3a36463b47                                             12.3s
+ => => resolve docker.io/library/python:3.11-slim@sha256:d6e4d224f70f9e0172a06a3a2eba2f768eb146811a349278b38fff3a36463b47                                              0.0s
+ => => sha256:206356c42440674ecbdf1070cf70ce8ef7885ac2e5c56f1ecf800b758f6b0419 29.78MB / 29.78MB                                                                       8.7s
+ => => sha256:2067094444255bb5bf0f8b525f10409691c57f48c48e6bebac8c3a85df4f9dd2 1.29MB / 1.29MB                                                                         0.7s
+ => => sha256:bbf418262cbe98089272fafddcc570e7fa85e6fa28fe7163dc445136042bd183 14.37MB / 14.37MB                                                                      11.2s
+ => => sha256:d6e4d224f70f9e0172a06a3a2eba2f768eb146811a349278b38fff3a36463b47 10.37kB / 10.37kB                                                                       0.0s
+ => => sha256:06fa338add3c2ab8daeff7304a6bb204c68f67743b13553a8999605fc8097c58 1.75kB / 1.75kB                                                                         0.0s
+ => => sha256:7c68b568387255c3db2b374da329795e7c25520bd232458282d62d606296e719 5.47kB / 5.47kB                                                                         0.0s
+ => => sha256:43272e9c9d4bd6009934139dd3c958777b55bdbe0ccadb5e7a13f847436fabd2 250B / 250B                                                                             1.3s
+ => => extracting sha256:206356c42440674ecbdf1070cf70ce8ef7885ac2e5c56f1ecf800b758f6b0419                                                                              1.5s
+ => => extracting sha256:2067094444255bb5bf0f8b525f10409691c57f48c48e6bebac8c3a85df4f9dd2                                                                              0.1s
+ => => extracting sha256:bbf418262cbe98089272fafddcc570e7fa85e6fa28fe7163dc445136042bd183                                                                              1.0s
+ => => extracting sha256:43272e9c9d4bd6009934139dd3c958777b55bdbe0ccadb5e7a13f847436fabd2                                                                              0.0s
+ => [internal] load build context                                                                                                                                      0.0s
+ => => transferring context: 43.92kB                                                                                                                                   0.0s
+ => [2/6] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*      52.7s
+ => [3/6] WORKDIR /user-service                                                                                                                                        0.1s
+ => [4/6] COPY requirements.txt .                                                                                                                                      0.0s
+ => [5/6] RUN pip install --no-cache-dir -r requirements.txt                                                                                                          29.1s
+ => [6/6] COPY . .                                                                                                                                                     0.1s
+ => exporting to image                                                                                                                                                 3.3s
+ => => exporting layers                                                                                                                                                3.3s
+ => => writing image sha256:4643cac94c5aea2ad3f0d42da1d02021fae49c263686e0a1317843e06d61a587                                                                           0.0s
+ => => naming to docker.io/library/user-service:1.0.0                                                                                                                  0.0s
+Infer repository core for addon registry
+Addon core/registry is already enabled
+The push refers to repository [localhost:32000/user-service]
+f1a35dd65374: Pushed 
+5b3be3161438: Pushed 
+115ee43031cd: Pushed 
+07f34e891e34: Pushed 
+9d367dd04264: Pushed 
+fa1d322086e6: Pushed 
+5184c31ad48f: Pushed 
+b0c20bcd44fe: Pushed 
+a257f20c716c: Pushed 
+1.0.0: digest: sha256:e67f5e1de23edeb4daa1574a413ec729665c1f763e6a2dc6478f43383d67e493 size: 2207
+User service image pushed
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ ./k8s/services/product-service/00-product-build-push.sh 
+Building and pushing Product service image
+[+] Building 67.5s (11/11) FINISHED                                                                                                                          docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                   0.0s
+ => => transferring dockerfile: 800B                                                                                                                                   0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                    0.6s
+ => [internal] load .dockerignore                                                                                                                                      0.0s
+ => => transferring context: 2B                                                                                                                                        0.0s
+ => CACHED [1/6] FROM docker.io/library/python:3.11-slim@sha256:d6e4d224f70f9e0172a06a3a2eba2f768eb146811a349278b38fff3a36463b47                                       0.0s
+ => [internal] load build context                                                                                                                                      0.0s
+ => => transferring context: 40.83kB                                                                                                                                   0.0s
+ => [2/6] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*      41.6s
+ => [3/6] WORKDIR /product-service                                                                                                                                     0.0s 
+ => [4/6] COPY requirements.txt .                                                                                                                                      0.0s 
+ => [5/6] RUN pip install --no-cache-dir -r requirements.txt                                                                                                          22.3s 
+ => [6/6] COPY . .                                                                                                                                                     0.1s 
+ => exporting to image                                                                                                                                                 2.7s 
+ => => exporting layers                                                                                                                                                2.7s 
+ => => writing image sha256:9b97fa855de33d6d58fb31deadd614ac02e3e84cdab2a9881749a02a28641706                                                                           0.0s 
+ => => naming to docker.io/library/product-service:1.0.0                                                                                                               0.0s 
+Infer repository core for addon registry                                                                                                                                    
+Addon core/registry is already enabled
+The push refers to repository [localhost:32000/product-service]
+6b024604e408: Pushed 
+874daaa612c9: Pushed 
+27e44ccaece0: Pushed 
+eff258975328: Pushed 
+d90cc1315f16: Pushed 
+fa1d322086e6: Mounted from user-service 
+5184c31ad48f: Mounted from user-service 
+b0c20bcd44fe: Mounted from user-service 
+a257f20c716c: Mounted from user-service 
+1.0.0: digest: sha256:ecfad5ee1354e4dfef0f3c9d2aeb06a48f91c20966383cd1b79426f711de5213 size: 2207
+Product service pushed
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl apply -f k8s/services/user-service/01-deployment.yml 
+deployment.apps/user-service configured
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl apply -f k8s/services/product-service/01-product-deployment.yml 
+deployment.apps/product-service configured
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl get pods -n projeto-final 
+NAME                              READY   STATUS    RESTARTS         AGE
+mysql-product-0                   1/1     Running   16 (5h48m ago)   13d
+mysql-user-0                      1/1     Running   20 (5h48m ago)   18d
+product-service-dfcbc566c-4zz8f   1/1     Running   0                63m
+product-service-dfcbc566c-w57lt   1/1     Running   0                63m
+user-service-5957b547bf-fl9cp     1/1     Running   0                65m
+user-service-5957b547bf-q8q5v     1/1     Running   0                65m
+
+VERIFICATION IF SERVICES HAVE JAEGER VARIABLES
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl exec -n projeto-final deployment/product-service -- env | grep JAEGER
+JAEGER_AGENT_HOST=jaeger.monitoring.svc.cluster.local
+JAEGER_AGENT_PORT=6831
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl exec -n projeto-final deployment/product-service -- env | grep JAEGER
+JAEGER_AGENT_HOST=jaeger.monitoring.svc.cluster.local
+JAEGER_AGENT_PORT=6831
+
+TRACER TESTS
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://user.local.prod/register   -H "Content-Type: application/json"   -d '{"email":"teste@email.com","password":"Teste123@"}'
+{"error":"User already exists"}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ TOKEN=$(curl -X POST http://user.local.prod/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teste@email.com","password":"Teste123@"}' | jq -r .token)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   257  100   207  100    50    637    154 --:--:-- --:--:-- --:--:--   793
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://product.local.prod/products \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Produto Teste","price":99.99,"quantity":10}'
+{"description":"","id":2,"message":"Product created successfully","price":99.99,"product_name":"produto teste","quantity":10}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -H "Authorization: Bearer $TOKEN" http://product.local.prod/products
+{"products":[{"created_at":"Tue, 10 Mar 2026 15:06:41 GMT","created_by":1,"description":"","id":1,"name":"produto teste","price":99.99,"quantity":10},{"created_at":"Tue, 10 Mar 2026 19:26:38 GMT","created_by":1,"description":"","id":2,"name":"produto teste","price":99.99,"quantity":10}]}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 

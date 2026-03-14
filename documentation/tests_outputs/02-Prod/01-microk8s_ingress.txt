@@ -1,0 +1,24 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/networking$ microk8s kubectl apply -f 01-ingress.yml 
+ingress.networking.k8s.io/app-ingress created
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl get pods -n ingress
+NAME                                      READY   STATUS    RESTARTS         AGE
+nginx-ingress-microk8s-controller-26458   1/1     Running   224 (119m ago)   300d
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ cat /etc/hosts
+127.0.0.1       localhost
+127.0.1.1       ubuntu-2204.linuxvmimages.local ubuntu-2204
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+ADDING USER AND PRODUCT HOST TO ETC/HOSTS
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ sudo sh -c 'echo "127.0.0.1 user.local.prod product.local.prod" >> /etc/hosts'
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ grep "user.local.prod" /etc/hosts
+127.0.0.1 user.local.prod product.local.prod
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ getent hosts user.local.prod
+127.0.0.1       user.local.prod product.local.prod

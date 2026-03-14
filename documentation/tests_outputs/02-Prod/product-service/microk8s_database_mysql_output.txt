@@ -168,6 +168,7 @@ persistentvolumeclaim "mysql-product-pvc" deleted
 persistentvolumeclaim/mysql-product-pvc created
 (venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl apply -f k8s/databases/mysql-product/02-statefulset.yml 
 statefulset.apps/mysql-product created
+
 (venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl exec -it mysql-product-0 -n projeto-final -- mysql -u root -p
 Enter password: 
 Welcome to the MySQL monitor.  Commands end with ; or \g.
