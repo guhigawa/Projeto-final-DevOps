@@ -329,14 +329,17 @@ def update_product(current_user_id):
         try:
             with connection.cursor() as cursor:
                 with tracer.start_as_current_span("verify_product_query") as verify_span:
-                    cursor.execute("SELECT id FROM items WHERE id = %s AND created_by = %s",(target_id,current_user_id))
+                    cursor.execute("SELECT id, name FROM items WHERE id = %s AND created_by = %s",(target_id,current_user_id))
                     selected_product = cursor.fetchone()
                     if not selected_product:
                         verify_span.set_attribute("product_exists", False)
                         return jsonify({"error":"product not found or access denied"}),404
                     verify_span.set_attribute("product.found", True)
-                    verify_span.set_attribute("product.name", selected_product["name"])
-
+                    if selected_product and "name" in selected_product:
+                        verify_span.set_attribute("product.name", selected_product["name"])
+                    else:
+                        verify_span.set_attribute("product.name", "unknown")
+                    
                 with tracer.start_as_current_span("update_product_query") as update_span:    
                     if new_product_name is not None:# Allow empty name
                         cursor.execute("UPDATE items SET name = %s WHERE id = %s AND created_by = %s",(new_product_name, target_id, current_user_id))
