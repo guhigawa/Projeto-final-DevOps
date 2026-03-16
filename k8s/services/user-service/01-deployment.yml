@@ -27,7 +27,7 @@ spec:
       containers:
       - name: user-service
         image: localhost:32000/user-service:1.0.0
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
         - name: SECRET_KEY
           valueFrom:
@@ -40,7 +40,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: pd-app-config
-              key: MYSQL_PRODUCT_USER_NAME
+              key: MYSQL_USER_NAME
         - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -76,6 +76,14 @@ spec:
             configMapKeyRef:
               name: pd-app-config
               key: LOG_LEVEL
+        - name: JAEGER_AGENT_HOST
+          value: "jaeger.monitoring.svc.cluster.local"
+        - name: JAEGER_AGENT_PORT
+          value: "6831"
+        - name: OTEL_SERVICE_NAME
+          value: "user-service"
+        - name: OTEL_TRACES_EXPORTER
+          value: "jaeger"
         ports:
         - containerPort: 5001
           name: http
@@ -84,8 +92,8 @@ spec:
             path: /health
             port: 5001
             scheme: HTTP
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: 45
+          periodSeconds: 15
           timeoutSeconds: 3
           failureThreshold: 3
         readinessProbe:
@@ -93,10 +101,10 @@ spec:
             path: /health/detailed
             port: 5001
             scheme: HTTP
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 2
-          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
         resources:
           requests:
             memory: "256Mi"

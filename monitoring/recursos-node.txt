@@ -1,0 +1,6 @@
+Capacity:
+  cpu:                6
+  ephemeral-storage:  525800976Ki
+  hugepages-2Mi:      0
+  memory:             8131580Ki
+  pods:               110

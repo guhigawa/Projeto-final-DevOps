@@ -27,7 +27,7 @@ spec:
       containers:
       - name: product-service
         image: localhost:32000/product-service:1.0.0
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
         - name: SECRET_KEY
           valueFrom:
@@ -76,6 +76,14 @@ spec:
             configMapKeyRef:
               name: pd-app-config
               key: LOG_LEVEL
+        - name: JAEGER_AGENT_HOST
+          value: "jaeger.monitoring.svc.cluster.local"
+        - name: JAEGER_AGENT_PORT
+          value: "6831"
+        - name: OTEL_SERVICE_NAME
+          value: "product-service"
+        - name: OTEL_TRACES_EXPORTER
+          value: "jaeger"
         ports:
           - containerPort: 5002
             name: http
@@ -93,10 +101,10 @@ spec:
             path: /health/detailed
             port: 5002
             scheme: HTTP
-          initialDelaySeconds: 5
+          initialDelaySeconds: 10
           periodSeconds: 5
-          timeoutSeconds: 2
-          failureThreshold: 1
+          timeoutSeconds: 3
+          failureThreshold: 3
         resources:
           requests:
             memory: "256Mi"

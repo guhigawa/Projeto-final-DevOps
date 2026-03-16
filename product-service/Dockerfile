@@ -6,6 +6,10 @@ ARG PORT
 ENV FLASK_ENV=${ENVIRONMENT}
 ENV FLASK_RUN_PORT=${PORT}
 ENV PYTHONUNBUFFERED=1
+ENV JAEGER_AGENT_HOST=jaeger.monitoring.svc.cluster.local
+ENV JAEGER_AGENT_PORT=6831
+ENV OTEL_SERVICE_NAME=product-service
+ENV OTEL_TRACES_EXPORTER=jaeger
 
 RUN apt-get update && apt-get install -y \
     curl \ 
