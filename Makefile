@@ -105,3 +105,8 @@ clean-prod:
 # Clean everything
 clean-all: clean clean-containers clean-prod
 	@echo "Full cleanup completed"
+
+#zip
+zip:
+	@echo "Creating clean ZIP"
+	@./scripts/utils/create-clean-zip.sh
