@@ -21,17 +21,41 @@ env:
   STAGING_PRODUCT_MYSQL_USER: 'staging_product_user'
 
 jobs:
-  
-  test-all-services:
+  #Job 1 - Unit tests
+  test-unit:
     runs-on: ${{ matrix.os }}
-    env:
-      USER_SERVICE_PORT: 3001
-      PRODUCT_SERVICE_PORT: 3002
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: pip install -r requirements/dev_requirements.txt
+      
+      - name: Run unit tests
+        run: ./scripts/test/run-unit-tests.sh
+      
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: |
+            user-service/.coverage
+            product-service/.coverage
+  #job 2 - integration tests
+  test-integration:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
         mysql_version: ['8.0']
-
     services:
       mysql-user:
         image: mysql:${{ matrix.mysql_version }}
@@ -40,11 +64,10 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -u root -ptest_root_password_123"
+          --health-cmd="mysqladmin ping -h localhost"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
-      
+          --health-retries=5
       mysql-product:
         image: mysql:${{ matrix.mysql_version }}
         env:
@@ -52,24 +75,18 @@ jobs:
         ports:
           - 3307:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -u root -ptest_root_password_123"
+          --health-cmd="mysqladmin ping -h localhost"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
-      
+          --health-retries=5
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       
-      - name: Creating test environment file
-        env:
-          USER_SERVICE_PORT: ${{ env.USER_SERVICE_PORT }}
-          PRODUCT_SERVICE_PORT: ${{ env.PRODUCT_SERVICE_PORT }}
+      - name: Create test env file
         run: |
           cat > .env.test << EOF
           SECRET_KEY=test_fallback_secret_key_123
@@ -88,125 +105,25 @@ jobs:
           FLASK_ENV=test
           TESTING=True
           EOF
-
-      - name: Install MySQL client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mysql-client
       
-      - name: wait for MySQL to be ready
+      - name: Initialize databases
         run: |
-          until mysql -h 127.0.0.1 -P 3306 -u root -ptest_root_password_123 -e  "SELECT 1"; do echo "waiting for MySQL"
-            sleep 2
-          done
-
-          until mysql -h 127.0.0.1 -P 3307 -u root -ptest_root_password_123 -e  "SELECT 1"; do echo "waiting for MySQL"
-            sleep 2
-          done
+          mysql -h127.0.0.1 -P3306 -uroot -ptest_root_password_123 < scripts/structure/init.sql
+          mysql -h127.0.0.1 -P3307 -uroot -ptest_root_password_123 < scripts/structure/product_init.sql
       
-      - name: Initialize service database
-        run: |
-          mysql -h 127.0.0.1 -P 3306 -u root -ptest_root_password_123 < user-service/init_test.sql
-          mysql -h 127.0.0.1 -P 3307 -u root -ptest_root_password_123 < product-service/product_init_test.sql
-
-      - name: Install dependencies with coverage support
-        run: |
-          cd user-service && pip install -r requirements.txt 
-          cd ../product-service && pip install -r requirements.txt 
-
-      - name: Start user-service
-        working-directory: ./user-service
-        env:
-          USER_SERVICE_PORT: ${{ env.USER_SERVICE_PORT }}
-        run: |
-          echo "Starting user-service"
-          python3 app.py &
-          FLASK_PID_USER=$! #cli command to store the last executed command in the background into the variable FLASK_PID
-          echo $FLASK_PID_USER > user_service.pid 
-          echo "User-service PID: $FLASK_PID_USER"
-          sleep 30
-
-      - name: Start product-service
-        working-directory: ./product-service
-        env:
-          PRODUCT_SERVICE_PORT: ${{ env.PRODUCT_SERVICE_PORT }}
-        run: |
-          echo "Starting product-service"
-          python3 product_app.py &
-          FLASK_PID_PRODUCT=$! #cli command to store the last executed command in the background into the variable FLASK_PID
-          echo FLASK_PID_PRODUCT > product-service.pid
-          echo "Flask PID product-service: $FLASK_PID_PRODUCT"
-          sleep 30
+      - name: Install dependencies
+        run: pip install -r requirements/dev_requirements.txt
       
-      -  name: Verification if both services are running
-         run: |
-          curl -f http://localhost:${{ env.USER_SERVICE_PORT }}/health && echo "User Service: OK"
-          curl -f http://localhost:${{ env.PRODUCT_SERVICE_PORT }}/health && echo "Product Service: OK"
+      - name: Run integration tests
+        run: ./scripts/test/run-integration-test.sh
 
-      - name: Run user-service tests with coverage 
-        working-directory: ./user-service
-        env:
-          USER_SERVICE_PORT: ${{ env.USER_SERVICE_PORT }}
-        run: |
-          python3 -m pytest tests/ -v --cov=app --cov-report=xml:user-coverage.xml --cov-report=html:user-htmlcov/ --cov-report=term -k "not functional"
-          
-      - name: Run product-service tests with coverage
-        working-directory: ./product-service
-        env:
-          PRODUCT_SERVICE_PORT: ${{ env.PRODUCT_SERVICE_PORT }}
-        run: |
-          python3 -m pytest products_tests/ -v --cov=product_app --cov-report=xml:product-coverage.xml --cov-report=html:product-htmlcov/ --cov-report=term -k "not functional"
-      
-      - name: Stop Flask services  
-        if: always()
-        run: |
-          echo "Stopping Flask services"
-          if [ -f user-service/user_service.pid ]; then
-            kill $(cat user-service/user_service.pid) 2>/dev/null || true
-          fi
-          if [ -f product-service/product_service.pid ]; then
-            kill $(cat product-service/product_service.pid) 2>/dev/null || true
-          fi
-          pkill -f "python3 app.py" || true
-          pkill -f "python3 product_app.py" || true
-          echo "Flask services stopped"
-
-      - name: Upload tests artifacts and coverage reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ github.run_id }}
-          path: |
-            user-service/tests/evidence/
-            product-service/products_tests/products_evidence/
-            user-service/user-coverage.xml
-            product-service/product-coverage.xml
-            user-service/user-htmlcov/
-            product-service/product-htmlcov/
-          retention-days: 14
-      
-      - name: Generate test summary
-        if: always()
-        run: |
-          echo "#Test Execution Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "##Test Statistics" >> $GITHUB_STEP_SUMMARY
-          echo "-User Service Tests: 37" >> $GITHUB_STEP_SUMMARY
-          echo "-Product Service Tests: 46" >> $GITHUB_STEP_SUMMARY
-          echo "-Functional Tests: 8" >> $GITHUB_STEP_SUMMARY
-          echo "-**Total Tests: 91**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Coverage Reports Generated" >> $GITHUB_STEP_SUMMARY
-          echo "XML reports for CI integration" >> $GITHUB_STEP_SUMMARY
-          echo "HTML reports for detailed analysis" >> $GITHUB_STEP_SUMMARY
-          echo "Console output for immediate feedback" >> $GITHUB_STEP_SUMMARY
-   
+  #job 3 - deploy staging
   deploy-staging:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
-    needs: test-all-services
+    needs: [test-unit, test-integration]
     if: |
       github.ref == 'refs/heads/main' ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
@@ -278,7 +195,7 @@ jobs:
           STAGING_PRODUCT_MYSQL_USER: ${{ env.STAGING_PRODUCT_MYSQL_USER }}
 
         run: |
-          docker-compose -f docker-compose.staging.yml up -d --build
+          ./scripts/staging/deploy-staging.sh
           sleep 30
 
       - name: Verify staging deployment
@@ -430,38 +347,13 @@ jobs:
       - name: Run functional tests in staging environment 
         run: |
           echo "Running functional tests in staging environment"
+          run: ./scripts/staging/run-functional-tests.sh
 
-          #User service functional tests
-          docker-compose -f docker-compose.staging.yml exec -T user-service \
-            timeout 300 python3 -m pytest /user-service/tests/test_functional.py -v --tb=short 2>&1 | tee /tmp/user-functional.log
-          
-          USER_EXIT_CODE=${PIPESTATUS[0]}
-          if [ $USER_EXIT_CODE -eq 0 ]; then
-            echo "User functional tests PASSED"
-          elif [ $USER_EXIT_CODE -eq 124 ]; then
-            echo "User functional tests TIMEOUT"
-          else
-            echo "User functional tests had issues (exit code: $USER_EXIT_CODE)"
-          fi
-
-          #Product service functional tests
-          echo "Running product-service functional tests"
-          docker-compose -f docker-compose.staging.yml exec -T product-service \
-            timeout 300 python3 -m pytest /product-service/products_tests/test_product_functional.py -v --tb=short 2>&1 | tee /tmp/product-functional.log
-          
-          PRODUCT_EXIT_CODE=${PIPESTATUS[0]}
-          if [ $PRODUCT_EXIT_CODE -eq 0 ]; then
-            echo "Product functional tests PASSED"
-          elif [ $PRODUCT_EXIT_CODE -eq 124 ]; then
-            echo "Product functional tests TIMEOUT"
-          else
-            echo "Product functional tests had issues (exit code: $PRODUCT_EXIT_CODE)"
-          fi
       
       - name: Record deployment
         if: success()
         run: |
-          echo "## Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "##Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Status:** Successful" >> $GITHUB_STEP_SUMMARY
           echo "**Timestamp:** $(date)" >> $GITHUB_STEP_SUMMARY
@@ -470,12 +362,41 @@ jobs:
           echo "**Services:**" >> $GITHUB_STEP_SUMMARY
           echo "- User Service: http://localhost:${{ env.STAGING_USER_PORT }}" >> $GITHUB_STEP_SUMMARY
           echo "- Product Service: http://localhost:${{ env.STAGING_PRODUCT_PORT }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Test Coverage:**" >> $GITHUB_STEP_SUMMARY
-          echo "- Unit/Integration Tests: 83 tests passed" >> $GITHUB_STEP_SUMMARY
-          echo "- Functional Tests: Executed in staging" >> $GITHUB_STEP_SUMMARY
 
       - name: Cleanup
         if: always()
+        run: docker-compose -f docker-compose.staging.yml down -v
+  
+  deploy-production:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    needs: [test-unit, test-integration, deploy-staging]
+    if: success() && github.ref == 'refs/heads/main'
+
+    environment:
+      name: production
+      url: http://user.local.prod
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get Kubernetes information
+        id: k8s
         run: |
-          docker-compose -f docker-compose.staging.yml down -v
+          NODE_IP=$(microk8s kubectl get node -o jsonpath='{.items[0].status.addresses[0].address}')
+          USER_HOST=$(microk8s kubectl get ingress app-ingress -n projeto-final -o jsonpath='{.spec.rules[0].host}')
+          echo "node_ip=$NODE_IP" >> $GITHUB_OUTPUT
+          echo "user_host=$USER_HOST" >> $GITHUB_OUTPUT
+
+      - name: Build production images
+        run: ./scripts/prod/build-prod.sh
+      
+      - name: Deploy to Kubernetes
+        run: ./scripts/prod/deploy-prod.sh
+
+      - name: Verify production deployment
+        run: |
+          curl -s -f http://${{ steps.k8s.outputs.user_host }}/health || exit 1
+          microk8s kubectl get pods -n projeto-final

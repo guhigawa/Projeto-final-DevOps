@@ -2,8 +2,12 @@
 #!/bin/bash
 
 echo "Building and pushing Product service image"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo "script dir = $SCRIPT_DIR"
+PROJECT_ROOT="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")"
+echo "Project root = $PROJECT_ROOT"
 
-cd ~/Downloads/Projeto_final/product-service
+cd "$PROJECT_ROOT/user-service"
 
 docker build -t product-service:1.0.0 \
     --build-arg ENVIRONMENT=production \

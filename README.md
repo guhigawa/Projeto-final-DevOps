@@ -1,5 +1,45 @@
 ## 1.INTRODUÇÃO
-Este projeto implementa uma arquitetura de microsserviços com **Python/Flask** e **MySQL**, containerizada com **Docker** e orquestrada com **Kubernetes (MicroK8s)**. O pipeline CI/CD é automatizado com **GitHub Actions**, incluindo testes unitários, de integração e funcionais. O monitoramento é realizado com **Jaeger** para tracing distribuído entre os microsserviços.
+### A Startup: "Inventory"
+A **Inventory** é uma startup que oferece uma plataforma simplificada para pequenos vendedores gerenciarem seu catálogo de produtos de forma segura e organizada.
+
+### Para o Usuário Final (Vendedor)
+
+- **Registro**: Registre-se na plataforma com email e senha
+- **Gerencie seu catálogo**: Adicione, edite e remova produtos do seu estoque
+- **Controle seu perfil**: Atualize seus dados pessoais
+- **Acesso seguro**: Todas as operações são protegidas por autenticação JWT
+
+### Funcionalidades Principais
+
+| Serviço | Funcionalidade | Endpoint |
+|---------|----------------|----------|
+| **User Service** | Registro de vendedores | `POST /register` |
+| **User Service** | Autenticação | `POST /login` |
+| **User Service** | Gerenciamento de perfil | `GET/PUT /profile` |
+| **Product Service** | Criar produto | `POST /products` |
+| **Product Service** | Listar produtos | `GET /products` |
+| **Product Service** | Atualizar produto | `PUT /products` |
+| **Product Service** | Remover produto | `DELETE /products` |
+
+### Como Usar na Prática
+
+1. **Usuário**, acessa a plataforma e cria sua conta
+2. **Usuário faz login** e recebe um token de acesso
+3. **Usuário adiciona seus produtos** ao catálogo (nome, preço, quantidade)
+4. **Usuário pode editar** produtos existentes ou removê-los do estoque
+5. **Usuário ode atualizar** seus dados pessoais no perfil
+6. **Todas as operações** são rastreadas via Jaeger, permitindo à startup identificar possíveis gargalos
+
+### Arquitetura Técnica
+
+Este projeto implementa uma arquitetura de microsserviços com **Python/Flask** e **MySQL**, containerizada com **Docker** e orquestrada com **Kubernetes (MicroK8s)**. O pipeline CI/CD é automatizado com **GitHub Actions**, incluindo testes unitários, de integração e funcionais. O monitoramento é realizado com **Jaeger** para tracing distribuído entre os microsserviços, permitindo rastrear cada requisição desde o login até a gestão de produtos.
+
+### Interação entre Microsserviços
+
+Os serviços interagem da seguinte forma:
+- O **Product Service** depende do **User Service** para autenticação
+- Quando um vendedor tenta criar/editar/remover um produto, o Product Service valida o token JWT com o User Service
+- Isso garante que cada vendedor só acesse seus próprios produtos (isolamento de dados)
 
 ![alt text](documentation/20251009-HLD-ProjetoFinal-DevOps.drawio.png)
 *Figura 1: Diagrama de Arquitetura do Projeto*
@@ -10,6 +50,25 @@ Este projeto implementa uma arquitetura de microsserviços com **Python/Flask** 
 - **MySQL**: Bancos de dados separados por serviço
 - **Jaeger**: Tracing distribuído entre microsserviços
 - **Kubernetes**: Orquestração em produção com HPA e Rolling Updates
+
+## 2. REPOSITÓRIO
+
+O projeto está hospedado em um repositório **público** no GitHub:
+[https://github.com/guhigawa/Projeto-final-DevOps.git](https://github.com/guhigawa/Projeto-final-DevOps.git)
+
+### Justificativa para a Startup
+- **Acesso imediato**: Qualquer membro da equipe pode clonar e começar a trabalhar
+- **Transparência**: Código aberto facilita auditoria e revisão de código
+- **Portfólio**: Demonstra boas práticas de desenvolvimento para futuros clientes
+- **Custo zero**: GitHub Actions gratuito para repositórios públicos
+
+### Segurança
+Apesar de público, **nenhuma credencial sensível** está no repositório:
+- Secrets utilizam GitHub Secrets
+- Senhas de banco via variáveis de ambiente
+- Tokens JWT injetados no deploy
+
+---
 
 ## 3. Tecnologias Utilizadas
 
@@ -31,55 +90,42 @@ Projeto_final
 ├── documentation
 ├── generate_hashed_password.py
 ├── k8s
+├── Makefile
 ├── monitoring
+├── pipeline.png
 ├── product-service
 ├── README.md
-├── requirements.txt
+├── requirements
+├── requirements.txt.backup
 ├── scripts
-├── stack-monitoring
 ├── user-service
 └── venv
 
 ## 5. Configuração dos Ambientes
 
-| Ambiente | Ferramenta 
-|----------|------------
-| **DEV** | Docker Compose + Local 
-| **STG** | Docker Compose + GitHub Actions 
-| **PRD** | Kubernetes (MicroK8s) 
+| Ambiente | Ferramenta | Acesso | Comando |
+|----------|------------|--------|---------|
+| **DEV** | Docker Compose + Local | `http://localhost:3001` (user), `http://localhost:3002` (product) | `make dev` |
+| **STG** | Docker Compose + GitHub Actions | `http://localhost:4001` (user), `http://localhost:4002` (product) | `make staging` |
+| **PRD** | Kubernetes (MicroK8s) | `http://user.local.prod`, `http://product.local.prod` | `make prod` |
 
 
 ## 6. Pipeline CI/CD
 
 ![alt text](documentation/pipeline.png)
 *Figura 2: Pipeline automatizada no GitHub Actions*
+
 ### Jobs do Pipeline:
 
-    ```yaml
-    jobs:
-    test-all-services:
-        runs-on: ubuntu-latest
-        description: Executa testes unitários e de integração
-        steps:
-        - Setup Python
-        - Inicializa MySQL
-        - Executa testes unitários (37 no user, 46 no product)
-        - Gera relatórios de cobertura
-
-    deploy-staging:
-        runs-on: ubuntu-latest
-        needs: test-all-services
-        environment: staging
-        description: Deploy no ambiente staging e testes funcionais
-        steps:
-        - Build das imagens Docker
-        - Deploy com docker-compose
-        - Executa testes funcionais (8 testes)
-        - Valida comunicação entre serviços
+| Job | Descrição | Condição |
+|-----|-----------|----------|
+| `test-unit` | Testes unitários e validadores | Sempre |
+| `test-integration` | Testes de integração com MySQL | Sempre |
+| `deploy-staging` | Deploy em staging e testes funcionais | Só na main/PR |
+| `deploy-production` | Deploy em produção (com aprovação manual) | Só na main |
 
 ## 7. Testes manuais e Testes automatizados
 Os resultados dos testes feitos para garantir o funcionamento dos serviços foram concluidos e estão todos documentados no diretório Documentation. Além destes, há também, dentro de cada diretório dos serviços diretórios de evidências de logging que auxiliaram no debugging e realização de testes.
-
 
 ## 8. Monitoramento com Jaeger
 O Projeto utilzar Jaeger para rastrear a requisição de serviços
@@ -199,9 +245,9 @@ Nomes de variáveis diferentes entre statefulset, configmap e código	| Padroniz
 11. Lições Aprendidas e Pontos-Chave
 11.1 Arquitetura de Testes
 text
-DEV (Local)      → Testes unitários e validadores (rápidos)
-STAGING (Docker) → Testes de integração e funcionais (ambiente real)
-PROD (K8s)       → Health checks e tracing (validação de deploy)
+DEV (Local)      - Testes unitários e validadores (rápidos)
+STAGING (Docker) - Testes de integração e funcionais (ambiente real)
+PROD (K8s)       - Health checks e tracing (validação de deploy)
 
 11.2 Segurança em Múltiplas Camadas
 python
