@@ -10,6 +10,8 @@ on:
 
 env:
   PYTHON_VERSION: '3.10'
+  USER_SERVICE_PORT: 3001
+  PRODUCT_SERVICE_PORT: 3002
   STAGING_USER_PORT: 4001
   STAGING_PRODUCT_PORT: 4002
   STAGING_USER_MYSQL_PORT: 4308
@@ -36,7 +38,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       
       - name: Install dependencies
-        run: pip install -r requirements/dev_requirements.txt
+        run: pip install -r requirements/development_requirements.txt
       
       - name: Run unit tests
         run: ./scripts/test/run-unit-tests.sh
@@ -112,7 +114,7 @@ jobs:
           mysql -h127.0.0.1 -P3307 -uroot -ptest_root_password_123 < scripts/structure/product_init.sql
       
       - name: Install dependencies
-        run: pip install -r requirements/dev_requirements.txt
+        run: pip install -r requirements/development_requirements.txt
       
       - name: Run integration tests
         run: ./scripts/test/run-integration-test.sh
@@ -231,7 +233,6 @@ jobs:
 
       - name: Pre-Test Verification
         run: |
-  
           echo "1. Service health:"
           curl -s http://localhost:${{ env.STAGING_USER_PORT }}/health | jq . || echo "User service health check"
           curl -s http://localhost:${{ env.STAGING_PRODUCT_PORT }}/health | jq . || echo "Product service health check"
@@ -328,7 +329,6 @@ jobs:
       
       - name: Verify databases are separate
         run: |
-    
           echo "Getting database names from containers..."
     
           USER_DB=$(docker-compose -f docker-compose.staging.yml exec -T user-service python3 -c "import os; print(os.getenv('MYSQL_DATABASE'))")
@@ -345,9 +345,7 @@ jobs:
           fi
 
       - name: Run functional tests in staging environment 
-        run: |
-          echo "Running functional tests in staging environment"
-          run: ./scripts/staging/run-functional-tests.sh
+        run: ./scripts/staging/run-functional-tests.sh
 
       
       - name: Record deployment
