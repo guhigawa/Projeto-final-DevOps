@@ -95,12 +95,12 @@ jobs:
           USER_MYSQL_HOST=localhost
           USER_MYSQL_USER=test_user
           USER_MYSQL_PASSWORD=test_password_123
-          USER_MYSQL_DB=auth
+          USER_MYSQL_DB=auth_test
           USER_MYSQL_PORT=3306
           PRODUCT_MYSQL_HOST=localhost
           PRODUCT_MYSQL_USER=product_test_user
           PRODUCT_MYSQL_PASSWORD=test_password_123
-          PRODUCT_MYSQL_DB=products
+          PRODUCT_MYSQL_DB=products_test
           PRODUCT_MYSQL_PORT=3307
           USER_SERVICE_URL=http://localhost:${{ env.USER_SERVICE_PORT }}
           PRODUCT_SERVICE_URL=http://localhost:${{ env.PRODUCT_SERVICE_PORT }}
@@ -110,8 +110,8 @@ jobs:
       
       - name: Initialize databases
         run: |
-          mysql -h127.0.0.1 -P3306 -uroot -ptest_root_password_123 < scripts/structure/init.sql
-          mysql -h127.0.0.1 -P3307 -uroot -ptest_root_password_123 < scripts/structure/product_init.sql
+          mysql -h127.0.0.1 -P3306 -uroot -ptest_root_password_123 < user-service/init_test.sql
+          mysql -h127.0.0.1 -P3307 -uroot -ptest_root_password_123 < product-service/product_init_test.sql
       
       - name: Install dependencies
         run: pip install -r requirements/development_requirements.txt
