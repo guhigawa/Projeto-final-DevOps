@@ -116,6 +116,31 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements/development_requirements.txt
       
+      - name: Start user-service
+        working-directory: ./user-service
+        env:
+          USER_SERVICE_PORT: ${{ env.USER_SERVICE_PORT }}
+        run: |
+          echo "Starting user-service..."
+          python3 app.py &
+          sleep 10
+      
+      - name: Start product-service
+        working-directory: ./product-service
+        env:
+          PRODUCT_SERVICE_PORT: ${{ env.PRODUCT_SERVICE_PORT }}
+          USER_SERVICE_URL: http://localhost:${{ env.USER_SERVICE_PORT }}
+        run: |
+          echo "Starting product-service..."
+          python3 product_app.py &
+          sleep 10
+      
+      - name: Verify services are running
+        run: |
+          curl -f http://localhost:${{ env.USER_SERVICE_PORT }}/health || exit 1
+          curl -f http://localhost:${{ env.PRODUCT_SERVICE_PORT }}/health || exit 1
+          echo "Both services are healthy"
+          
       - name: Run integration tests
         run: ./scripts/test/run-integration-test.sh
 
