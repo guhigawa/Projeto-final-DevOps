@@ -371,30 +371,23 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     needs: [test-unit, test-integration, deploy-staging]
-    if: success() && github.ref == 'refs/heads/main'
-
+    if: false  # Disable,mannual deploy on VM
     environment:
       name: production
       url: http://user.local.prod
-
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Get Kubernetes information
-        id: k8s
+      - name: Manual deployment required
         run: |
-          NODE_IP=$(microk8s kubectl get node -o jsonpath='{.items[0].status.addresses[0].address}')
-          USER_HOST=$(microk8s kubectl get ingress app-ingress -n projeto-final -o jsonpath='{.spec.rules[0].host}')
-          echo "node_ip=$NODE_IP" >> $GITHUB_OUTPUT
-          echo "user_host=$USER_HOST" >> $GITHUB_OUTPUT
-
-      - name: Build production images
-        run: ./scripts/prod/build-prod.sh
-      
-      - name: Deploy to Kubernetes
-        run: ./scripts/prod/deploy-prod.sh
-
-      - name: Verify production deployment
-        run: |
-          curl -s -f http://${{ steps.k8s.outputs.user_host }}/health || exit 1
-          microk8s kubectl get pods -n projeto-final
+          echo "========================================="
+          echo "PRODUCTION DEPLOYMENT IS MANUAL"
+          echo "========================================="
+          echo ""
+          echo "This job is disabled in CI/CD pipeline."
+          echo "Deploy to production manually on the VM:"
+          echo ""
+          echo "  cd ~/Downloads/Projeto_final"
+          echo "  ./scripts/prod/build-prod.sh"
+          echo "  ./scripts/prod/deploy-prod.sh"
+          echo ""
+          echo "  Verify: curl http://user.local.prod/health"

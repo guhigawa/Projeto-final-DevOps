@@ -122,7 +122,22 @@ Projeto_final
 | `test-unit` | Testes unitários e validadores | Sempre |
 | `test-integration` | Testes de integração com MySQL | Sempre |
 | `deploy-staging` | Deploy em staging e testes funcionais | Só na main/PR |
-| `deploy-production` | Deploy em produção (com aprovação manual) | Só na main |
+| `deploy-production` | PRD | **Manual** | Deploy em produção via Kubernetes (MicroK8s) |
+
+### Deploy em Produção
+
+O deploy em produção é **manual** e deve ser executado na VM onde o MicroK8s está instalado:
+
+```bash
+# Na VM com MicroK8s
+cd ~/Downloads/Projeto_final
+./scripts/prod/build-prod.sh
+./scripts/prod/deploy-prod.sh
+
+# Verificar status
+microk8s kubectl get pods -n projeto-final
+curl http://user.local.prod/health
+curl http://product.local.prod/health
 
 ## 7. Testes manuais e Testes automatizados
 Os resultados dos testes feitos para garantir o funcionamento dos serviços foram concluidos e estão todos documentados no diretório Documentation. Além destes, há também, dentro de cada diretório dos serviços diretórios de evidências de logging que auxiliaram no debugging e realização de testes.
