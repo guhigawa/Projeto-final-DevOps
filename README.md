@@ -110,7 +110,7 @@ Projeto_final
 |----------|------------|--------|---------|
 | **DEV** | Docker Compose + Local | `http://localhost:3001` (user), `http://localhost:3002` (product) | `make dev` |
 | **STG** | Docker Compose + GitHub Actions | `http://localhost:4001` (user), `http://localhost:4002` (product) | `make staging` |
-| **PRD** | Kubernetes (MicroK8s) | `http://user.local.prod`, `http://product.local.prod` | `make prod` |
+| **PRD** | Kubernetes (MicroK8s) + Self-hosted runner | `http://user.local.prod`, `http://product.local.prod` | Automático via CI |
 
 ### 5.1 Ambiente de Desenvolvimento (DEV)
 
@@ -136,24 +136,22 @@ curl http://localhost:3002/health
 
 ### Jobs do Pipeline:
 
-| Job | Descrição | Condição |
+| Job | Descrição | Ambiente |
 |-----|-----------|----------|
-| `test-unit` | Testes unitários e validadores | Sempre |
-| `test-integration` | Testes de integração com MySQL | Sempre |
-| `deploy-staging` | Deploy em staging e testes funcionais | Só na main/PR |
-| `deploy-production` | Deploy em produção via Kubernetes (MicroK8s)| **Manual** | 
+| `dev-unit-tests` | Testes unitários e validadores | DEV |
+| `dev-integration-tests` | Testes de integração com MySQL | DEV |
+| `dev-security-tests` | Testes de segurança (Bandit + Safety) | DEV |
+| `dev-build-images` | Build das imagens (uma única vez) | DEV |
+| `staging-deploy` | Deploy em staging e testes funcionais | STG |
+| `deploy-production` | Deploy em produção (Kubernetes) | PRD |
 
-### Deploy em Produção
+### Fluxo do Pipeline
+[Push/PR] → [dev-unit-tests] → [dev-integration-tests] → [dev-security-tests] → [dev-build-images] → [staging-deploy] → [deploy-production]
 
-O deploy em produção é **manual** e deve ser executado na VM onde o MicroK8s está instalado:
+O deploy em produção utiliza um **self-hosted runner** configurado na VM com MicroK8s. O job baixa as imagens construídas no DEV e realiza o deploy no Kubernetes.
 
 ```bash
-# Na VM com MicroK8s
-cd ~/Downloads/Projeto_final
-./scripts/prod/build-prod.sh
-./scripts/prod/deploy-prod.sh
-
-# Verificar status
+# Verificar status em produção
 microk8s kubectl get pods -n projeto-final
 curl http://user.local.prod/health
 curl http://product.local.prod/health
@@ -161,20 +159,22 @@ curl http://product.local.prod/health
 ```
 
 ## 7. Testes manuais e Testes automatizados
-Os resultados dos testes feitos para garantir o funcionamento dos serviços foram concluidos e estão todos documentados no diretório Documentation.
 
 | Tipo | Quantidade | Status |
 |------|------------|--------|
-| Testes unitários | 55 | OK |
-| Testes de integração | ~11 | OK|
-| Testes funcionais | 11 | OK |
-| Testes de segurança | 2 | OK|
+| Testes unitários | 55 | ok |
+| Testes de integração | ~11 | ok |
+| Testes funcionais | 11 | ok |
+| Testes de segurança | Bandit + Safety | ok |
 
 ### 7.1 Testes de Segurança
 
-Os testes de segurança são executados com:
-- **Bandit**: análise de vulnerabilidades no código
-- **Safety**: verificação de vulnerabilidades em bibliotecas
+### Testes de Segurança
+
+O projeto inclui testes de segurança automatizados:
+
+- **Bandit**: análise de vulnerabilidades no código (253 Low, 25 Medium issues em testes - aceitáveis)
+- **Safety**: verificação de vulnerabilidades em bibliotecas (corrigidas)
 
 ```bash
 make test-vulnerability
@@ -391,3 +391,17 @@ RollingUpdate strategy configurada
 HPA configurado
 
 Monitoring (Jaeger) implementado
+
+## 12. Self-Hosted Runner
+
+O deploy em produção utiliza um **self-hosted runner** configurado na VM com MicroK8s. Isso permite que o GitHub Actions execute comandos `kubectl` e `docker` diretamente no cluster.
+
+### Configuração do Runner
+
+```bash
+# Na VM com MicroK8s
+mkdir actions-runner && cd actions-runner
+./config.sh --url https://github.com/guhigawa/Projeto-final-DevOps --token <TOKEN>
+sudo ./svc.sh install
+sudo ./svc.sh start
+```
