@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-user-pvc
+  namespace: projeto-final
+  labels:
+    app: mysql-user
+    component: database
+    service: user
+spec:
+  storageClassName: microk8s-hostpath
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi #amount of memory reserved for persistent volume

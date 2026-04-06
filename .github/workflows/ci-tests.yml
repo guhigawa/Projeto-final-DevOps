@@ -1,0 +1,448 @@
+name: Final-Project CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    
+
+env:
+  PYTHON_VERSION: '3.10'
+  USER_SERVICE_PORT: 3001
+  PRODUCT_SERVICE_PORT: 3002
+  STAGING_USER_PORT: 4001
+  STAGING_PRODUCT_PORT: 4002
+  STAGING_USER_MYSQL_PORT: 4308
+  STAGING_PRODUCT_MYSQL_PORT: 4309
+  STAGING_MYSQL_PORT: 3306
+  STAGING_USER_MYSQL_DB: 'user_staging'
+  STAGING_PRODUCT_MYSQL_DB: 'product_staging'
+  STAGING_USER_MYSQL_USER: 'staging_user'
+  STAGING_PRODUCT_MYSQL_USER: 'staging_product_user'
+
+jobs:
+  #Job 1 - Unit tests
+  dev-unit-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: pip install -r requirements/development_requirements.txt
+      
+      - name: Run unit tests
+        run: ./scripts/test/run-unit-tests.sh
+      
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: |
+            user-service/.coverage
+            product-service/.coverage
+  #job 2 - integration tests
+  dev-integration-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        mysql_version: ['8.0']
+    services:
+      mysql-user:
+        image: mysql:${{ matrix.mysql_version }}
+        env:
+          MYSQL_ROOT_PASSWORD: test_root_password_123
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      mysql-product:
+        image: mysql:${{ matrix.mysql_version }}
+        env:
+          MYSQL_ROOT_PASSWORD: test_root_password_123
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Create test env file
+        run: |
+          cat > .env.test << EOF
+          SECRET_KEY=test_fallback_secret_key_123
+          USER_MYSQL_HOST=localhost
+          USER_MYSQL_USER=test_user
+          USER_MYSQL_PASSWORD=test_password_123
+          USER_MYSQL_DB=auth_test
+          USER_MYSQL_PORT=3306
+          PRODUCT_MYSQL_HOST=localhost
+          PRODUCT_MYSQL_USER=product_test_user
+          PRODUCT_MYSQL_PASSWORD=test_password_123
+          PRODUCT_MYSQL_DB=products_test
+          PRODUCT_MYSQL_PORT=3307
+          USER_SERVICE_URL=http://localhost:${{ env.USER_SERVICE_PORT }}
+          PRODUCT_SERVICE_URL=http://localhost:${{ env.PRODUCT_SERVICE_PORT }}
+          FLASK_ENV=test
+          TESTING=True
+          EOF
+      
+      - name: Initialize databases
+        run: |
+          mysql -h127.0.0.1 -P3306 -uroot -ptest_root_password_123 < user-service/init_test.sql
+          mysql -h127.0.0.1 -P3307 -uroot -ptest_root_password_123 < product-service/product_init_test.sql
+      
+      - name: Install dependencies
+        run: pip install -r requirements/development_requirements.txt
+      
+      - name: Start user-service
+        working-directory: ./user-service
+        env:
+          USER_SERVICE_PORT: ${{ env.USER_SERVICE_PORT }}
+        run: |
+          echo "Starting user-service..."
+          python3 app.py &
+          sleep 10
+      
+      - name: Start product-service
+        working-directory: ./product-service
+        env:
+          PRODUCT_SERVICE_PORT: ${{ env.PRODUCT_SERVICE_PORT }}
+          USER_SERVICE_URL: http://localhost:${{ env.USER_SERVICE_PORT }}
+        run: |
+          echo "Starting product-service..."
+          python3 product_app.py &
+          sleep 10
+      
+      - name: Verify services are running
+        run: |
+          curl -f http://localhost:${{ env.USER_SERVICE_PORT }}/health || exit 1
+          curl -f http://localhost:${{ env.PRODUCT_SERVICE_PORT }}/health || exit 1
+          echo "Both services are healthy"
+
+      - name: Run integration tests
+        run: ./scripts/test/run-integration-test.sh
+  
+  #job 3 - security tests
+  dev-security-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install security tools
+        run: |
+          pip install bandit safety
+      - name: Run Bandit (code security)
+        run: bandit -r user-service/ product-service/
+      - name: Run Safety (dependency vulnerabilities)
+        run: safety check -r requirements/development_requirements.txt
+
+  # job 4 - build images for staging and production
+  dev-build-images:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    needs: [dev-unit-tests, dev-integration-tests, dev-security-tests]
+    if: success() && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build user-service image
+        run: |
+          docker build -t user-service:latest -f user-service/Dockerfile ./user-service
+          docker save user-service:latest -o user-service.tar
+      - name: Build product-service image
+        run: |
+          docker build -t product-service:latest -f product-service/Dockerfile ./product-service
+          docker save product-service:latest -o product-service.tar
+      - name: Upload images as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images
+          path: |
+            user-service.tar
+            product-service.tar
+          retention-days: 1
+
+  #job 5 - deploy staging
+  staging-deploy:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    needs: [dev-build-images]
+    if: |
+      github.ref == 'refs/heads/main' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+
+    environment:
+      name: staging
+      url: http://localhost:${{ env.STAGING_USER_PORT }} 
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install docker-compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker --version
+          docker-compose --version
+
+      - name: Download images from DEV
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images
+
+      - name: Load images
+        run: |
+          docker load -i user-service.tar
+          docker load -i product-service.tar
+
+      - name: Cleanup previous staging runs
+        run: |
+          docker-compose -f docker-compose.staging.yml down -v 2>/dev/null || true
+
+      - name: Create .env.staging file
+        run: |
+          cat > .env.staging << EOF
+          STAGING_SECRET_KEY=${{ secrets.STAGING_JWT_SECRET || 'staging_fallback_key_123'}}
+          STAGING_USER_MYSQL_PASSWORD=${{ secrets.STAGING_USER_DB_PASSWORD || 'staging_user_pass_123'}}
+          STAGING_PRODUCT_MYSQL_PASSWORD=${{ secrets.STAGING_PRODUCT_DB_PASSWORD || 'staging_product_pass_123'}}
+          STAGING_DB_ROOT_PASSWORD=${{ secrets.STAGING_DB_ROOT_PASSWORD || 'staging_root_pass_123' }}
+          STAGING_USER_PORT=${{ env.STAGING_USER_PORT }}
+          STAGING_PRODUCT_PORT=${{ env.STAGING_PRODUCT_PORT }}
+          STAGING_MYSQL_PORT=${{ env.STAGING_MYSQL_PORT }}
+          STAGING_USER_MYSQL_PORT=${{ env.STAGING_USER_MYSQL_PORT }}
+          STAGING_PRODUCT_MYSQL_PORT=${{ env.STAGING_PRODUCT_MYSQL_PORT }}
+          STAGING_USER_MYSQL_DB=${{ env.STAGING_USER_MYSQL_DB }}
+          STAGING_PRODUCT_MYSQL_DB=${{ env.STAGING_PRODUCT_MYSQL_DB }}
+          STAGING_USER_MYSQL_USER=${{ env.STAGING_USER_MYSQL_USER }}
+          STAGING_PRODUCT_MYSQL_USER=${{ env.STAGING_PRODUCT_MYSQL_USER }}
+          EOF
+
+      - name: Deploy staging environment with docker-compose
+        run: |
+          ./scripts/staging/deploy-staging.sh
+          sleep 30
+
+      - name: Verify staging deployment
+        run: |
+          max_retries=10
+          for i in $(seq 1 $max_retries); do
+            echo "Attempt $i/$max_retries"
+            
+            if curl -s -f http://localhost:${{ env.STAGING_USER_PORT }}/health > /dev/null && \
+               curl -s -f http://localhost:${{ env.STAGING_PRODUCT_PORT }}/health > /dev/null; then
+              echo "Both services are healthy"
+              
+              # Verificação detalhada
+              echo "Detailed health check:"
+              curl -s http://localhost:${{ env.STAGING_USER_PORT }}/health | jq .
+              curl -s http://localhost:${{ env.STAGING_PRODUCT_PORT }}/health | jq .
+              break
+            fi
+            
+            if [ $i -eq $max_retries ]; then
+              echo "Services not healthy after $max_retries attempts"
+              exit 1
+            fi
+            
+            sleep 10
+          done
+
+      - name: Verify test files exist in containers
+        run: |
+          echo "Checking if test files exist"
+          docker-compose -f docker-compose.staging.yml exec user-service ls -la /user-service/tests/ || echo "User tests not found"
+          docker-compose -f docker-compose.staging.yml exec product-service ls -la /product-service/products_tests/ || echo "Product tests not found"
+
+      - name: Pre-Test Verification
+        run: |
+          echo "1. Service health:"
+          curl -s http://localhost:${{ env.STAGING_USER_PORT }}/health | jq . || echo "User service health check"
+          curl -s http://localhost:${{ env.STAGING_PRODUCT_PORT }}/health | jq . || echo "Product service health check"
+    
+    
+          echo ""
+          echo "2. Testing database connection from user-service container:"
+          # User Service DB Connection Test
+          docker-compose -f docker-compose.staging.yml exec user-service python3 -c "
+          import os
+          import pymysql
+          import sys
+
+          print('Variables in container:')
+          print(f'MYSQL_DATABASE: {os.getenv(\"MYSQL_DATABASE\")}')
+
+          try:
+            conn = pymysql.connect(
+                host=os.getenv('MYSQL_HOST'),
+                user=os.getenv('MYSQL_USER'),
+                password=os.getenv('MYSQL_PASSWORD'),
+                database=os.getenv('MYSQL_DATABASE'),
+                port=int(os.getenv('MYSQL_PORT', 3306))
+            )
+            print(' Database connection SUCCESS!')
+    
+            with conn.cursor() as cursor:
+                cursor.execute('SELECT DATABASE()')
+                db = cursor.fetchone()
+                print(f'Current database: {db[0]}')
+        
+                cursor.execute('SHOW TABLES')
+                tables = cursor.fetchall()
+                print(f'Tables in database: {[t[0] for t in tables]}')
+    
+            conn.close()
+    
+          except Exception as e:
+              print(f'Database connection FAILED: {e}')
+              sys.exit(1)
+          "
+        
+          echo "3. product-service database connection test:"
+          docker-compose -f docker-compose.staging.yml exec product-service python3 -c "
+          import os
+          import pymysql
+          import sys
+          print('Variables in container:')
+          print(f'MYSQL_DATABASE: {os.getenv(\"MYSQL_DATABASE\")}')
+          try:
+            conn = pymysql.connect(
+                host=os.getenv('MYSQL_HOST'),
+                user=os.getenv('MYSQL_USER'),
+                password=os.getenv('MYSQL_PASSWORD'),
+                database=os.getenv('MYSQL_DATABASE'),
+                port=int(os.getenv('MYSQL_PORT', 3306))
+            )
+            print(' Database connection SUCCESS!')
+    
+            with conn.cursor() as cursor:
+                cursor.execute('SELECT DATABASE()')
+                db = cursor.fetchone()
+                print(f'Current database: {db[0]}')
+        
+                cursor.execute('SHOW TABLES')
+                tables = cursor.fetchall()
+                print(f'Tables in database: {[t[0] for t in tables]}')
+    
+            conn.close()
+    
+          except Exception as e:
+              print(f' Database connection FAILED: {e}')
+              sys.exit(1)
+          "
+
+          echo "4. Service communication test inside product-service container:"
+          docker-compose -f docker-compose.staging.yml exec product-service python3 -c "
+          import os
+          import requests
+          import sys
+          user_service_url = os.getenv('USER_SERVICE_URL')
+          print(f'User Service URL: {user_service_url}')
+          try:
+              response = requests.get(f'{user_service_url}/health', timeout=5)
+              if response.status_code == 200:
+                  print(' Communication SUCCESS!')
+              else:
+                  print(f' Communication FAILED: Status code {response.status_code}')
+                  sys.exit(1)
+          except Exception as e:
+              print(f' Communication FAILED: {e}')
+              sys.exit(1)
+          "
+      
+      - name: Verify databases are separate
+        run: |
+          echo "Getting database names from containers..."
+    
+          USER_DB=$(docker-compose -f docker-compose.staging.yml exec -T user-service python3 -c "import os; print(os.getenv('MYSQL_DATABASE'))")
+          PRODUCT_DB=$(docker-compose -f docker-compose.staging.yml exec -T product-service python3 -c "import os; print(os.getenv('MYSQL_DATABASE'))")
+    
+          echo "User Service Database: $USER_DB"
+          echo "Product Service Database: $PRODUCT_DB"
+    
+          if [ "$USER_DB" = "$PRODUCT_DB" ]; then
+            echo " ERROR: Both services using same database!"
+            exit 1
+          else
+            echo " SUCCESS: Services using separate databases"
+          fi
+
+      - name: Run functional tests in staging environment 
+        run: ./scripts/staging/run-functional-tests.sh
+
+      
+      - name: Record deployment
+        if: success()
+        run: |
+          echo "##Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Successful" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Services:**" >> $GITHUB_STEP_SUMMARY
+          echo "- User Service: http://localhost:${{ env.STAGING_USER_PORT }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Product Service: http://localhost:${{ env.STAGING_PRODUCT_PORT }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose -f docker-compose.staging.yml down -v
+  
+  deploy-production:
+    runs-on: self-hosted
+    needs: [dev-buildimages,staging-deploy]
+    if:  success() && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: http://user.local.prod
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download images from DEV
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images
+
+      - name: Load images to local registry
+        run: |
+          docker load -i user-service.tar
+          docker load -i product-service.tar
+          docker tag user-service:latest localhost:32000/user-service:1.0.0
+          docker tag product-service:latest localhost:32000/product-service:1.0.0
+          docker push localhost:32000/user-service:1.0.0
+          docker push localhost:32000/product-service:1.0.0
+
+      - name: Deploy to Kubernetes
+        run: ./scripts/prod/deploy-prod.sh
+
+      - name: Verify production
+        run: |
+          microk8s kubectl get pods -n projeto-final
+          curl -s -f http://user.local.prod/health || exit 1
+          curl -s -f http://product.local.prod/health || exit 1

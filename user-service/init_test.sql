@@ -1,0 +1,20 @@
+CREATE USER IF NOT EXISTS 'test_user'@'%' IDENTIFIED BY 'test_password_123';
+CREATE USER IF NOT EXISTS 'test_user'@'localhost' IDENTIFIED BY 'test_password_123';
+
+CREATE DATABASE IF NOT EXISTS auth_test;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON auth_test.* TO 'test_user'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON auth_test.* TO 'test_user'@'localhost';
+
+FLUSH PRIVILEGES;
+
+USE auth_test;
+
+CREATE TABLE IF NOT EXISTS users(
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+);
+
+INSERT IGNORE INTO users (email, password) VALUES
+('testuser@example.com', 'scrypt:32768:8:1$EXl66wiublG0w095$5797a6ddd6959c5b3ec7abe1b13a390b708381e20a521a16f47822ea5bd0ac67082da04a468de600b682d294d364b306daf7f9f7942025e7653a200dcc0558e1');

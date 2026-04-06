@@ -1,0 +1,130 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f databases/mysql-user/
+configmap/mysql-user-init-scripts created
+persistentvolumeclaim/mysql-user-pvc created
+statefulset.apps/mysql-user created
+service/mysql-user created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get all -n projeto-final
+NAME               READY   STATUS    RESTARTS   AGE
+pod/mysql-user-0   1/1     Running   0          36s
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)    AGE
+service/mysql-user   ClusterIP   None         <none>        3306/TCP   36s
+
+NAME                          READY   AGE
+statefulset.apps/mysql-user   1/1     36s
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get pvc -n projeto-final
+NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS        VOLUMEATTRIBUTESCLASS   AGE
+mysql-user-pvc   Bound    pvc-1d216f7b-1447-4420-b25d-bb46cfdd24a4   5Gi        RWO            microk8s-hostpath   <unset>                 81s
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl logs mysql-user-0 -n projeto-final | grep -i "init"
+2026-02-06 17:39:45+00:00 [Note] [Entrypoint]: Initializing database files
+2026-02-06T17:39:45.961722Z 0 [System] [MY-013169] [Server] /usr/sbin/mysqld (mysqld 8.0.45) initializing of server in progress as process 41
+2026-02-06T17:39:45.967854Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-02-06T17:39:46.289754Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2026-02-06T17:39:47.569184Z 6 [Warning] [MY-010453] [Server] root@localhost is created with an empty password ! Please consider switching off the --initialize-insecure option.
+2026-02-06 17:39:50+00:00 [Note] [Entrypoint]: Database files initialized
+2026-02-06T17:39:50.678506Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-02-06T17:39:50.989159Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2026-02-06 17:39:56+00:00 [Note] [Entrypoint]: /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/init.sql
+2026-02-06 17:39:57+00:00 [Note] [Entrypoint]: MySQL init process done. Ready for start up.
+2026-02-06T17:39:58.254468Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-02-06T17:39:58.466121Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+
+REBOOT MYSQL
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/databases$ microk8s kubectl delete -f mysql-user/02-statefulset.yml 
+statefulset.apps "mysql-user" deleted
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/databases$ microk8s kubectl delete pvc mysql-user-pvc -n projeto-final
+persistentvolumeclaim "mysql-user-pvc" deleted
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/databases$ microk8s kubectl apply -f mysql-user/00-init-mysql-configmap.yml 
+configmap/mysql-user-init-scripts configured
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/databases$ microk8s kubectl apply -f mysql-user/01-pvc.yml 
+persistentvolumeclaim/mysql-user-pvc created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/databases$ microk8s kubectl apply -f mysql-user/02-statefulset.yml 
+statefulset.apps/mysql-user created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/databases$ microk8s kubectl apply -f mysql-user/03-service.yml 
+service/mysql-user unchanged
+
+VERIFICATION OF THE REBOOT
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl logs mysql-user-0 -n projeto-final | grep -i "initialized"
+2026-02-11 11:45:16+00:00 [Note] [Entrypoint]: Database files initialized
+[USER-DB] Database initialized successfully
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/databases$ microk8s kubectl get all -n projeto-final
+NAME                                READY   STATUS    RESTARTS      AGE
+pod/mysql-user-0                    1/1     Running   0             2m4s
+pod/user-service-6b54dbc479-7p62p   1/1     Running   2 (72m ago)   17h
+pod/user-service-6b54dbc479-d6n4m   1/1     Running   2 (72m ago)   17h
+
+NAME                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/mysql-user     ClusterIP   None             <none>        3306/TCP   4d18h
+service/user-service   ClusterIP   10.152.183.130   <none>        5001/TCP   17h
+
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/user-service   2/2     2            2           17h
+
+NAME                                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/user-service-6b54dbc479   2         2         2       17h
+
+NAME                          READY   AGE
+statefulset.apps/mysql-user   1/1     2m4s
+
+NAME                                                   REFERENCE                 TARGETS                                     MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/user-service-hpa   Deployment/user-service   cpu: <unknown>/70%, memory: <unknown>/80%   2         5         2          17h
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s/databases$ microk8s kubectl exec -it mysql-user-0 -n projeto-final -- mysql -u root -p
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 215
+Server version: 8.0.45 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2026, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> ;
+ERROR: 
+No query specified
+
+mysql> USE auth_production;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> DESC users;
++------------+--------------+------+-----+-------------------+-----------------------------------------------+
+| Field      | Type         | Null | Key | Default           | Extra                                         |
++------------+--------------+------+-----+-------------------+-----------------------------------------------+
+| id         | int          | NO   | PRI | NULL              | auto_increment                                |
+| email      | varchar(255) | NO   | UNI | NULL              |                                               |
+| password   | varchar(255) | NO   |     | NULL              |                                               |
+| created_at | timestamp    | YES  | MUL | CURRENT_TIMESTAMP | DEFAULT_GENERATED                             |
+| updated_at | timestamp    | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED on update CURRENT_TIMESTAMP |
++------------+--------------+------+-----+-------------------+-----------------------------------------------+
+5 rows in set (0.00 sec)
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl describe svc mysql-user -n projeto-final
+Name:                     mysql-user
+Namespace:                projeto-final
+Labels:                   app=mysql-user
+                          component=database
+                          service=user
+Annotations:              <none>
+Selector:                 app=mysql-user
+Type:                     ClusterIP
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       None
+IPs:                      None
+Port:                     mysql  3306/TCP
+TargetPort:               mysql/TCP
+Endpoints:                10.1.4.160:3306
+Session Affinity:         None
+Internal Traffic Policy:  Cluster
+Events:                   <none>

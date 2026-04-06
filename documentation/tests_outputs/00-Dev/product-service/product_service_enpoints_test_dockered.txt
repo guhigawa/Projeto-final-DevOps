@@ -1,0 +1,286 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3001/login -u "test1_container@example.com:test123"
+{
+  "email": "test1_container@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InRlc3QxX2NvbnRhaW5lckBleGFtcGxlLmNvbSIsImV4cCI6MTc2NDAxMDg0NH0.orT9loDZG5IZGJ8DqyMvzv3gbQ4T6aSFA--jqByYQwI",
+  "user_id": 2
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InRlc3QxX2NvbnRhaW5lckBleGFtcGxlLmNvbSIsImV4cCI6MTc2NDAxMDg0NH0.orT9loDZG5IZGJ8DqyMvzv3gbQ4T6aSFA--jqByYQwI"
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{
+    "name": "Notebook Dell",
+    "price": 2500.00,
+    "description": "Notebook Dell i7 16GB RAM",
+    "quantity": 3
+  }'
+{
+  "description": "Notebook Dell i7 16GB RAM",
+  "id": 1,
+  "message": "Product created successfully",
+  "product_name": "Notebook Dell"
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{
+    "name": "Notebook Dell sem descrição",
+    "price": 2500.00,
+    "quantity": 3
+  }'
+{
+  "description": null,
+  "id": 2,
+  "message": "Product created successfully",
+  "product_name": "Notebook Dell sem descri\u00e7\u00e3o"
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{
+    "price": 2500.00,                     
+    "quantity": 3
+  }'
+{
+  "error": "Name and price are required",
+  "example_request": {
+    "description": "optional description",
+    "name": "Test Product",
+    "price": "9.99",
+    "quantity": "1 (if not provided, defaults to 0)"
+  }
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{
+    "name": "Notebook Dell sem descrição",
+    "quantity": 3    
+  }'
+{
+  "error": "Name and price are required",
+  "example_request": {
+    "description": "optional description",
+    "name": "Test Product",
+    "price": "9.99",
+    "quantity": "1 (if not provided, defaults to 0)"
+  }
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN"
+{
+  "products": [
+    {
+      "created_at": "Mon, 24 Nov 2025 18:02:54 GMT",
+      "created_by": 2,
+      "description": "Notebook Dell i7 16GB RAM",
+      "id": 1,
+      "name": "Notebook Dell",
+      "price": 2500.0,
+      "quantity": 3
+    },
+    {
+      "created_at": "Mon, 24 Nov 2025 18:05:04 GMT",
+      "created_by": 2,
+      "description": null,
+      "id": 2,
+      "name": "Notebook Dell sem descri\u00e7\u00e3o",
+      "price": 2500.0,
+      "quantity": 3
+    }
+  ]
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X PUT http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"id": 1
+, "name": "Notebook Atualizado", "price": 1800.00, "quantity": 8}'
+{
+  "message": "Product updated successfully"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN"
+{
+  "products": [
+    {
+      "created_at": "Mon, 24 Nov 2025 18:02:54 GMT",
+      "created_by": 2,
+      "description": "Notebook Dell i7 16GB RAM",
+      "id": 1,
+      "name": "Notebook Atualizado",
+      "price": 1800.0,
+      "quantity": 8
+    },
+    {
+      "created_at": "Mon, 24 Nov 2025 18:05:04 GMT",
+      "created_by": 2,
+      "description": null,
+      "id": 2,
+      "name": "Notebook Dell sem descri\u00e7\u00e3o",
+      "price": 2500.0,
+      "quantity": 3
+    }
+  ]
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X PUT http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"id": 4, "name": "Notebook Atualizado", "price": 1800.00, "quantity": 8}'
+{
+  "error": "product not found or access denied"
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X PUT http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"id": 1, "name": "Notebook Atualizado_container"}'
+{
+  "message": "Product updated successfully"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN"
+{
+  "products": [
+    {
+      "created_at": "Mon, 24 Nov 2025 18:02:54 GMT",
+      "created_by": 2,
+      "description": "Notebook Dell i7 16GB RAM",
+      "id": 1,
+      "name": "Notebook Atualizado_container",
+      "price": 1800.0,
+      "quantity": 8
+    },
+    {
+      "created_at": "Mon, 24 Nov 2025 18:05:04 GMT",
+      "created_by": 2,
+      "description": null,
+      "id": 2,
+      "name": "Notebook Dell sem descri\u00e7\u00e3o",
+      "price": 2500.0,
+      "quantity": 3
+    }
+  ]
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X PUT http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"id": 1, "price": 1000.0}'
+{
+  "message": "Product updated successfully"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN"
+{
+  "products": [
+    {
+      "created_at": "Mon, 24 Nov 2025 18:02:54 GMT",
+      "created_by": 2,
+      "description": "Notebook Dell i7 16GB RAM",
+      "id": 1,
+      "name": "Notebook Atualizado_container",
+      "price": 1000.0,
+      "quantity": 8
+    },
+    {
+      "created_at": "Mon, 24 Nov 2025 18:05:04 GMT",
+      "created_by": 2,
+      "description": null,
+      "id": 2,
+      "name": "Notebook Dell sem descri\u00e7\u00e3o",
+      "price": 2500.0,
+      "quantity": 3
+    }
+  ]
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X PUT http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"id": 1, "description":"Novo teste"}'
+{
+  "message": "Product updated successfully"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN"
+{
+  "products": [
+    {
+      "created_at": "Mon, 24 Nov 2025 18:02:54 GMT",
+      "created_by": 2,
+      "description": "Novo teste",
+      "id": 1,
+      "name": "Notebook Atualizado_container",
+      "price": 1000.0,
+      "quantity": 8
+    },
+    {
+      "created_at": "Mon, 24 Nov 2025 18:05:04 GMT",
+      "created_by": 2,
+      "description": null,
+      "id": 2,
+      "name": "Notebook Dell sem descri\u00e7\u00e3o",
+      "price": 2500.0,
+      "quantity": 3
+    }
+  ]
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X PUT http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"id": 1, "description":"Novo teste"}'
+{
+  "message": "Product updated successfully"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN"
+{
+  "products": [
+    {
+      "created_at": "Mon, 24 Nov 2025 18:02:54 GMT",
+      "created_by": 2,
+      "description": "Novo teste",
+      "id": 1,
+      "name": "Notebook Atualizado_container",
+      "price": 1000.0,
+      "quantity": 8
+    },
+    {
+      "created_at": "Mon, 24 Nov 2025 18:05:04 GMT",
+      "created_by": 2,
+      "description": null,
+      "id": 2,
+      "name": "Notebook Dell sem descri\u00e7\u00e3o",
+      "price": 2500.0,
+      "quantity": 3
+    }
+  ]
+ }
+
+ (venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X DELETE http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"id"
+:1}'
+{
+  "deleted_product_id": 1,
+  "message": "Product deleted successfully"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/products -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN"
+{
+  "products": [
+    {
+      "created_at": "Mon, 24 Nov 2025 18:05:04 GMT",
+      "created_by": 2,
+      "description": null,
+      "id": 2,
+      "name": "Notebook Dell sem descri\u00e7\u00e3o",
+      "price": 2500.0,
+      "quantity": 3
+    }
+  ]
+} 
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/health
+{
+  "status": "healthy"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/health/detailed
+{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "product-service",
+  "status": "healthy",
+  "timestamp": "2025-11-24T18:16:54.856547"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/metrics
+{
+  "active_endpoints": [
+    "/product",
+    "/health",
+    "health/detailed",
+    "/metrics"
+  ],
+  "service": "user-service",
+  "timestamp": "2025-11-24T18:17:04.283677"
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/products
+{
+  "error": "Token is missing!"
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3002/products \
+  -H "Authorization: Bearer token_invalido teste"
+{
+  "error": "Invalid token!"
+}

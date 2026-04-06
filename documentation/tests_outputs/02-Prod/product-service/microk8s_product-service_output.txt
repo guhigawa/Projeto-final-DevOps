@@ -1,0 +1,181 @@
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ source /home/ubuntu/Downloads/Projeto_final/venv/bin/activate
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ chmod +x k8s/services/product-service/00-product-build-push.sh 
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ cd k8s/
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ ./services/product-service/00-product-build-push.sh 
+Building and pushing Product service image
+[+] Building 63.2s (11/11) FINISHED                                                                                                                                               docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                        0.0s
+ => => transferring dockerfile: 645B                                                                                                                                                        0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                         1.0s
+ => [internal] load .dockerignore                                                                                                                                                           0.0s
+ => => transferring context: 2B                                                                                                                                                             0.0s
+ => CACHED [1/6] FROM docker.io/library/python:3.11-slim@sha256:0b23cfb7425d065008b778022a17b1551c82f8b4866ee5a7a200084b7e2eafbf                                                            0.0s
+ => [internal] load build context                                                                                                                                                           0.0s
+ => => transferring context: 144.88kB                                                                                                                                                       0.0s
+ => [2/6] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*     && apt-get clean      47.6s
+ => [3/6] WORKDIR /product-service                                                                                                                                                          0.0s 
+ => [4/6] COPY requirements.txt .                                                                                                                                                           0.0s 
+ => [5/6] RUN pip install --no-cache-dir -r requirements.txt                                                                                                                               12.1s 
+ => [6/6] COPY . .                                                                                                                                                                          0.0s 
+ => exporting to image                                                                                                                                                                      2.3s 
+ => => exporting layers                                                                                                                                                                     2.3s 
+ => => writing image sha256:4b2fdc25ba3c945d69fee2b13cdf2765b5d3471d3ab387c5af1366fa4aa1e1eb                                                                                                0.0s
+ => => naming to docker.io/library/product-service:1.0.0                                                                                                                                    0.0s
+Infer repository core for addon registry
+Addon core/registry is already enabled
+The push refers to repository [localhost:32000/product-service]
+bb497a6bd72f: Pushed 
+5c9eba8b3688: Pushed 
+1a8e45ae196f: Pushed 
+cf5b5c9f80c2: Pushed 
+1e4b2ec748ef: Pushed 
+b69aea4cac7d: Mounted from user-service 
+40b88e8d19a2: Mounted from user-service 
+dfd9efb4ec4c: Mounted from user-service 
+a8ff6f8cbdfd: Mounted from user-service 
+1.0.0: digest: sha256:cd15b487b781646dc45bf3bed8e1e6aeb6628f200f1cc54e52c89b4696a290aa size: 2207
+Product service pushed
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f services/product-service/01-product-deployment.yml 
+deployment.apps/product-service created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f services/product-service/02-product-service.yml 
+service/product-service created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl apply -f services/product-service/03-product-hpa.yml 
+horizontalpodautoscaler.autoscaling/product-service-hpa created
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get all -n projeto-final -l service=product
+NAME                                   READY   STATUS    RESTARTS        AGE
+pod/mysql-product-0                    1/1     Running   2 (5h18m ago)   4d4h
+pod/product-service-584d59689f-9rfvj   0/1     Running   0               25s
+pod/product-service-584d59689f-jf4xp   0/1     Running   0               25s
+
+NAME                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/mysql-product     ClusterIP   None            <none>        3306/TCP   4d21h
+service/product-service   ClusterIP   10.152.183.31   <none>        5002/TCP   12s
+
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/product-service   0/2     2            0           25s
+
+NAME                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/product-service-584d59689f   2         2         0       25s
+
+NAME                             READY   AGE
+statefulset.apps/mysql-product   1/1     4d4h
+
+NAME                                                      REFERENCE                    TARGETS                                     MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/product-service-hpa   Deployment/product-service   cpu: <unknown>/80%, memory: <unknown>/80%   2         5         0          7s
+
+LOGS
+ERRO DE CONEXÃO COM DATABASE
+POSSIVEL CAUSA, DIFERENTES NOMES DE VARIAVEL DA PASSWORD DE MYSQL 
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl logs -l app=product-service -n projeto-final
+attempt: 9 failed, retrying in 5 seconds...
+{"timestamp": "2026-02-24 18:23:10", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.230' (using password: YES)")"}
+{"timestamp": "2026-02-24 18:23:15", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.230' (using password: YES)")"}
+Database connection returned none, attempt: 10
+Database setup verification attempt: 10 failed with error: Connection returned None
+attempt: 10 failed, retrying in 5 seconds...
+{"timestamp": "2026-02-24 18:23:20", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.230' (using password: YES)")"}
+Database connection returned none, attempt: 11
+Database setup verification attempt: 11 failed with error: Connection returned None
+attempt: 11 failed, retrying in 5 seconds...
+attempt: 10 failed, retrying in 5 seconds...
+{"timestamp": "2026-02-24 18:23:13", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.229' (using password: YES)")"}
+{"timestamp": "2026-02-24 18:23:18", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.229' (using password: YES)")"}
+Database connection returned none, attempt: 11
+Database setup verification attempt: 11 failed with error: Connection returned None
+attempt: 11 failed, retrying in 5 seconds...
+{"timestamp": "2026-02-24 18:23:23", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.229' (using password: YES)")"}
+Database connection returned none, attempt: 12
+Database setup verification attempt: 12 failed with error: Connection returned None
+attempt: 12 failed, retrying in 5 seconds...
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl delete pod -l app=product-service -n projeto-final
+pod "product-service-584d59689f-9rfvj" deleted
+pod "product-service-584d59689f-jf4xp" deleted
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl get all -n projeto-final
+NAME                                   READY   STATUS    RESTARTS        AGE
+pod/mysql-product-0                    1/1     Running   0               14m
+pod/mysql-user-0                       1/1     Running   3 (6h21m ago)   4d23h
+pod/product-service-584d59689f-2whn2   0/1     Running   0               60s
+pod/product-service-584d59689f-7xxxp   0/1     Running   0               60s
+pod/user-service-c67d55bb6-f45jg       1/1     Running   2 (6h19m ago)   3d22h
+pod/user-service-c67d55bb6-kw8sd       1/1     Running   2 (6h19m ago)   3d22h
+
+NAME                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/mysql-product     ClusterIP   None            <none>        3306/TCP   4d22h
+service/mysql-user        ClusterIP   None            <none>        3306/TCP   4d23h
+service/product-service   ClusterIP   10.152.183.31   <none>        5002/TCP   62m
+service/user-service      ClusterIP   10.152.183.64   <none>        5001/TCP   3d22h
+
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/product-service   0/2     2            0           63m
+deployment.apps/user-service      2/2     2            2           3d22h
+
+NAME                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/product-service-584d59689f   2         2         0       63m
+replicaset.apps/user-service-c67d55bb6       2         2         2       3d22h
+
+NAME                             READY   AGE
+statefulset.apps/mysql-product   1/1     14m
+statefulset.apps/mysql-user      1/1     4d23h
+
+NAME                                                      REFERENCE                    TARGETS                                     MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/product-service-hpa   Deployment/product-service   cpu: <unknown>/80%, memory: <unknown>/80%   2         5         2          62m
+horizontalpodautoscaler.autoscaling/user-service-hpa      Deployment/user-service      cpu: <unknown>/70%, memory: <unknown>/80%   2         5         2          3d22h
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/k8s$ microk8s kubectl logs -l app=product-service -n projeto-final --tail=20
+{"timestamp": "2026-02-24 19:23:57", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.234' (using password: YES)")"}
+Database connection returned none, attempt: 9
+Database setup verification attempt: 9 failed with error: Connection returned None
+attempt: 9 failed, retrying in 5 seconds...
+{"timestamp": "2026-02-24 19:24:02", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.234' (using password: YES)")"}
+Database connection returned none, attempt: 10
+Database setup verification attempt: 10 failed with error: Connection returned None
+attempt: 10 failed, retrying in 5 seconds...
+Database connection returned none, attempt: 11
+Database setup verification attempt: 11 failed with error: Connection returned None
+attempt: 11 failed, retrying in 5 seconds...
+{"timestamp": "2026-02-24 19:24:07", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.234' (using password: YES)")"}
+{"timestamp": "2026-02-24 19:24:12", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.234' (using password: YES)")"}
+Database connection returned none, attempt: 12
+Database setup verification attempt: 12 failed with error: Connection returned None
+attempt: 12 failed, retrying in 5 seconds...
+{"timestamp": "2026-02-24 19:24:17", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.234' (using password: YES)")"}
+Database connection returned none, attempt: 13
+Database setup verification attempt: 13 failed with error: Connection returned None
+attempt: 13 failed, retrying in 5 seconds...
+{"timestamp": "2026-02-24 19:23:57", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.235' (using password: YES)")"}
+Database connection returned none, attempt: 9
+Database setup verification attempt: 9 failed with error: Connection returned None
+attempt: 9 failed, retrying in 5 seconds...
+{"timestamp": "2026-02-24 19:24:02", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.235' (using password: YES)")"}
+Database connection returned none, attempt: 10
+Database setup verification attempt: 10 failed with error: Connection returned None
+attempt: 10 failed, retrying in 5 seconds...
+Database connection returned none, attempt: 11
+Database setup verification attempt: 11 failed with error: Connection returned None
+attempt: 11 failed, retrying in 5 seconds...
+{"timestamp": "2026-02-24 19:24:07", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.235' (using password: YES)")"}
+{"timestamp": "2026-02-24 19:24:12", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.235' (using password: YES)")"}
+Database connection returned none, attempt: 12
+Database setup verification attempt: 12 failed with error: Connection returned None
+attempt: 12 failed, retrying in 5 seconds...
+Database connection returned none, attempt: 13
+Database setup verification attempt: 13 failed with error: Connection returned None
+attempt: 13 failed, retrying in 5 seconds...
+{"timestamp": "2026-02-24 19:24:17", "level": "ERROR", "service": "product-service", "message": "Error connecting to products database: (1045, "Access denied for user 'production_product_user'@'10.1.4.235' (using password: YES)")"}
+
+APOS CORREÇºAO DA VARIAVEL NO STATEFULSET E RESET DO DATABASE AINDA TENHO ERRO DE USUARIO
+INCOERENCIA DE VARIAVEIS IDENTIFICADA, NO STATEFUL A VARIAVEL DE MYSQL_USER ESTAVA INCORRETA, ANTES = MYSQL_PRODUCT-USER, DEPOIS = MYSQL_USER
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl delete pod -l app=product-service -n projeto-final
+pod "product-service-584d59689f-2whn2" deleted
+pod "product-service-584d59689f-7xxxp" deleted
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl get pods  -n projeto-final
+NAME                               READY   STATUS    RESTARTS      AGE
+mysql-product-0                    1/1     Running   0             4m8s
+mysql-user-0                       1/1     Running   4 (25m ago)   5d16h
+product-service-584d59689f-5bqcv   1/1     Running   0             62s
+product-service-584d59689f-djptj   1/1     Running   0             62s
+user-service-c67d55bb6-f45jg       1/1     Running   4 (23m ago)   4d16h
+user-service-c67d55bb6-kw8sd       1/1     Running   4 (23m ago)   4d16h
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 

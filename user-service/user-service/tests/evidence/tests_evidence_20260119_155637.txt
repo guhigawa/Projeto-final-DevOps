@@ -1,0 +1,16 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2026-01-19 15:56:37
+Projeto:WebApp Final Project - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2026-01-19 15:56:38] - User registration test - PASS
+Details: Email: test_1768838197@example.com, Status Code: 201, User ID: 54
+response:{
+  "email": "test_1768838197@example.com",
+  "message": "User registered successfully",
+  "user_id": 54
+}
+----------------------------------------

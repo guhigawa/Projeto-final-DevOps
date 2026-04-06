@@ -1,0 +1,474 @@
+MAKE HELP
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make help
+Available commands
+Development Environment:
+make setup - Configure the virtual environment and install dependencies
+make dev - deploy local environment with docker-compose.yml
+  make clean         - Remove cache files only
+  make clean-containers - Stop DEV + STAGING containers
+  make clean-prod    - Delete ALL production resources (K8s)
+  make clean-all     - Complete cleanup (cache + containers + prod)
+
+Tests:
+make test - run all tests (unit and integration)
+make test-unit - Execute unit tests and validators test
+make test-integration - execute integration tests
+make test-vulnerability - Execute security tests (bandit, safety)
+
+ Environments:
+    make staging       - deploy staging environment(docker-compose)
+    make prod          - deploy production environment (Kubernetes)
+
+MAKE SETUP
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make setup
+configuring virtual environment
+python -m venv venv
+virtual environment created
+
+Installing development dependencies
+. venv/bin/activate && pip install -r requirements/development_requirements.txt
+Requirement already satisfied: Flask==3.1.2 in ./venv/lib/python3.10/site-packages (from -r requirements/base_requirements.txt (line 2)) (3.1.2)
+Requirement already satisfied: PyJWT==2.10.1 in ./venv/lib/python3.10/site-packages (from -r requirements/base_requirements.txt (line 3)) (2.10.1)
+Requirement already satisfied: PyMySQL==1.1.2 in ./venv/lib/python3.10/site-packages (from -r requirements/base_requirements.txt (line 4)) (1.1.2)
+Requirement already satisfied: Werkzeug==3.1.3 in ./venv/lib/python3.10/site-packages (from -r requirements/base_requirements.txt (line 5)) (3.1.3)
+Requirement already satisfied: python-dotenv==1.1.1 in ./venv/lib/python3.10/site-packages (from -r requirements/base_requirements.txt (line 6)) (1.1.1)
+Requirement already satisfied: requests==2.32.5 in ./venv/lib/python3.10/site-packages (from -r requirements/base_requirements.txt (line 7)) (2.32.5)
+Requirement already satisfied: opentelemetry-distro==0.45b0 in ./venv/lib/python3.10/site-packages (from -r requirements/development_requirements.txt (line 5)) (0.45b0)
+Requirement already satisfied: opentelemetry-exporter-jaeger==1.21.0 in ./venv/lib/python3.10/site-packages (from -r requirements/development_requirements.txt (line 6)) (1.21.0)
+Requirement already satisfied: opentelemetry-instrumentation-flask==0.45b0 in ./venv/lib/python3.10/site-packages (from -r requirements/development_requirements.txt (line 7)) (0.45b0)
+Collecting opentelemetry-instrumentation-requests==0.45b0
+  Downloading opentelemetry_instrumentation_requests-0.45b0-py3-none-any.whl (12 kB)
+Requirement already satisfied: opentelemetry-instrumentation-pymysql==0.45b0 in ./venv/lib/python3.10/site-packages (from -r requirements/development_requirements.txt (line 9)) (0.45b0)
+Requirement already satisfied: opentelemetry-instrumentation-logging==0.45b0 in ./venv/lib/python3.10/site-packages (from -r requirements/development_requirements.txt (line 10)) (0.45b0)
+Requirement already satisfied: opentelemetry-sdk==1.24.0 in ./venv/lib/python3.10/site-packages (from -r requirements/development_requirements.txt (line 11)) (1.24.0)
+Requirement already satisfied: pytest==8.4.2 in ./venv/lib/python3.10/site-packages (from -r requirements/development_requirements.txt (line 14)) (8.4.2)
+Requirement already satisfied: pytest-cov==5.0.0 in ./venv/lib/python3.10/site-packages (from -r requirements/development_requirements.txt (line 15)) (5.0.0)
+Requirement already satisfied: coverage==7.6.7 in ./venv/lib/python3.10/site-packages (from -r requirements/development_requirements.txt (line 16)) (7.6.7)
+Requirement already satisfied: bandit==1.7.5 in ./venv/lib/python3.10/site-packages (from -r requirements/development_requirements.txt (line 19)) (1.7.5)
+Requirement already satisfied: safety==2.3.5 in ./venv/lib/python3.10/site-packages (from -r requirements/development_requirements.txt (line 20)) (2.3.5)
+Requirement already satisfied: blinker>=1.9.0 in ./venv/lib/python3.10/site-packages (from Flask==3.1.2->-r requirements/base_requirements.txt (line 2)) (1.9.0)
+Requirement already satisfied: itsdangerous>=2.2.0 in ./venv/lib/python3.10/site-packages (from Flask==3.1.2->-r requirements/base_requirements.txt (line 2)) (2.2.0)
+Requirement already satisfied: click>=8.1.3 in ./venv/lib/python3.10/site-packages (from Flask==3.1.2->-r requirements/base_requirements.txt (line 2)) (8.3.0)
+Requirement already satisfied: markupsafe>=2.1.1 in ./venv/lib/python3.10/site-packages (from Flask==3.1.2->-r requirements/base_requirements.txt (line 2)) (3.0.3)
+Requirement already satisfied: jinja2>=3.1.2 in ./venv/lib/python3.10/site-packages (from Flask==3.1.2->-r requirements/base_requirements.txt (line 2)) (3.1.6)
+Requirement already satisfied: charset_normalizer<4,>=2 in ./venv/lib/python3.10/site-packages (from requests==2.32.5->-r requirements/base_requirements.txt (line 7)) (3.4.3)
+Requirement already satisfied: certifi>=2017.4.17 in ./venv/lib/python3.10/site-packages (from requests==2.32.5->-r requirements/base_requirements.txt (line 7)) (2025.10.5)
+Requirement already satisfied: idna<4,>=2.5 in ./venv/lib/python3.10/site-packages (from requests==2.32.5->-r requirements/base_requirements.txt (line 7)) (3.11)
+Requirement already satisfied: urllib3<3,>=1.21.1 in ./venv/lib/python3.10/site-packages (from requests==2.32.5->-r requirements/base_requirements.txt (line 7)) (2.5.0)
+Requirement already satisfied: opentelemetry-api~=1.12 in ./venv/lib/python3.10/site-packages (from opentelemetry-distro==0.45b0->-r requirements/development_requirements.txt (line 5)) (1.24.0)
+Requirement already satisfied: opentelemetry-instrumentation==0.45b0 in ./venv/lib/python3.10/site-packages (from opentelemetry-distro==0.45b0->-r requirements/development_requirements.txt (line 5)) (0.45b0)
+Requirement already satisfied: opentelemetry-exporter-jaeger-proto-grpc==1.21.0 in ./venv/lib/python3.10/site-packages (from opentelemetry-exporter-jaeger==1.21.0->-r requirements/development_requirements.txt (line 6)) (1.21.0)
+Requirement already satisfied: opentelemetry-exporter-jaeger-thrift==1.21.0 in ./venv/lib/python3.10/site-packages (from opentelemetry-exporter-jaeger==1.21.0->-r requirements/development_requirements.txt (line 6)) (1.21.0)
+Requirement already satisfied: opentelemetry-util-http==0.45b0 in ./venv/lib/python3.10/site-packages (from opentelemetry-instrumentation-flask==0.45b0->-r requirements/development_requirements.txt (line 7)) (0.45b0)
+Requirement already satisfied: packaging>=21.0 in ./venv/lib/python3.10/site-packages (from opentelemetry-instrumentation-flask==0.45b0->-r requirements/development_requirements.txt (line 7)) (21.3)
+Requirement already satisfied: importlib-metadata>=4.0 in ./venv/lib/python3.10/site-packages (from opentelemetry-instrumentation-flask==0.45b0->-r requirements/development_requirements.txt (line 7)) (7.0.0)
+Requirement already satisfied: opentelemetry-semantic-conventions==0.45b0 in ./venv/lib/python3.10/site-packages (from opentelemetry-instrumentation-flask==0.45b0->-r requirements/development_requirements.txt (line 7)) (0.45b0)
+Requirement already satisfied: opentelemetry-instrumentation-wsgi==0.45b0 in ./venv/lib/python3.10/site-packages (from opentelemetry-instrumentation-flask==0.45b0->-r requirements/development_requirements.txt (line 7)) (0.45b0)
+Requirement already satisfied: opentelemetry-instrumentation-dbapi==0.45b0 in ./venv/lib/python3.10/site-packages (from opentelemetry-instrumentation-pymysql==0.45b0->-r requirements/development_requirements.txt (line 9)) (0.45b0)
+Requirement already satisfied: typing-extensions>=3.7.4 in ./venv/lib/python3.10/site-packages (from opentelemetry-sdk==1.24.0->-r requirements/development_requirements.txt (line 11)) (4.15.0)
+Requirement already satisfied: iniconfig>=1 in ./venv/lib/python3.10/site-packages (from pytest==8.4.2->-r requirements/development_requirements.txt (line 14)) (2.1.0)
+Requirement already satisfied: exceptiongroup>=1 in ./venv/lib/python3.10/site-packages (from pytest==8.4.2->-r requirements/development_requirements.txt (line 14)) (1.3.0)
+Requirement already satisfied: pygments>=2.7.2 in ./venv/lib/python3.10/site-packages (from pytest==8.4.2->-r requirements/development_requirements.txt (line 14)) (2.19.2)
+Requirement already satisfied: tomli>=1 in ./venv/lib/python3.10/site-packages (from pytest==8.4.2->-r requirements/development_requirements.txt (line 14)) (2.3.0)
+Requirement already satisfied: pluggy<2,>=1.5 in ./venv/lib/python3.10/site-packages (from pytest==8.4.2->-r requirements/development_requirements.txt (line 14)) (1.6.0)
+Requirement already satisfied: PyYAML>=5.3.1 in ./venv/lib/python3.10/site-packages (from bandit==1.7.5->-r requirements/development_requirements.txt (line 19)) (6.0.3)
+Requirement already satisfied: GitPython>=1.0.1 in ./venv/lib/python3.10/site-packages (from bandit==1.7.5->-r requirements/development_requirements.txt (line 19)) (3.1.46)
+Requirement already satisfied: stevedore>=1.20.0 in ./venv/lib/python3.10/site-packages (from bandit==1.7.5->-r requirements/development_requirements.txt (line 19)) (5.7.0)
+Requirement already satisfied: rich in ./venv/lib/python3.10/site-packages (from bandit==1.7.5->-r requirements/development_requirements.txt (line 19)) (14.3.3)
+Requirement already satisfied: setuptools>=19.3 in ./venv/lib/python3.10/site-packages (from safety==2.3.5->-r requirements/development_requirements.txt (line 20)) (59.6.0)
+Requirement already satisfied: ruamel.yaml>=0.17.21 in ./venv/lib/python3.10/site-packages (from safety==2.3.5->-r requirements/development_requirements.txt (line 20)) (0.19.1)
+Requirement already satisfied: dparse>=0.6.2 in ./venv/lib/python3.10/site-packages (from safety==2.3.5->-r requirements/development_requirements.txt (line 20)) (0.6.4)
+Requirement already satisfied: deprecated>=1.2.6 in ./venv/lib/python3.10/site-packages (from opentelemetry-api~=1.12->opentelemetry-distro==0.45b0->-r requirements/development_requirements.txt (line 5)) (1.3.1)
+Requirement already satisfied: grpcio<2.0.0,>=1.0.0 in ./venv/lib/python3.10/site-packages (from opentelemetry-exporter-jaeger-proto-grpc==1.21.0->opentelemetry-exporter-jaeger==1.21.0->-r requirements/development_requirements.txt (line 6)) (1.78.0)
+Requirement already satisfied: googleapis-common-protos<1.60.0,~=1.52 in ./venv/lib/python3.10/site-packages (from opentelemetry-exporter-jaeger-proto-grpc==1.21.0->opentelemetry-exporter-jaeger==1.21.0->-r requirements/development_requirements.txt (line 6)) (1.59.1)
+Requirement already satisfied: thrift>=0.10.0 in ./venv/lib/python3.10/site-packages (from opentelemetry-exporter-jaeger-thrift==1.21.0->opentelemetry-exporter-jaeger==1.21.0->-r requirements/development_requirements.txt (line 6)) (0.22.0)
+Requirement already satisfied: wrapt<2.0.0,>=1.0.0 in ./venv/lib/python3.10/site-packages (from opentelemetry-instrumentation==0.45b0->opentelemetry-distro==0.45b0->-r requirements/development_requirements.txt (line 5)) (1.17.3)
+Requirement already satisfied: gitdb<5,>=4.0.1 in ./venv/lib/python3.10/site-packages (from GitPython>=1.0.1->bandit==1.7.5->-r requirements/development_requirements.txt (line 19)) (4.0.12)
+Requirement already satisfied: zipp>=0.5 in ./venv/lib/python3.10/site-packages (from importlib-metadata>=4.0->opentelemetry-instrumentation-flask==0.45b0->-r requirements/development_requirements.txt (line 7)) (3.23.0)
+Requirement already satisfied: pyparsing!=3.0.5,>=2.0.2 in ./venv/lib/python3.10/site-packages (from packaging>=21.0->opentelemetry-instrumentation-flask==0.45b0->-r requirements/development_requirements.txt (line 7)) (3.3.2)
+Requirement already satisfied: markdown-it-py>=2.2.0 in ./venv/lib/python3.10/site-packages (from rich->bandit==1.7.5->-r requirements/development_requirements.txt (line 19)) (4.0.0)
+Requirement already satisfied: smmap<6,>=3.0.1 in ./venv/lib/python3.10/site-packages (from gitdb<5,>=4.0.1->GitPython>=1.0.1->bandit==1.7.5->-r requirements/development_requirements.txt (line 19)) (5.0.3)
+Requirement already satisfied: protobuf!=3.20.0,!=3.20.1,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0.dev0,>=3.19.5 in ./venv/lib/python3.10/site-packages (from googleapis-common-protos<1.60.0,~=1.52->opentelemetry-exporter-jaeger-proto-grpc==1.21.0->opentelemetry-exporter-jaeger==1.21.0->-r requirements/development_requirements.txt (line 6)) (4.25.8)
+Requirement already satisfied: mdurl~=0.1 in ./venv/lib/python3.10/site-packages (from markdown-it-py>=2.2.0->rich->bandit==1.7.5->-r requirements/development_requirements.txt (line 19)) (0.1.2)
+Installing collected packages: opentelemetry-instrumentation-requests
+Successfully installed opentelemetry-instrumentation-requests-0.45b0
+dependencies installed
+
+Activate environment: source venv/bin/activate
+
+MAKE TEST-UNIT
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make test-unit
+Executing unit and validators tests
+Running unit tests
+=============================================================================== test session starts ================================================================================
+platform linux -- Python 3.10.12, pytest-8.4.2, pluggy-1.6.0 -- /home/ubuntu/Downloads/Projeto_final/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/ubuntu/Downloads/Projeto_final/user-service
+plugins: cov-5.0.0
+collected 28 items                                                                                                                                                                 
+
+tests/test_unit.py::TestTokenRequiredDecorator::test_token_required_missing_token PASSED                                                                                     [  3%]
+tests/test_unit.py::TestTokenRequiredDecorator::test_token_required_valid_token PASSED                                                                                       [  7%]
+tests/test_unit.py::TestTokenRequiredDecorator::test_token_required_expired_token PASSED                                                                                     [ 10%]
+tests/test_unit.py::TestTokenRequiredDecorator::test_token_required_invalid_token PASSED                                                                                     [ 14%]
+tests/test_unit.py::TestGetDbConnection::test_get_db_connection_success PASSED                                                                                               [ 17%]
+tests/test_unit.py::TestGetDbConnection::test_get_db_connection_failure PASSED                                                                                               [ 21%]
+tests/test_unit.py::TestValidatorsIntegration::test_app_imports_validators PASSED                                                                                            [ 25%]
+tests/test_unit.py::TestAppRoutesWithMocks::test_register_route_success PASSED                                                                                               [ 28%]
+tests/test_unit.py::TestAppRoutesWithMocks::test_register_route_validation_failure PASSED                                                                                    [ 32%]
+tests/test_unit.py::TestAppRoutesWithMocks::test_login_route_success PASSED                                                                                                  [ 35%]
+tests/test_unit.py::TestAppRoutesWithMocks::test_get_profile_route PASSED                                                                                                    [ 39%]
+tests/test_unit.py::TestAppRoutesWithMocks::test_get_profile_by_id_route PASSED                                                                                              [ 42%]
+tests/test_unit.py::TestAppRoutesWithMocks::test_get_profile_by_id_unauthorized PASSED                                                                                       [ 46%]
+tests/test_unit.py::TestAppRoutesWithMocks::test_get_profile_route_user_id_not_found PASSED                                                                                  [ 50%]
+tests/test_unit.py::TestAppRoutesWithMocks::test_update_route_success PASSED                                                                                                 [ 53%]
+tests/test_unit.py::TestAppRoutesWithMocks::test_logout_route_success PASSED                                                                                                 [ 57%]
+tests/test_unit.py::TestAppRoutesWithMocks::test_logout_without_token PASSED                                                                                                 [ 60%]
+tests/test_unit.py::TestHealthEndpoints::test_health_check PASSED                                                                                                            [ 64%]
+tests/test_unit.py::TestHealthEndpoints::test_health_check_detailed PASSED                                                                                                   [ 67%]
+tests/test_unit.py::TestHealthEndpoints::test_metrics_endpoint PASSED                                                                                                        [ 71%]
+tests/test_validators.py::TestValidators::test_validate_email PASSED                                                                                                         [ 75%]
+tests/test_validators.py::TestValidators::test_validate_email_invalid PASSED                                                                                                 [ 78%]
+tests/test_validators.py::TestValidators::test_validate_password_strong PASSED                                                                                               [ 82%]
+tests/test_validators.py::TestValidators::test_validate_password_weak PASSED                                                                                                 [ 85%]
+tests/test_validators.py::TestValidators::test_sanitize_input PASSED                                                                                                         [ 89%]
+tests/test_validators.py::TestValidators::test_validate_registration_data_valid PASSED                                                                                       [ 92%]
+tests/test_validators.py::TestValidators::test_validate_registration_data_invalid PASSED                                                                                     [ 96%]
+tests/test_validators.py::TestValidators::test_validate_registration_data_password_requirements_in_response PASSED                                                           [100%]
+
+================================================================================= warnings summary =================================================================================
+app.py:30
+  /home/ubuntu/Downloads/Projeto_final/user-service/app.py:30: DeprecationWarning: Call to deprecated method __init__. (Since v1.35, the Jaeger supports OTLP natively. Please use the OTLP exporter instead. Support for this exporter will end July 2023.) -- Deprecated since version 1.16.0.
+    jaeger_exporter = JaegerExporter(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+========================================================================== 28 passed, 1 warning in 0.65s ===========================================================================
+Exception while exporting Span batch.
+Traceback (most recent call last):
+  File "/home/ubuntu/Downloads/Projeto_final/venv/lib/python3.10/site-packages/opentelemetry/sdk/trace/export/__init__.py", line 367, in _export_batch
+    self.span_exporter.export(self.spans_list[:idx])  # type: ignore
+  File "/home/ubuntu/Downloads/Projeto_final/venv/lib/python3.10/site-packages/opentelemetry/exporter/jaeger/thrift/__init__.py", line 225, in export
+    self._agent_client.emit(batch)
+  File "/home/ubuntu/Downloads/Projeto_final/venv/lib/python3.10/site-packages/opentelemetry/exporter/jaeger/thrift/send.py", line 95, in emit
+    udp_socket.sendto(buff, self.address)
+socket.gaierror: [Errno -2] Name or service not known
+=============================================================================== test session starts ================================================================================
+platform linux -- Python 3.10.12, pytest-8.4.2, pluggy-1.6.0 -- /home/ubuntu/Downloads/Projeto_final/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/ubuntu/Downloads/Projeto_final/product-service
+plugins: cov-5.0.0
+collected 27 items                                                                                                                                                                 
+
+products_tests/test_product_unit.py::TestProductTokenRequiredDecorator::test_token_required_missing_token PASSED                                                             [  3%]
+products_tests/test_product_unit.py::TestProductTokenRequiredDecorator::test_token_required_valid_token PASSED                                                               [  7%]
+products_tests/test_product_unit.py::TestProductTokenRequiredDecorator::test_token_required_expired_token PASSED                                                             [ 11%]
+products_tests/test_product_unit.py::TestProductTokenRequiredDecorator::test_token_required_invalid_token PASSED                                                             [ 14%]
+products_tests/test_product_unit.py::TestGetDbConnection::test_get_db_connection_success PASSED                                                                              [ 18%]
+products_tests/test_product_unit.py::TestGetDbConnection::test_get_db_connection_failure PASSED                                                                              [ 22%]
+products_tests/test_product_unit.py::TestProductValidatorsIntegration::test_product_import_validators PASSED                                                                 [ 25%]
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_registration_route_success PASSED                                                           [ 29%]
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_registration_route_failure PASSED                                                           [ 33%]
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_get_route_success PASSED                                                                    [ 37%]
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_get_empty PASSED                                                                            [ 40%]
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_put_route_success PASSED                                                                    [ 44%]
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_put_route_without_product PASSED                                                            [ 48%]
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_delete_route_success PASSED                                                                 [ 51%]
+products_tests/test_product_unit.py::TestProductAppRoutesWithMocks::test_product_delete_route_without_product PASSED                                                         [ 55%]
+products_tests/test_product_unit.py::TestProductHealthCheck::test_health_check PASSED                                                                                        [ 59%]
+products_tests/test_product_unit.py::TestProductHealthCheck::test_health_check_detailed PASSED                                                                               [ 62%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_name_valid PASSED                                                                      [ 66%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_name_invalid PASSED                                                                    [ 70%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_price PASSED                                                                           [ 74%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_price_invalid PASSED                                                                   [ 77%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_quantity_valid PASSED                                                                  [ 81%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_quantity_invalid PASSED                                                                [ 85%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_description PASSED                                                                     [ 88%]
+products_tests/test_product_validator.py::TestProductValidator::test_sanitize_input PASSED                                                                                   [ 92%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_registration_object_valid PASSED                                                               [ 96%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_registration_object_invalid PASSED                                                             [100%]
+
+================================================================================= warnings summary =================================================================================
+product_app.py:29
+  /home/ubuntu/Downloads/Projeto_final/product-service/product_app.py:29: DeprecationWarning: Call to deprecated method __init__. (Since v1.35, the Jaeger supports OTLP natively. Please use the OTLP exporter instead. Support for this exporter will end July 2023.) -- Deprecated since version 1.16.0.
+    jaeger_exporter = JaegerExporter(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+========================================================================== 27 passed, 1 warning in 0.46s ===========================================================================
+Exception while exporting Span batch.
+Traceback (most recent call last):
+  File "/home/ubuntu/Downloads/Projeto_final/venv/lib/python3.10/site-packages/opentelemetry/sdk/trace/export/__init__.py", line 367, in _export_batch
+    self.span_exporter.export(self.spans_list[:idx])  # type: ignore
+  File "/home/ubuntu/Downloads/Projeto_final/venv/lib/python3.10/site-packages/opentelemetry/exporter/jaeger/thrift/__init__.py", line 225, in export
+    self._agent_client.emit(batch)
+  File "/home/ubuntu/Downloads/Projeto_final/venv/lib/python3.10/site-packages/opentelemetry/exporter/jaeger/thrift/send.py", line 95, in emit
+    udp_socket.sendto(buff, self.address)
+socket.gaierror: [Errno -2] Name or service not known
+Unit tests passed successfully
+
+MAKE DEV
+[+] Running 7/7
+ ✔ projeto_final-product-service              Built                                                                                                                                        0.0s 
+ ✔ projeto_final-user-service                 Built                                                                                                                                        0.0s 
+ ✔ Network projeto_final_default              Created                                                                                                                                      0.1s 
+ ✔ Container projeto_final-mysql-product-1    Started                                                                                                                                      0.8s 
+ ✔ Container projeto_final-mysql-user-1       Healthy                                                                                                                                      6.3s 
+ ✔ Container projeto_final-user-service-1     Started                                                                                                                                      6.4s 
+ ✔ Container projeto_final-product-service-1  Started                                                                                                                                      1.1s 
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.yml ps
+WARN[0000] /home/ubuntu/Downloads/Projeto_final/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+NAME                              IMAGE                           COMMAND                  SERVICE           CREATED          STATUS                    PORTS
+projeto_final-mysql-product-1     mysql:8.0                       "docker-entrypoint.s…"   mysql-product     57 seconds ago   Up 57 seconds (healthy)   3306/tcp, 33060/tcp
+projeto_final-mysql-user-1        mysql:8.0                       "docker-entrypoint.s…"   mysql-user        57 seconds ago   Up 57 seconds (healthy)   3306/tcp, 33060/tcp
+projeto_final-product-service-1   projeto_final-product-service   "python3 product_app…"   product-service   57 seconds ago   Up 56 seconds (healthy)   0.0.0.0:3002->3002/tcp
+projeto_final-user-service-1      projeto_final-user-service      "python3 app.py"         user-service      57 seconds ago   Up 50 seconds (healthy)   0.0.0.0:3001->3001/tcp
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:3001/health
+{
+  "status": "healthy"
+}
+{
+  "status": "healthy"
+}
+{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "user-service",
+  "status": "healthy",
+  "timestamp": "2026-03-25T15:39:18.920102"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:3002/health
+{
+  "status": "healthy"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:3002/health/detailed
+{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "product-service",
+  "status": "healthy",
+  "timestamp": "2026-03-25T15:39:45.674990"
+}
+
+MAKE STAGING
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make staging
+Initializing staging environment
+script dir = /home/ubuntu/Downloads/Projeto_final/scripts/staging
+Project root = /home/ubuntu/Downloads/Projeto_final
+Cleaning up previous staging environment
+building and starting the staging environment
+
+[+] Running 9/9
+ ✔ projeto_final-product-service                      Built                                                                                                                                0.0s 
+ ✔ projeto_final-user-service                         Built                                                                                                                                0.0s 
+ ✔ Network projeto_final_default                      Created                                                                                                                              0.1s 
+ ✔ Volume "projeto_final_mysql_product_staging_data"  Created                                                                                                                              0.0s 
+ ✔ Volume "projeto_final_mysql_user_staging_data"     Created                                                                                                                              0.0s 
+ ✔ Container projeto_final-mysql-staging-user-1       Healthy                                                                                                                             10.9s 
+ ✔ Container projeto_final-mysql-staging-product-1    Healthy                                                                                                                             15.9s 
+ ✔ Container projeto_final-product-service-1          Started                                                                                                                             16.1s 
+ ✔ Container projeto_final-user-service-1             Started     
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.staging.yml --env-file .env.staging ps
+NAME                                    IMAGE                           COMMAND                  SERVICE                 CREATED              STATUS                        PORTS
+projeto_final-mysql-staging-product-1   mysql:8.0                       "docker-entrypoint.s…"   mysql-staging-product   About a minute ago   Up About a minute (healthy)   3306/tcp, 33060/tcp
+projeto_final-mysql-staging-user-1      mysql:8.0                       "docker-entrypoint.s…"   mysql-staging-user      About a minute ago   Up About a minute (healthy)   3306/tcp, 33060/tcp
+projeto_final-product-service-1         projeto_final-product-service   "python3 product_app…"   product-service         About a minute ago   Up 55 seconds (healthy)       0.0.0.0:4002->4002/tcp
+projeto_final-user-service-1            projeto_final-user-service      "python3 app.py"         user-service            About a minute ago   Up About a minute (healthy)   0.0.0.0:4001->4001/tcp
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:4001/health
+{
+  "status": "healthy"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:4002/health
+{
+  "status": "healthy"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:4001/health/detailed
+{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "user-service",
+  "status": "healthy",
+  "timestamp": "2026-03-25T18:25:58.316126"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:4002/health/detailed
+{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "product-service",
+  "status": "healthy",
+  "timestamp": "2026-03-25T18:26:05.474091"
+}
+
+MAKE TEST-FUNCTIONAL
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make test-functional
+Executing functional tests
+Running functional tests
+============================= test session starts ==============================
+platform linux -- Python 3.11.15, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python3.11
+cachedir: .pytest_cache
+rootdir: /user-service
+plugins: cov-5.0.0
+collecting ... collected 4 items
+
+tests/test_functional.py::TestUserServiceFunctional::test_complete_user_lifecycle PASSED [ 25%]
+tests/test_functional.py::TestUserServiceFunctional::test_registration_with_weak_password PASSED [ 50%]
+tests/test_functional.py::TestUserServiceFunctional::test_registration_with_invalid_email PASSED [ 75%]
+tests/test_functional.py::TestUserServiceFunctional::test_rapid_registration_attempts PASSED [100%]
+
+============================== 4 passed in 5.93s ===============================
+============================= test session starts ==============================
+platform linux -- Python 3.11.15, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python3.11
+cachedir: .pytest_cache
+rootdir: /product-service
+plugins: cov-5.0.0
+collecting ... collected 7 items
+
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_complete_product_lifecycle PASSED [ 14%]
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_multiple_products_management PASSED [ 28%]
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_product_validation_scenarios PASSED [ 42%]
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_edge_cases PASSED [ 57%]
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_user_isolation_security PASSED [ 71%]
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_basic_performance PASSED [ 85%]
+products_tests/test_product_functional.py::TestProductServiceFunctional::test_service_resilience PASSED [100%]
+
+============================== 7 passed in 10.21s ==============================
+[+] Running 7/7
+ ✔ Container projeto_final-product-service-1        Removed                                                                                                                                0.4s 
+ ✔ Container projeto_final-user-service-1           Removed                                                                                                                                0.3s 
+ ✔ Container projeto_final-mysql-staging-user-1     Removed                                                                                                                                1.0s 
+ ✔ Container projeto_final-mysql-staging-product-1  Removed                                                                                                                                1.0s 
+ ✔ Network projeto_final_default                    Removed                                                                                                                                0.2s 
+ ✔ Volume projeto_final_mysql_product_staging_data  Removed                                                                                                                                0.1s 
+ ✔ Volume projeto_final_mysql_user_staging_data     Removed                                                                                                                                0.1s 
+Functional tests passed successfully
+
+MAKE CLEAN PROD
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make clean-prod
+WARNING: This will delete ALL production resources
+Type 'DELETE PROD' to confirm: DELETE PROD
+Deleting production pods
+namespace "projeto-final" deleted
+Production cleaned
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl get all -n projeto-final
+No resources found in projeto-final namespace.
+
+MAKE CLEAN
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make clean
+Cleaning temporary files
+find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+find . -type f -name "*.pyc" -delete 2>/dev/null || true
+rm -rf .pytest_cache .coverage htmlcov 2>/dev/null || true
+Clean finished
+
+MAKE CLEAN-CONTAINERS
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make clean-containers 
+Stopping DEV and STAGING containers
+Containers stopped
+
+MAKE PROD
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make prod
+Deploy production environment
+1. Build: ./scripts/prod/build-prod.sh
+2. Deploy K8s: ./scripts/prod/deploy-prod.sh
+
+Execute manually the commands above or the following:
+./scripts/prod/build-prod.sh && ./scripts/prod/deploy-prod.sh
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ ./scripts/prod/build-prod.sh && ./scripts/prod/deploy-prod.sh
+script dir = /home/ubuntu/Downloads/Projeto_final/scripts/prod
+Project root = /home/ubuntu/Downloads/Projeto_final
+building user-service
+Building and pushing User service image
+./k8s/services/user-service/00-build-push.sh: line 5: cd./k8s/services/user-service: No such file or directory
+script dir = 
+Project root = .
+[+] Building 143.4s (11/11) FINISHED                                                                                                                                                             docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                       0.0s
+ => => transferring dockerfile: 804B                                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                                        6.0s
+ => [internal] load .dockerignore                                                                                                                                                                          0.0s
+ => => transferring context: 2B                                                                                                                                                                            0.0s
+ => CACHED [1/6] FROM docker.io/library/python:3.11-slim@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634                                                                           0.0s
+ => [internal] load build context                                                                                                                                                                          0.0s
+ => => transferring context: 6.54kB                                                                                                                                                                        0.0s
+ => [2/6] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*     && apt-get clean                     94.4s
+ => [3/6] WORKDIR /user-service                                                                                                                                                                            0.0s 
+ => [4/6] COPY requirements.txt ./requirements.txt                                                                                                                                                         0.0s 
+ => [5/6] RUN pip install --no-cache-dir -r requirements.txt                                                                                                                                              40.6s 
+ => [6/6] COPY . .                                                                                                                                                                                         0.1s 
+ => exporting to image                                                                                                                                                                                     2.2s 
+ => => exporting layers                                                                                                                                                                                    2.1s 
+ => => writing image sha256:bc4b00054f9a8bb68c31eb1200ffb9410ae4c73a756b0c74a44aa2d34139beec                                                                                                               0.0s 
+ => => naming to docker.io/library/user-service:1.0.0                                                                                                                                                      0.0s 
+Infer repository core for addon registry
+Addon core/registry is already enabled
+The push refers to repository [localhost:32000/user-service]
+74ca05f2bf0c: Pushed 
+3cdde992ab65: Pushed 
+f77ba90649ac: Pushed 
+261767ec0187: Pushed 
+aabfe7dd14a5: Pushed 
+8347a0657a00: Pushed 
+34b037810a00: Pushed 
+188695d9eb1d: Pushed 
+188c9b34dfbe: Pushed 
+1.0.0: digest: sha256:31a516f9dc5d2a66c4b660d622759726d66238dcdd2d5c2bd47057940e9bedd9 size: 2207
+User service image pushed
+building product-service
+Building and pushing Product service image
+./k8s/services/product-service/00-product-build-push.sh: line 5: cd./k8s/services/product-service: No such file or directory
+script dir = 
+Project root = .
+[+] Building 79.9s (11/11) FINISHED                                                                                                                                                              docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                       0.0s
+ => => transferring dockerfile: 804B                                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                                        0.5s
+ => [internal] load .dockerignore                                                                                                                                                                          0.0s
+ => => transferring context: 2B                                                                                                                                                                            0.0s
+ => [internal] load build context                                                                                                                                                                          0.0s
+ => => transferring context: 6.08kB                                                                                                                                                                        0.0s
+ => CACHED [1/6] FROM docker.io/library/python:3.11-slim@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634                                                                           0.0s
+ => [2/6] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*     && apt-get clean                     58.2s
+ => [3/6] WORKDIR /user-service                                                                                                                                                                            0.0s 
+ => [4/6] COPY requirements.txt ./requirements.txt                                                                                                                                                         0.0s 
+ => [5/6] RUN pip install --no-cache-dir -r requirements.txt                                                                                                                                              18.9s 
+ => [6/6] COPY . .                                                                                                                                                                                         0.0s 
+ => exporting to image                                                                                                                                                                                     2.2s 
+ => => exporting layers                                                                                                                                                                                    2.2s 
+ => => writing image sha256:9ea2118ede81e3d2d0c359cad398df53aa992c67d40856b3095bd7d36f9dc98c                                                                                                               0.0s 
+ => => naming to docker.io/library/product-service:1.0.0                                                                                                                                                   0.0s 
+Infer repository core for addon registry
+Addon core/registry is already enabled
+The push refers to repository [localhost:32000/product-service]
+74ca05f2bf0c: Mounted from user-service 
+995fee43027e: Pushed 
+4b75c0af13ff: Pushed 
+c9ad1e12e48f: Pushed 
+831f81f1352c: Pushed 
+8347a0657a00: Mounted from user-service 
+34b037810a00: Mounted from user-service 
+188695d9eb1d: Mounted from user-service 
+188c9b34dfbe: Mounted from user-service 
+1.0.0: digest: sha256:f14248e5c18fbd69d8a7428fd01618677dd22f800760d29b64d1942eb8958241 size: 2207
+Product service pushed
+build completed
+namespace/projeto-final created
+configmap/pd-app-config created
+secret/app-secrets created
+error: error reading [k8s/databases/]: recognized file extensions are [.json .yaml .yml]
+error: error reading [k8s/services/]: recognized file extensions are [.json .yaml .yml]
+ingress.networking.k8s.io/app-ingress created
+No resources found in projeto-final namespace.
+Deployment completed successfully!

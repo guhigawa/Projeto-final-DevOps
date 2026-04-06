@@ -1,0 +1,14 @@
+================================================================================
+TESTS EVIDENCE - PRODUCT SERVICE
+================================================================================
+Date and Time: 2026-01-26 18:43:53
+Projeto:WebApp Final Project - Product service
+test suite: Integration Tests for Product Service
+================================================================================
+
+[2026-01-26 18:43:53] - User Cannot Access Other User's Products - FAIL
+Details: Exception: Fail to create user{
+  "error": "Invalid credentials"
+}
+
+----------------------------------------

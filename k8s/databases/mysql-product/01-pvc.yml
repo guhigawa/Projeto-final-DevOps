@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-product-pvc
+  namespace: projeto-final
+  labels:
+    app: mysql-product
+    component: database
+    service: product
+spec:
+  storageClassName: microk8s-hostpath
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

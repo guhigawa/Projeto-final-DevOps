@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-user
+  namespace: projeto-final
+  labels:
+    app: mysql-user
+    component: database
+    service: user
+spec:
+  clusterIP: None #Headless service for StatefulSet, allows the creation of DNS for each pod created by the service
+  selector: 
+    app: mysql-user # Directs traffic to Pods with this label
+  ports:
+  - port: 3306 #Port exposed by the Service in the cluster network
+    targetPort: mysql #actual port where the MySQL container is listening
+    name: mysql #Identification 

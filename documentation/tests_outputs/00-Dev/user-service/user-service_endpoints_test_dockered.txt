@@ -1,0 +1,81 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose ps -a
+WARN[0000] /home/ubuntu/Downloads/Projeto_final/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+NAME                              IMAGE                           COMMAND                  SERVICE           CREATED          STATUS          PORTS
+projeto_final-mysql-product-1     mysql:8.0                       "docker-entrypoint.s…"   mysql-product     50 minutes ago   Up 50 minutes   33060/tcp, 0.0.0.0:3309->3306/tcp
+projeto_final-mysql-user-1        mysql:8.0                       "docker-entrypoint.s…"   mysql-user        3 hours ago      Up 3 hours      33060/tcp, 0.0.0.0:3308->3306/tcp
+projeto_final-product-service-1   projeto_final-product-service   "python product_app.…"   product-service   3 hours ago      Up 40 minutes   0.0.0.0:3002->3002/tcp
+projeto_final-user-service-1      projeto_final-user-service      "python3 app.py"         user-service      3 hours ago      Up 3 hours      0.0.0.0:3001->3001/tcp
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:3001/health
+{
+  "status": "healthy"
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://localhost:3001/health/detailed
+{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "user-service",
+  "status": "healthy",
+  "timestamp": "2025-11-24T17:27:30.625528"
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3001/register -H "Content-type: application/json" -d '{"email":"test1_container@example.com","p
+assword":"test123"}'
+{
+  "email": "test1_container@example.com",
+  "message": "User registered successfully",
+  "user_id": 2
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3001/login -u "test1_container@example.com:test123"
+{
+  "email": "test1_container@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InRlc3QxX2NvbnRhaW5lckBleGFtcGxlLmNvbSIsImV4cCI6MTc2NDAwOTMwN30.yvjzW3qlvtMiUa-dMgN1NYKkPTDbsElESTlzu48gl8k",
+  "user_id": 2
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3001/login -H "Content-Type: application/json" -d '{"email":"test1_container@example.com","pass
+word":"test123"}'
+{
+  "email": "test1_container@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InRlc3QxX2NvbnRhaW5lckBleGFtcGxlLmNvbSIsImV4cCI6MTc2NDAwOTM1OX0.Jl5DTn0GMsqo6PyaIhxZnmQ1rFwWBqVp6pyyB0LOqPg",
+  "user_id": 2
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJlbWFpbCI6InRlc3QxX2NvbnRhaW5lckBleGFtcGxlLmNvbSIsImV4cCI6MTc2N
+DAwOTM1OX0.Jl5DTn0GMsqo6PyaIhxZnmQ1rFwWBqVp6pyyB0LOqPg"
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3001/profile -H "Authorization: Bearer $TOKEN"
+{
+  "email": "test1_container@example.com",
+  "user_id": 2
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3001/profile
+{
+  "error": "Token is missing!"
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3001/register -H "Content-Type: application/json" -d '{"email":"test1_container@example.com","p
+assword":"test123"}'
+{
+  "error": "User already exists"
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3001/logout -H "Authorization: Bearer $TOKEN"
+{
+  "message": "Logout successful",
+  "timestamp": "2025-11-24T17:43:34.723013",
+  "user_id": 2
+}
+
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:3001/profile -H "Authorization: Bearer $TOKEN"
+{
+  "error": "Token has been invalidated. Please login again."
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:3001/logout -H "Authorization: Bearer $TOKEN"
+{
+  "error": "Token has been invalidated. Please login again."
+}

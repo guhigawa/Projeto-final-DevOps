@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+
+  mysql-user:
+    image: mysql:8.0
+    environment:
+      MYSQL_USER: ${USER_MYSQL_USER}
+      MYSQL_PASSWORD: ${USER_MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${USER_MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${USER_MYSQL_DB}
+    volumes:
+      - mysql_user_data:/var/lib/mysql
+      - ./scripts/structure/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${USER_MYSQL_USER}", "-p${USER_MYSQL_PASSWORD}"]
+      timeout: 10s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+    restart: unless-stopped
+  
+  mysql-product:
+    image: mysql:8.0
+    environment:
+      MYSQL_USER: ${PRODUCT_MYSQL_USER}
+      MYSQL_PASSWORD: ${PRODUCT_MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${PRODUCT_MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${PRODUCT_MYSQL_DB}
+    volumes:
+      - mysql_product_data:/var/lib/mysql
+      - ./scripts/structure/product_init.sql:/docker-entrypoint-initdb.d/01-product_init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost","-u${PRODUCT_MYSQL_USER}", "-p${PRODUCT_MYSQL_PASSWORD}"]
+      timeout: 10s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./user-service
+      args:
+        ENVIRONMENT: development
+        PORT: ${USER_PORT}
+    ports:
+      - "${USER_PORT}:${USER_PORT}"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - MYSQL_HOST=mysql-user
+      - MYSQL_USER=${USER_MYSQL_USER}
+      - MYSQL_PASSWORD=${USER_MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${USER_MYSQL_DB}
+      - MYSQL_PORT=${USER_MYSQL_PORT}
+      - FLASK_ENV=development
+      - FLASK_RUN_PORT=${USER_PORT}
+      - USER_PORT=${USER_PORT}
+    depends_on:
+      mysql-user:
+          condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${USER_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+  
+  product-service:
+    build:
+      context: ./product-service
+      args:
+        ENVIRONMENT: development
+        PORT: ${PRODUCT_PORT}
+    ports:
+      - "${PRODUCT_PORT}:${PRODUCT_PORT}"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - MYSQL_HOST=mysql-product
+      - MYSQL_USER=${PRODUCT_MYSQL_USER}
+      - MYSQL_PASSWORD=${PRODUCT_MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${PRODUCT_MYSQL_DB}
+      - MYSQL_PORT=${PRODUCT_MYSQL_PORT}
+      - USER_SERVICE_URL=http://user-service:${USER_PORT}
+      - FLASK_ENV=development
+      - FLASK_RUN_PORT=${PRODUCT_PORT}
+      - PRODUCT_PORT=${PRODUCT_PORT}
+    depends_on:
+      - mysql-product
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PRODUCT_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s  
+    restart: unless-stopped
+  
+
+
+volumes:
+  mysql_user_data:
+  mysql_product_data:

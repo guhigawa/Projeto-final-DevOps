@@ -1,0 +1,21 @@
+================================================================================
+TESTS EVIDENCE - USER SERVICE
+================================================================================
+Date and Time: 2026-01-26 16:47:10
+Projeto:WebApp Final Project - User service
+test suite: Integration Tests for User Service
+================================================================================
+
+[2026-01-26 16:47:10] - Detailed Health Check - PASS
+Details: Status: healthy, DB Connection: True, DB Query: True
+response:{
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  },
+  "service": "user-service",
+  "status": "healthy",
+  "timestamp": "2026-01-26T16:47:10.441295"
+}
+----------------------------------------

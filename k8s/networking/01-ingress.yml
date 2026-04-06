@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: 
+  name: app-ingress
+  namespace: projeto-final
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx #Which Ingress controller to use
+  rules: #Routing rules
+  - host: user.local.prod #When user access this host, the following rules will be applied, must be defined in /etc/hosts file to work
+    http:
+      paths:
+      - path: / #access any path (e.g. user.local.prod/login)
+        pathType: Prefix
+        backend:
+          service:
+            name: user-service 
+            port:
+              number: 5001
+  
+  - host: product.local.prod
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: product-service
+            port:
+              number: 5002

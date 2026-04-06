@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace #object type
+metadata: # Object id
+  name: projeto-final
+  labels: #labels to filter resources (key:valor format)
+    name: projeto-final
+    environment: production
+    project: projeto-final-devops

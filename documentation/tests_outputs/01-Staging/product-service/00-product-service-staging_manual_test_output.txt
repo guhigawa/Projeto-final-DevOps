@@ -1,0 +1,25 @@
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://localhost:4002/products \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"name":"Produto Teste Staging","price":99.99,"quantity":10}'
+{
+  "description": null,
+  "id": 1,
+  "message": "Product created successfully",
+  "product_name": "Produto Teste Staging"
+}
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://localhost:4002/products \
+  -H "Authorization: Bearer $TOKEN"
+{
+  "products": [
+    {
+      "created_at": "Fri, 28 Nov 2025 16:43:09 GMT",
+      "created_by": 1,
+      "description": null,
+      "id": 1,
+      "name": "Produto Teste Staging",
+      "price": 99.99,
+      "quantity": 10
+    }
+  ]
+}

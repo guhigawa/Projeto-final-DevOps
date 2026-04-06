@@ -1,0 +1,18 @@
+================================================================================
+TESTS EVIDENCE - PRODUCT SERVICE
+================================================================================
+Date and Time: 2026-01-26 19:58:08
+Projeto:WebApp Final Project - Product service
+test suite: Integration Tests for Product Service
+================================================================================
+
+[2026-01-26 19:58:08] - Update user item list - FAIL
+Details: Product ID: 19, Update status: 200
+response:{
+  "message": "Product updated successfully"
+}
+----------------------------------------
+[2026-01-26 19:58:08] - Update user item list - FAIL
+Details: Exception occurred: Update failed: Product ID: 19, Update status: 200
+assert False
+----------------------------------------

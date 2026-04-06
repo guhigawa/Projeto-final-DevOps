@@ -1,0 +1,20 @@
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/product-service$ python -m pytest products_tests/test_product_validator.py -v
+====================================================================================== test session starts ======================================================================================
+platform linux -- Python 3.10.12, pytest-8.4.2, pluggy-1.6.0 -- /home/ubuntu/Downloads/Projeto_final/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/ubuntu/Downloads/Projeto_final/product-service
+collected 10 items                                                                                                                                                                              
+
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_name_valid PASSED                                                                                   [ 10%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_name_invalid PASSED                                                                                 [ 20%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_price PASSED                                                                                        [ 30%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_price_invalid PASSED                                                                                [ 40%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_quantity_valid PASSED                                                                               [ 50%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_quantity_invalid PASSED                                                                             [ 60%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_product_description PASSED                                                                                  [ 70%]
+products_tests/test_product_validator.py::TestProductValidator::test_sanitize_input PASSED                                                                                                [ 80%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_registration_object_valid PASSED                                                                            [ 90%]
+products_tests/test_product_validator.py::TestProductValidator::test_validate_registration_object_invalid PASSED                                                                          [100%]
+
+====================================================================================== 10 passed in 0.02s =======================================================================================
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final/product-service$ 

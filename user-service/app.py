@@ -1,0 +1,755 @@
+import jwt,datetime,os,pymysql,logging, time;
+from functools import wraps
+from flask import Flask, request, jsonify
+from werkzeug.security import check_password_hash, generate_password_hash
+from pymysql import Error
+from dotenv import dotenv_values
+from pathlib import Path
+from validators import Validators
+from opentelemetry import trace
+from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.instrumentation.pymysql import PyMySQLInstrumentor
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry.trace import Status, StatusCode
+
+
+def setup_tracing():
+    resource = Resource.create({
+        SERVICE_NAME: "user-service",
+        "deployment.environment": os.environ.get('FLASK_ENV', 'development'),
+        "service.version": "1.0.0"
+                                })
+    
+    provider = TracerProvider(resource=resource)
+    
+    jaeger_exporter = JaegerExporter(
+        agent_host_name=os.environ.get('JAEGER_AGENT_HOST', 'jaeger.monitoring.svc.cluster.local'),
+        agent_port=int(os.environ.get('JAEGER_AGENT_PORT', '6831')),
+    )
+    span_processor = BatchSpanProcessor(jaeger_exporter)
+    provider.add_span_processor(span_processor)
+
+    trace.set_tracer_provider(provider)
+    
+    FlaskInstrumentor().instrument_app(app)
+    RequestsInstrumentor().instrument()
+    PyMySQLInstrumentor().instrument()
+    LoggingInstrumentor().instrument()
+    
+    return trace.get_tracer(__name__)
+
+def get_port():
+    port = os.environ.get('FLASK_RUN_PORT','3001')
+    return int(port)
+
+
+def get_debug_mode():
+    env = os.environ.get('FLASK_ENV','development')
+    return env in ['development','staging']
+
+
+def load_env_files():
+    current_dir = Path(__file__).parent
+
+    env_test_path = current_dir.parent / '.env.test'
+    if env_test_path.exists():
+        env_vars= dotenv_values(str(env_test_path))
+        for key, values in env_vars.items():
+            os.environ[key] = values
+        return
+    
+    root_env_path = current_dir.parent / '.env'
+    if root_env_path.exists():
+        env_vars = dotenv_values(str(root_env_path))
+        for key, values in env_vars.items():
+            os.environ[key] = values
+        return
+
+load_env_files()
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+tracer = setup_tracing()
+token_blacklist = set()
+blacklist_expiry = {}
+
+#config
+app.config["MYSQL_HOST"] = os.environ.get("MYSQL_HOST") or os.environ.get("USER_MYSQL_HOST")
+app.config["MYSQL_USER"] = os.environ.get("MYSQL_USER") or os.environ.get("USER_MYSQL_USER")
+app.config["MYSQL_PASSWORD"] = os.environ.get("MYSQL_PASSWORD") or os.environ.get("USER_MYSQL_PASSWORD")
+app.config["MYSQL_DB"] = os.environ.get("MYSQL_DATABASE") or os.environ.get("USER_MYSQL_DB")
+app.config["MYSQL_PORT"] = os.environ.get("MYSQL_PORT") or os.environ.get("USER_MYSQL_PORT")
+
+#logging setup
+def setup_structured_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format='{"timestamp": "%(asctime)s", "level": "%(levelname)s", "service": "user-service", "message": "%(message)s"}',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+setup_structured_logging()
+
+def get_db_connection():
+    try:
+        connection = pymysql.connect(
+            host=app.config["MYSQL_HOST"],
+            user=app.config["MYSQL_USER"],
+            password=app.config["MYSQL_PASSWORD"],
+            database=app.config["MYSQL_DB"],
+            port=int(app.config["MYSQL_PORT"]),
+            cursorclass=pymysql.cursors.DictCursor
+        )
+        return connection
+    except Error as e:
+        logging.error(f"Error connecting to MySQL Platform: {e}")
+        return None
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({"error": "Token is missing!"}), 401
+        
+        try:
+            if token.startswith("Bearer "):
+                token = token[7:]
+
+                data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+                current_user_id = data['user_id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token has expired!"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid token!"}), 401
+        
+
+        return f(current_user_id, *args, **kwargs)
+    return decorated
+
+@app.before_request
+def check_blacklisted_token():
+    
+    cleanup_expired_tokens()
+
+    # Public routes that do not require token validation
+    public_routes = ['/login', '/register', '/health', '/health/detailed', '/metrics']
+    
+    if request.path in public_routes:
+        return
+    
+    # Protected routes - check for blacklisted token
+    auth_header = request.headers.get('Authorization')
+    
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(' ')[1]
+        
+        if token in token_blacklist:
+            logging.warning("Access attempt with blacklisted token", 
+                          extra={"endpoint": request.path, "method": request.method})
+            return jsonify({
+                "error": "Token has been invalidated. Please login again."
+            }), 401
+    
+
+# Function to clean up expired tokens from the blacklist
+def cleanup_expired_tokens():
+    
+    current_time = time.time()
+    tokens_to_remove = []
+    
+    for token, exp_time in blacklist_expiry.items():
+        if exp_time < current_time:
+            tokens_to_remove.append(token)
+    
+    for token in tokens_to_remove:
+        token_blacklist.discard(token)
+        blacklist_expiry.pop(token, None)
+    
+    if tokens_to_remove:
+        logging.info(f"Cleaned up {len(tokens_to_remove)} expired tokens from blacklist")
+
+@app.route("/register", methods=["POST"])
+def register():
+    with tracer.start_as_current_span("register_user") as span:
+        data = request.get_json()
+
+        span.set_attribute("http.method", "POST")
+        span.set_attribute("http.route", "/register")
+
+    #Concealing password values from logs
+        log_data = {key:value for key, value in data.items()} if data else {} #Creating copy from data to not erase original 
+        if "password" in log_data:
+            log_data["password"] = "*" * 6
+        logging.info("Registration attempt", extra={"data": log_data})
+
+    #Input data validation
+        is_valid, validation_response = Validators.validate_registration_data(data)
+        if not is_valid:
+            logging.warning(f"Registration failed: {validation_response}")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", validation_response.get("error", "Invalid data"))
+            return jsonify(validation_response), 400 
+    
+        email = validation_response["email"]
+        password = validation_response["password"]
+
+        span.set_attribute("user.email", email)
+
+        connection = get_db_connection()
+        if not connection:
+            logging.error("Database connection error during registration")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", "Database connection error")
+            span.set_status(Status(StatusCode.ERROR, "Database connection error"))
+            return jsonify({"error": "Database connection error"}), 503 #503 = Service Unavailable(database down or unreachable)
+    
+        try:
+            with connection.cursor() as cursor:
+                with tracer.start_as_current_span("check_existing_user") as check_span:
+                    cursor.execute("SELECT * FROM users WHERE email=%s",(email,))
+                    existing_user = cursor.fetchone()
+                    check_span.set_attribute("user.exists", existing_user is not None)
+
+                    if existing_user:
+                        logging.warning("Registration failed - user already exists", extra={"email": email})
+                        span.set_attribute("error", True)
+                        span.set_attribute("error.message", "User already exists")
+                        return jsonify({"error": "User already exists"}), 409 #409 = Conflict(user already exists)
+                
+                with tracer.start_as_current_span("create_user") as create_span:
+                    hashed_password = generate_password_hash(password)
+                    cursor.execute("INSERT INTO users (email, password) VALUES (%s, %s)",(email, hashed_password))
+                    user_id = cursor.lastrowid
+                    connection.commit()
+                    create_span.set_attribute("user.id", user_id)
+
+                logging.info("User registered successfully", extra={"email": email, "user_id": user_id})
+                span.set_attribute("user.id", user_id)
+
+                return jsonify({
+                    "message": "User registered successfully",
+                    "user_id": user_id,
+                    "email": email
+                }), 201 #201 = Created(resource successfully created)
+
+        except Exception as e:
+            logging.error(f"Registration error", extra={"email": email, "error": str(e)})
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", str(e))
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            return jsonify({"error": f"Registration error: {str(e)}"}), 500 
+        finally:
+            connection.close()
+
+@app.route("/login", methods=["POST"])
+def login():
+    with tracer.start_as_current_span("login_user") as span:
+        span.set_attribute("http.method", "POST")
+        span.set_attribute("http.route", "/login")
+
+        auth = request.authorization
+        data = {}
+        #Nao deveria colocar span.set_attribute http.method e http.route /login?
+
+        #check db for username and password
+        #determining the authentication method
+        if auth and auth.username and auth.password:
+            user_email = auth.username
+            password = auth.password
+            auth_method = "basic"
+
+        elif request.is_json:
+            try:
+                data = request.get_json()
+                if data.get("email") and data.get("password"):
+                    user_email = data.get("email")
+                    password = data.get("password","")
+                    auth_method = "json"
+                else:
+                    logging.warning("No valid authentication method provided")
+                    span.set_attribute("error", True)
+                    span.set_attribute("error.message", "No valid authentication method provided")
+                    return jsonify({
+                        "error": "No valid authentication method provided", 
+                        "supported_auth_methods": ["basic_auth","json"]}), 400 #400 = Bad Request(no valid authentication method)
+            except Exception as e:
+                logging.error(f"Error parsing JSON data during login", extra={"error": str(e)})
+                span.set_attribute("error", True)
+                span.set_attribute("error.message", f"Error parsing JSON data: {str(e)}")
+                return jsonify({
+                    "error": "Invalid JSON data", 
+                    "supported_auth_methods": ["basic_auth","json"]}), 400 #400 = Bad Request(invalid JSON data)
+        else:
+            logging.warning("No valid authentication method provided")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", "No valid authentication method provided")
+            return jsonify({
+                "error": "No valid authentication method provided", 
+                "supported_auth_methods": ["basic_auth","json"]}), 400 #400 = Bad Request(no valid authentication method)
+
+        logging.info("Login attempt", extra={"email": user_email, "auth_method": auth_method})
+        span.set_attribute("user.email", user_email)
+        span.set_attribute("user.auth_method", auth_method)
+    
+        if 'user_email' in locals():
+            user_email = Validators.sanitize_input(user_email)
+
+        if not user_email or not password:
+            logging.warning("Login failed - missing credentials")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", "missing credentials")
+            return jsonify({
+                "error": "Missing credentials", 
+                "supported_auth_methods": ["basic_auth","json"]}), 401 #401 = Unauthorized(missing or invalid credentials)
+    
+    #logic for authentication
+        connection = get_db_connection()
+        if not connection:
+            logging.error("Database connection error during login")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", "Database connection error")
+            span.set_status(Status(StatusCode.ERROR, "Database connection error"))
+            return jsonify({"error": "Database connection error"}), 503 #503 = Service Unavailable(database down or unreachable)
+    
+        try:
+            with connection.cursor() as cursor:
+                with tracer.start_as_current_span("query_user") as query_span:
+                    cursor.execute("SELECT * FROM users WHERE email=%s",(user_email,))
+                    user=cursor.fetchone()
+                    query_span.set_attribute("user.found", user is not None)
+
+                if user and check_password_hash(user['password'], password):
+                    with tracer.start_as_current_span("generate_token") as token_span: 
+                        token = jwt.encode({
+                            "user_id": user['id'],
+                            "email": user['email'],
+                            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+                        }, app.config['SECRET_KEY'], algorithm="HS256")
+                        token_span.set_attribute("token.generated", True)
+                        token_span.set_attribute("user.id", user['id'])
+
+                    logging.info("User logged in successfully", extra={"email": user_email, "user_id": user['id']})
+                    span.set_attribute("user.id", user['id'])
+
+                    return jsonify({
+                        "token": token,
+                        "user_id": user['id'],
+                        "email": user['email']
+                        })
+                else:
+                    logging.warning("Login failed - invalid credentials", extra={"email": user_email})
+                    span.set_attribute("error", True)
+                    span.set_attribute("error.message", "invalid credentials")
+                    return jsonify({"error": "Invalid credentials"}), 401
+        
+        except Exception as e:
+            logging.error(f"Authentication error", extra={"email": user_email, "error": str(e)})
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", str(e))
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            return jsonify({"error": f"Authentication error: {str(e)}"}), 500
+        finally:
+            connection.close()
+
+@app.route("/profile", methods=["GET"])
+@token_required
+def get_profile(current_user_id):
+    with tracer.start_as_current_span("get_profile") as span:
+        span.set_attribute("http.method", "GET")
+        span.set_attribute("http.route", "/profile")
+
+        connection = get_db_connection()
+        if not connection:
+            logging.error("Database connection error during profile retrieval")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message","Database connection error")
+            span.set_status(Status(StatusCode.ERROR, "Database connection error"))
+            return jsonify({"error": "Database connection error"}), 503 #503 = Service Unavailable(database down or unreachable)
+    
+        try:
+            with connection.cursor() as cursor:
+                with tracer.start_as_current_span("query_user_profile") as query_span:
+                    cursor.execute("SELECT id, email FROM users WHERE id=%s",(current_user_id,))
+                    user = cursor.fetchone()
+                    query_span.set_attribute("user.found", user is not None)
+
+                if not user:
+                    logging.warning("Profile retrieval failed - user not found", extra={"user_id": current_user_id})
+                    span.set_attribute("error", True)
+                    span.set_attribute("error.message", "user not found")            
+                    return jsonify({"error": "User not found"}), 404 #404 = Not Found(user does not exist)
+                
+                logging.info("Profile retrieved successfully", extra={"user_id": current_user_id})
+                span.set_attribute("user.id", user['id'])
+
+                return jsonify({
+                    "user_id": user['id'],
+                    "email": user['email']
+                })
+
+        except Exception as e:
+            logging.error(f"Profile retrieval error", extra={"user_id": current_user_id, "error": str(e)})
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", str(e))
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            return jsonify({"error": f"Profile retrieval error:{str(e)}"}), 500
+        finally:
+            connection.close()
+
+@app.route("/profile", methods=["PUT"])
+@token_required
+def update_profile(current_user_id):
+    with tracer.start_as_current_span("update_profile") as span:
+        data = request.get_json()
+        
+        span.set_attribute("http.method", "PUT")
+        span.set_attribute("http.route", "/profile")
+
+        if not data:
+            logging.warning("Profile update failed - no data provided", extra={"user_id": current_user_id})
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", "No data provided")
+            return jsonify({"error": "No data provided"}), 400
+
+        email = data.get("email")
+        password = data.get("password")
+
+        if email:
+            is_valid_email, email_result = Validators.validate_email(email)
+            if not is_valid_email:
+                logging.warning("Profile update failed - invalid email", extra={"user_id": current_user_id, "email": email})
+                span.set_attribute("error", True)
+                span.set_attribute("error.message",f"invalid email: {email_result}")
+                return jsonify({"error": f"Invalid email: {email_result}"}), 400
+            email = Validators.sanitize_input(email).lower() 
+    
+        if password:
+            is_valid_password, password_result = Validators.validate_password(password)
+            if not is_valid_password:
+                logging.warning("Profile update failed - invalid password", extra={"user_id": current_user_id})
+                span.set_attribute("error", True)
+                span.set_attribute("error.message",f"invalid password: {password_result}")
+                return jsonify({"error": f"Invalid password: {password_result}, minimun lenght {Validators.MIN_PASSWORD_LENGTH}, maximum lenght {Validators.MAX_PASSWORD_LENGTH}"}), 400
+
+        if not email and not password:
+            logging.warning("Profile update failed - no valid fields to update", extra={"user_id": current_user_id})
+            span.set_attribute("error", True)
+            span.set_attribute("error.message","no valid fields to update")
+            return jsonify({"error": "No valid fields to update"}), 400
+
+        connection = get_db_connection()
+
+        if not connection:
+            logging.error("Database connection error during profile update")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", "Database connection error")
+            span.set_status(Status(StatusCode.ERROR, "Database connection error"))
+            return jsonify({"error": "Database connection error"}), 503 #503 = Service Unavailable(database down or unreachable)
+    
+        try:
+            with connection.cursor() as cursor:
+                with tracer.start_as_current_span("update_user_profile") as update_span:
+                    if email:
+                        cursor.execute("UPDATE users SET email=%s WHERE id=%s",(email, current_user_id))
+                    if password:
+                        hashed_password = generate_password_hash(password)
+                        cursor.execute("UPDATE users SET password=%s WHERE id=%s",(hashed_password, current_user_id))
+            
+                    connection.commit()
+                    logging.info("Profile updated successfully", extra={"user_id": current_user_id})
+                    update_span.set_attribute("profile.updated", True)
+                    return jsonify({"message": "Profile updated successfully"}), 200
+
+        except Exception as e:
+            logging.error(f"Profile update error", extra={"user_id": current_user_id, "error": str(e)})
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", str(e))
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            return jsonify({"error": f"Profile update error: {str(e)}"}), 500
+        finally:
+            connection.close()
+
+@app.route("/users/<int:user_id>", methods=["GET"])
+@token_required
+def get_user_by_id(current_user_id, user_id):
+    with tracer.start_as_current_span("get_user_by_id") as span:
+        span.set_attribute("http.method", "GET")
+        span.set_attribute("http.route", "/users/<id>")
+    
+        if current_user_id != user_id:
+            logging.warning("Unauthorized access attempt to user data", extra={"requested_user_id": user_id, "current_user_id": current_user_id})
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", "Unauthorized access")
+            return jsonify({"error": "Unauthorized access"}), 403 #403 = Forbidden(trying to access resources they do not own)
+
+        connection = get_db_connection()
+        if not connection:
+            logging.error("Database connection error during user retrieval by ID")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message","Database connection error")
+            span.set_status(Status(StatusCode.ERROR, "Database connection error"))
+            return jsonify({"error": "Database connection error"}), 503 #503 = Service Unavailable(database down or unreachable)
+    
+        try:
+            with connection.cursor() as cursor:
+                with tracer.start_as_current_span("query_user_by_id") as query_profile_id_span:
+                    cursor.execute("SELECT id, email FROM users WHERE id=%s",(user_id,))
+                    user = cursor.fetchone()
+                    query_profile_id_span.set_attribute("user.found", user is not None)
+                
+            if not user:
+                logging.warning("User retrieval by ID failed - user not found", extra={"requested_user_id": user_id, "current_user_id": current_user_id})
+                span.set_attribute("error", True)
+                span.set_attribute("error.message", "user not found")
+                return jsonify({"error": "User not found"}), 404 #404 = Not Found(user does not exist)
+        
+            logging.info("User retrieved by ID successfully", extra={"requested_user_id": user_id, "current_user_id": current_user_id})
+            return jsonify({
+                "user_id": user['id'],
+                "email": user['email']
+            })
+
+        except Exception as e:
+            logging.error(f"User retrieval by ID error", extra={"requested_user_id": user_id, "current_user_id": current_user_id, "error": str(e)})
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", str(e))
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            return jsonify({"error": f"User retrieval error:{str(e)}"}), 500
+        finally:
+            connection.close()
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    with tracer.start_as_current_span("logout_user") as span:
+        span.set_attribute("http.method", "POST")
+        span.set_attribute("http.route", "/logout")
+        #Getting authorization header
+        auth_header = request.headers.get('Authorization')
+    
+        #validating toke presence
+        if not auth_header:
+            logging.warning("Logout attempt without authorization header")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", "missing authorization header")
+            return jsonify({"error": "Authorization header is missing"}), 401 #401 = Unauthorized
+
+        if not auth_header.startswith("Bearer "):
+            logging.warning("Logout attempt with invalid authorization format")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", "invalid authorization format")
+            return jsonify({"error": "Bearer token required"}), 401 #401 = Unauthorized
+    
+        #Extracting token
+        token = auth_header.split(" ")[1]
+
+        try:
+        #Decoding token to get expiration time
+            decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        
+            user_id = decoded_token.get("user_id")
+            email = decoded_token.get("email")
+            exp = decoded_token.get("exp")
+
+            token_blacklist.add(token)
+
+            if exp:
+                blacklist_expiry[token] = exp 
+
+            logging.info("User logged out successfully", extra={"user_id": user_id, 
+                                                                "email": email
+                                                                })
+            return jsonify({"message": "Logout successful",
+                            "user_id": user_id,
+                            "timestamp": datetime.datetime.utcnow().isoformat()
+                            }), 200
+        except jwt.ExpiredSignatureError:
+            logging.warning("Logout attempt with expired token")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", "logout attempt with expired token")
+            return jsonify({"error": "Token has already expired"}), 401 #401 = Unauthorized
+        except jwt.InvalidTokenError:
+            logging.warning("Logout attempt with invalid token")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", "logout attempt with invalid token")
+            return jsonify({"error": "Invalid token"}), 401 #401 = Unauthorized
+
+
+#Health check endpoint
+@app.route("/health", methods=["GET"])
+def health_check():
+    with tracer.start_as_current_span("health_check") as span:
+        span.set_attribute("http.method", "GET")
+        span.set_attribute("http.route", "/health")
+
+        try:
+            connection = get_db_connection()
+            healthy = connection is not None
+            if connection:
+                connection.close()
+            span.set_attribute("healthy", healthy)
+            return jsonify({"status": "healthy" if healthy else "unhealthy"})
+        except:
+            span.set_attribute("healthy", False)
+            span.set_attribute("error", True)
+            span.set_status(Status(StatusCode.ERROR, "Health check failed"))
+            return jsonify({"status": "unhealthy"}), 503
+
+@app.route("/health/detailed",methods=["GET"])
+def health_detailed():
+    with tracer.start_as_current_span("detailed_health_check") as span:
+        checks = {
+            "database_connection": False,
+            "database_query":False,
+            "service_responsive":True
+        }
+
+        try:
+            connection = get_db_connection()
+            if connection:
+                checks["database_connection"] = True
+                span.set_attribute("database.connected", True)
+                
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    cursor.fetchone()
+                    checks["database_query"] = True
+                    span.set_attribute("database.query", True)
+                connection.close()
+        
+        except Exception as e:
+            logging.error(f"Health check error: {str(e)}")
+            span.set_attribute("error", True)
+            span.set_attribute("error.message", str(e))
+            span.set_status(Status(StatusCode.ERROR, f"Health check detailed failed: {str(e)}"))
+
+        all_healthy = all(checks.values())
+        status = "healthy" if all_healthy else "unhealthy"
+        span.set_attribute("health.status", status)
+
+        logging.info(f"Health check executed - Status: {status}", extra={"checks": checks})
+
+        return jsonify({"status": status,
+                        "service": "user-service", 
+                        "timestamp": datetime.datetime.utcnow().isoformat(),
+                        "checks": checks
+                            
+                        }), 200 if all_healthy else 503
+
+@app.route("/metrics",methods=["GET"])
+def metrics():
+        return jsonify({
+            "service": "user-service",
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "active_endpoints": ["/register", "/login", "/profile", "/users/<id>", "/health", "/metrics"]
+        })
+
+
+def verify_db_setup():
+    with tracer.start_as_current_span("verify_db_setup") as span:
+        max_retries = 15
+        retry_delay = 5  #seconds
+        span.set_attribute("db_setup.max_retries", max_retries)
+
+        for attempt in range(1,max_retries):
+            with tracer.start_as_current_span(f"db_setup_attempt_{attempt}") as attempt_span:
+                attempt_span.set_attribute("attempt.number", attempt)
+                connection = None
+
+                try: #Verify basic connectivity
+                    connection = get_db_connection()
+                    if not connection:
+                        print(f"Database connection returned none, attempt: {attempt}")
+                        attempt_span.set_attribute("db.connection_error", True)
+                        attempt_span.set_status(Status(StatusCode.ERROR, "Database connection returned None"))
+                        raise Exception("Connection returned None")
+            
+                    with connection.cursor() as cursor:
+                        cursor.execute("SELECT 1")
+                        result = cursor.fetchone()
+                        if not result:
+                            raise Exception("Simple query SELECT 1 failed")
+                    
+                    print(f"Database connection established on attempt: {attempt}")
+                    attempt_span.set_attribute("db.connected", True)
+                    
+                    with tracer.start_as_current_span("verify_users_table_existence") as table_span:
+                        try: #Verify if 'users' table exists
+                            with connection.cursor() as cursor:
+                                cursor.execute("""
+                                    SELECT COUNT(*) as table_exists
+                                    FROM information_schema.tables
+                                    WHERE table_schema = DATABASE()
+                                    AND table_name = 'users'
+                                """)
+                                result = cursor.fetchone()
+                                exists = result['table_exists'] > 0
+                                table_span.set_attribute("db.table_results", exists)
+
+                                if exists:
+                                    cursor.execute("SELECT COUNT(*) AS count FROM  users")
+                                    user_result = cursor.fetchone()
+                                    user_count = user_result['count']
+                                    table_span.set_attribute("db.users_count", user_count)
+                                    print(f"table 'users' exists with {user_count} records")
+                                else:
+                                    print("table 'users' still not exists")
+                        
+                        except Exception as e:
+                            table_span.set_attribute("error", True)
+                            table_span.set_status(Status(StatusCode.ERROR, f"Table verification failed: {str(e)}"))
+                            print(f"Table verification failed: {e}")
+
+                    span.set_attribute("db_setup.table_verification", True)
+                    span.set_attribute("db_setup.attempts", attempt)
+                    return True
+            
+                except Exception as e:
+                    attempt_span.set_attribute("error", True)
+                    attempt_span.set_status(Status(StatusCode.ERROR, str(e)))
+                    print(f"Attempt {attempt} failed: {e}")
+                    
+                    if attempt < max_retries:
+                        time.sleep(retry_delay)
+                    else:
+                        span.set_attribute("db_setup.max_retries_reached", True)
+                        span.set_status(Status(StatusCode.ERROR, "Max retries reached"))
+                        return False
+
+                finally:
+                    if connection:
+                        try:
+                            connection.close()
+                        except Exception as close_err:
+                            print(f"Failed to close connection: {close_err}")
+    return False
+
+if __name__ == "__main__":
+    port = get_port()
+    debug_mode = get_debug_mode()
+    environment = os.environ.get('FLASK_ENV','development')
+
+    print("=" * 50)
+    print(f"Starting User Service - Environment: {environment}")
+    print(f"Port: {port}")
+    print(f"Debug mode: {debug_mode}")
+    print("=" * 50)
+    
+    print("Available endpoints:")
+    print("  POST /register     - Register new user")
+    print("  POST /login        - Login user") 
+    print("  GET  /profile      - Get user profile (JWT required)")
+    print("  PUT  /profile      - Update profile (JWT required)")
+    print("  GET  /health       - Health check")
+    print("  GET  /health/detailed - Detailed health check")
+    print("  GET  /metrics      - Service metrics")
+    print("=" * 50)
+
+    if verify_db_setup():
+        app.run(host="0.0.0.0",port=port,debug=debug_mode)
+    else:
+        print("Failed to start User Service due to database setup issues.")

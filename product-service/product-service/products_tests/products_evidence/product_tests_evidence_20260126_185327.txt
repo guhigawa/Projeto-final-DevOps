@@ -1,0 +1,19 @@
+================================================================================
+TESTS EVIDENCE - PRODUCT SERVICE
+================================================================================
+Date and Time: 2026-01-26 18:53:27
+Projeto:WebApp Final Project - Product service
+test suite: Integration Tests for Product Service
+================================================================================
+
+[2026-01-26 18:53:28] - Registration and login of test user for product test - PASS
+Details: Email:product_test1769453607@example.com, User test ID:111
+response:{
+  "email": "product_test1769453607@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMTEsImVtYWlsIjoicHJvZHVjdF90ZXN0MTc2OTQ1MzYwN0BleGFtcGxlLmNvbSIsImV4cCI6MTc2OTQ1NzIwOH0.CrVbez22pb48MhXHEJZina9ikOiR9h26f6vPPQ02rOo",
+  "user_id": 111,
+  "headers": {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMTEsImVtYWlsIjoicHJvZHVjdF90ZXN0MTc2OTQ1MzYwN0BleGFtcGxlLmNvbSIsImV4cCI6MTc2OTQ1NzIwOH0.CrVbez22pb48MhXHEJZina9ikOiR9h26f6vPPQ02rOo"
+  }
+}
+----------------------------------------
