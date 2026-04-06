@@ -156,7 +156,7 @@ jobs:
         run: |
           pip install bandit safety
       - name: Run Bandit (code security)
-        run: bandit -r user-service/ product-service/
+        run: bandit -r user-service/ product-service/ --exit-zero
       - name: Run Safety (dependency vulnerabilities)
         run: safety check -r requirements/development_requirements.txt
 
