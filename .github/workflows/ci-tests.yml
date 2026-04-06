@@ -417,7 +417,7 @@ jobs:
   
   deploy-production:
     runs-on: self-hosted
-    needs: [dev-buildimages,staging-deploy]
+    needs: [dev-build-images,staging-deploy]
     if:  success() && github.ref == 'refs/heads/main'
     environment:
       name: production
