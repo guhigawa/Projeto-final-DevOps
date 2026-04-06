@@ -10,7 +10,7 @@ echo "Applying Kubernetes manifests"
 
 microk8s kubectl apply -f k8s/00-namespace-production.yml
 microk8s kubectl apply -f k8s/01-config-maps-production.yml
-microk8s kubectl apply -f k8s/02-secrets-producao.yml
+microk8s kubectl apply -f k8s/02-secrets.template.yml
 
 # Databases - user
 echo "Deploying user database..."
