@@ -1,4 +1,5 @@
 import jwt,datetime,os,pymysql,logging, time;
+from datetime import datetime, timezone
 from functools import wraps
 from flask import Flask, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -491,7 +492,7 @@ def health_detailed():
 
         return jsonify({"status": status,
                         "service": "product-service", 
-                        "timestamp": datetime.datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                         "checks": checks
                             
                         }), 200 if all_healthy else 503
@@ -501,7 +502,7 @@ def health_detailed():
 def metrics():
         return jsonify({
             "service": "product-service",
-            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "active_endpoints": ["/product", "/health","health/detailed", "/metrics"]
         })
 

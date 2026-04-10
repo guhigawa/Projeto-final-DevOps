@@ -1,4 +1,4 @@
-import requests, json, time
+import requests, json, time, os
 
 class TestHelpers:
     __test__ = False  # Prevent pytest from collecting this class as a test case
@@ -11,10 +11,13 @@ class TestHelpers:
         timestamp = int(time.time())
         return f"test_{timestamp}@example.com"
     
-    def register_user(self, email=None, password="Test@1234"):
+    def register_user(self, email=None, password=None):
         if email is None:
             email = self.generate_unique_email()
-            
+
+        if password is None:
+            password =  os.environ.get('TEST_DEFAULT_PASSWORD', 'Test@1234')
+
         user_data = {
             "email": email,
             "password": password
@@ -23,7 +26,10 @@ class TestHelpers:
         return response, user_data
     
     
-    def login_user(self, email,password="Test@1234"):
+    def login_user(self, email,password=None):
+        if password is None:
+            password =  os.environ.get('TEST_DEFAULT_PASSWORD', 'Test@1234')
+
         payload = {
             "email": email,
             "password": password
@@ -32,8 +38,9 @@ class TestHelpers:
         return response
     
 
-    def get_user_token(self, email, password="Test@1234"):
-        
+    def get_user_token(self, email, password=None):
+        if password is None:
+            password =  os.environ.get('TEST_DEFAULT_PASSWORD', 'Test@1234')
         register_response, _ = self.register_user(email, password)
         if register_response.status_code != 200:
             return None

@@ -1,0 +1,11 @@
+.git
+.venv
+__pycache__
+*.pyc
+*.log
+.pytest_cache
+.coverage
+htmlcov
+documentation/tests_outputs
+user-service/tests/evidence
+product-service/products_tests/products_evidence

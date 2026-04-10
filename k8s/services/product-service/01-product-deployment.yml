@@ -24,6 +24,7 @@ spec:
         component: backend
         service: product
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: product-service
         image: localhost:32000/product-service:1.0.0
@@ -85,8 +86,8 @@ spec:
         - name: OTEL_TRACES_EXPORTER
           value: "jaeger"
         ports:
-          - containerPort: 5002
-            name: http
+        - containerPort: 5002
+          name: http
         livenessProbe:
           httpGet:
             path: /health
@@ -116,4 +117,10 @@ spec:
           runAsUser: 1000
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
-        
+        volumeMounts:
+        - name: tmp-storage
+          mountPath: /tmp
+      volumes:
+      - name: tmp-storage
+        emptyDir:
+          sizeLimit: 1Gi
