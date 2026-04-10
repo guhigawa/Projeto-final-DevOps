@@ -1,0 +1,1039 @@
+SONARQUBE
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ sudo sysctl -w vm.max_map_count=262144
+vm.max_map_count = 262144
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose -f docker-compose.sonarqube.yml up -d
+WARN[0000] /home/ubuntu/Downloads/Projeto_final/docker-compose.sonarqube.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] up 14/14
+ ✔ Image sonarqube:community                 Pulled                                                                                                                                       248.6s
+ ✔ Network projeto_final_default             Created                                                                                                                                      8.7s
+ ✔ Volume projeto_final_sonarqube_extensions Created                                                                                                                                      0.0s
+ ✔ Volume projeto_final_sonarqube_logs       Created                                                                                                                                      0.0s
+ ✔ Volume projeto_final_sonarqube_data       Created                                                                                                                                      0.0s
+ ✔ Container sonarqube                       Started                                                                                                                                      2.6s
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker ps -a
+CONTAINER ID   IMAGE                 COMMAND                  CREATED          STATUS          PORTS                    NAMES
+d2943623e6a6   sonarqube:community   "/opt/sonarqube/dock…"   18 seconds ago   Up 17 seconds   0.0.0.0:9000->9000/tcp   sonarqube
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker ps | grep sonarqube
+d2943623e6a6   sonarqube:community   "/opt/sonarqube/dock…"   29 seconds ago   Up 28 seconds   0.0.0.0:9000->9000/tcp   sonarqube
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:9000
+200
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker logs sonarqube --tail=50
+2026.04.07 17:30:16 INFO  web[][DbMigrations] Executed 9/9 DB migrations: success | time=430ms
+2026.04.07 17:30:16 INFO  web[][o.s.s.p.Platform] Database has been automatically updated
+2026.04.07 17:30:16 INFO  web[][o.s.s.p.w.MasterServletFilter] Initializing servlet filter org.sonar.server.platform.web.WebServiceFilter@143413cd [pattern=UrlPattern{inclusions=[/api/system/migrate_db.*, ...], exclusions=[/api/components/update_key, ...]}]
+2026.04.07 17:30:16 INFO  web[][o.s.s.p.w.MasterServletFilter] Initializing servlet filter org.sonar.server.platform.web.NoCacheFilter@14590fe2 [pattern=UrlPattern{inclusions=[/api/v2/*], exclusions=[]}]
+2026.04.07 17:30:16 INFO  web[][o.s.s.p.DetectPluginChange] Detect plugin changes
+2026.04.07 17:30:16 INFO  web[][o.s.s.s.PropertiesDBCleaner] Clean up properties from db
+2026.04.07 17:30:19 INFO  web[][o.h.v.i.util.Version] HV000001: Hibernate Validator 9.1.0.Final
+2026.04.07 17:30:19 INFO  web[][o.s.s.e.IndexCreator] Create index [metadatas]
+2026.04.07 17:30:19 INFO  es[][o.e.c.m.MetadataCreateIndexService] [metadatas] creating index, cause [api], templates [], shards [1]/[0]
+2026.04.07 17:30:20 INFO  es[][o.e.c.r.a.AllocationService] current.health="GREEN" message="Cluster health status changed from [YELLOW] to [GREEN] (reason: [shards started [[metadatas][0]]])." previous.health="YELLOW" reason="shards started [[metadatas][0]]"
+2026.04.07 17:30:20 INFO  web[][o.s.s.e.IndexCreator] Create mapping metadatas
+2026.04.07 17:30:20 INFO  es[][o.e.c.m.MetadataMappingService] [metadatas/k93zDEb2SD6SsD3aoqLmbw] create_mapping
+2026.04.07 17:30:21 INFO  web[][o.s.s.e.IndexCreator] Create index [components]
+2026.04.07 17:30:21 INFO  es[][o.e.c.m.MetadataCreateIndexService] [components] creating index, cause [api], templates [], shards [5]/[0]
+2026.04.07 17:30:21 INFO  es[][o.e.c.r.a.AllocationService] current.health="GREEN" message="Cluster health status changed from [YELLOW] to [GREEN] (reason: [shards started [[components][4]]])." previous.health="YELLOW" reason="shards started [[components][4]]"
+2026.04.07 17:30:21 INFO  web[][o.s.s.e.IndexCreator] Create mapping components
+2026.04.07 17:30:21 INFO  es[][o.e.c.m.MetadataMappingService] [components/wUpF2NkWQdakzTLQwpIz6g] create_mapping
+2026.04.07 17:30:28 INFO  web[][o.s.s.e.IndexCreator] Create index [projectmeasures]
+2026.04.07 17:30:28 INFO  es[][o.e.c.m.MetadataCreateIndexService] [projectmeasures] creating index, cause [api], templates [], shards [5]/[0]
+2026.04.07 17:30:28 INFO  es[][o.e.c.r.a.AllocationService] current.health="GREEN" message="Cluster health status changed from [YELLOW] to [GREEN] (reason: [shards started [[projectmeasures][4]]])." previous.health="YELLOW" reason="shards started [[projectmeasures][4]]"
+2026.04.07 17:30:28 INFO  web[][o.s.s.e.IndexCreator] Create mapping projectmeasures
+2026.04.07 17:30:28 INFO  es[][o.e.c.m.MetadataMappingService] [projectmeasures/LEDQfgW2Q52bE2_jUEzORw] create_mapping
+2026.04.07 17:30:28 INFO  web[][o.s.s.e.IndexCreator] Create index [rules]
+2026.04.07 17:30:29 INFO  es[][o.e.c.m.MetadataCreateIndexService] [rules] creating index, cause [api], templates [], shards [2]/[0]
+2026.04.07 17:30:29 INFO  es[][o.e.c.r.a.AllocationService] current.health="GREEN" message="Cluster health status changed from [YELLOW] to [GREEN] (reason: [shards started [[rules][1]]])." previous.health="YELLOW" reason="shards started [[rules][1]]"
+2026.04.07 17:30:29 INFO  web[][o.s.s.e.IndexCreator] Create mapping rules
+2026.04.07 17:30:29 INFO  es[][o.e.c.m.MetadataMappingService] [rules/ibTeKPH8Sz-mke4DmfoPsg] create_mapping
+2026.04.07 17:30:29 INFO  web[][o.s.s.e.IndexCreator] Create index [issues]
+2026.04.07 17:30:29 INFO  es[][o.e.c.m.MetadataCreateIndexService] [issues] creating index, cause [api], templates [], shards [5]/[0]
+2026.04.07 17:30:29 INFO  es[][o.e.c.r.a.AllocationService] current.health="GREEN" message="Cluster health status changed from [YELLOW] to [GREEN] (reason: [shards started [[issues][4]]])." previous.health="YELLOW" reason="shards started [[issues][4]]"
+2026.04.07 17:30:29 INFO  web[][o.s.s.e.IndexCreator] Create mapping issues
+2026.04.07 17:30:29 INFO  es[][o.e.c.m.MetadataMappingService] [issues/42PPRBbXTleFIM9KO0U0-Q] create_mapping
+2026.04.07 17:30:29 INFO  web[][o.s.s.e.IndexCreator] Create index [views]
+2026.04.07 17:30:29 INFO  es[][o.e.c.m.MetadataCreateIndexService] [views] creating index, cause [api], templates [], shards [5]/[0]
+2026.04.07 17:30:29 INFO  es[][o.e.c.r.a.AllocationService] current.health="GREEN" message="Cluster health status changed from [YELLOW] to [GREEN] (reason: [shards started [[views][4]]])." previous.health="YELLOW" reason="shards started [[views][4]]"
+2026.04.07 17:30:29 INFO  web[][o.s.s.e.IndexCreator] Create mapping views
+2026.04.07 17:30:29 INFO  es[][o.e.c.m.MetadataMappingService] [views/N1gTd-LRTYOPKCM-DVMI9g] create_mapping
+2026.04.07 17:30:30 INFO  web[][o.s.s.s.LogServerId] Server ID: 147B411E-AZ1o_rcjgw1EipgizhUN
+2026.04.07 17:30:30 INFO  web[][o.o.c.c.InitializationService] Initializing OpenSAML using the Java Services API
+2026.04.07 17:30:30 INFO  web[][o.o.x.a.AlgorithmRegistry] Algorithm failed runtime support check, will not be usable: http://www.w3.org/2001/04/xmlenc#ripemd160
+2026.04.07 17:30:30 INFO  web[][o.o.x.a.AlgorithmRegistry] Algorithm failed runtime support check, will not be usable: http://www.w3.org/2001/04/xmldsig-more#hmac-ripemd160
+2026.04.07 17:30:30 INFO  web[][o.o.x.a.AlgorithmRegistry] Algorithm failed runtime support check, will not be usable: http://www.w3.org/2001/04/xmldsig-more#rsa-ripemd160
+2026.04.07 17:30:31 WARN  web[][o.s.s.a.LogOAuthWarning] For security reasons, OAuth authentication should use HTTPS. You should set the property 'Administration > Configuration > Server base URL' to an HTTPS URL.
+2026.04.07 17:30:31 INFO  web[][o.s.s.p.UpdateCenterClient] Update center: https://downloads.sonarsource.com/sonarqube/update/update-center.properties
+2026.04.07 17:30:32 INFO  web[][o.s.s.a.p.ExpiredSessionsCleaner] Purge of expired session tokens has removed 0 elements
+2026.04.07 17:30:32 INFO  web[][o.s.s.a.p.ExpiredSessionsCleaner] Purge of expired SAML message ids has removed 0 elements
+2026.04.07 17:30:32 INFO  web[][o.s.s.n.NotificationDaemon] Notification service started (delay 60 sec.)
+2026.04.07 17:30:32 INFO  web[][o.s.t.TelemetryDaemon] Sharing of SonarQube statistics is enabled.
+2026.04.07 17:30:34 INFO  web[][o.s.s.r.r.RulesRegistrant] Register rules
+2026.04.07 17:30:36 INFO  web[][o.r.Reflections] Reflections took 59 ms to scan 1 urls, producing 24 keys and 257 values
+
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ pip install pysonar
+Collecting pysonar
+  Downloading pysonar-1.4.0.4676-py3-none-any.whl (42 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 42.5/42.5 KB 877.3 kB/s eta 0:00:00
+Collecting responses==0.25.8
+  Downloading responses-0.25.8-py3-none-any.whl (34 kB)
+Collecting pyfakefs==5.9.3
+  Downloading pyfakefs-5.9.3-py3-none-any.whl (245 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 245.2/245.2 KB 191.1 kB/s eta 0:00:00
+Requirement already satisfied: requests==2.32.5 in ./.venv/lib/python3.10/site-packages (from pysonar) (2.32.5)
+Collecting jproperties==2.1.2
+  Downloading jproperties-2.1.2-py2.py3-none-any.whl (17 kB)
+Collecting tomli==2.2.1
+  Using cached tomli-2.2.1-py3-none-any.whl (14 kB)
+Collecting six~=1.13
+  Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+Requirement already satisfied: certifi>=2017.4.17 in ./.venv/lib/python3.10/site-packages (from requests==2.32.5->pysonar) (2026.2.25)
+Requirement already satisfied: idna<4,>=2.5 in ./.venv/lib/python3.10/site-packages (from requests==2.32.5->pysonar) (3.11)
+Requirement already satisfied: charset_normalizer<4,>=2 in ./.venv/lib/python3.10/site-packages (from requests==2.32.5->pysonar) (3.4.7)
+Requirement already satisfied: urllib3<3,>=1.21.1 in ./.venv/lib/python3.10/site-packages (from requests==2.32.5->pysonar) (2.6.3)
+Requirement already satisfied: pyyaml in ./.venv/lib/python3.10/site-packages (from responses==0.25.8->pysonar) (6.0.3)
+Installing collected packages: tomli, six, pyfakefs, responses, jproperties, pysonar
+  Attempting uninstall: tomli
+    Found existing installation: tomli 2.4.1
+    Uninstalling tomli-2.4.1:
+      Successfully uninstalled tomli-2.4.1
+Successfully installed jproperties-2.1.2 pyfakefs-5.9.3 pysonar-1.4.0.4676 responses-0.25.8 six-1.17.0 tomli-2.2.1
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ pysonar \
+  --sonar-host-url=http://localhost:9000 \
+  --sonar-token=sqp_db01dd104429ce3af8f402475761afa9304d60f6 \
+  --sonar-project-key=projeto-final-devops
+INFO: Starting the analysis...
+INFO: Starting SonarScanner Engine...
+INFO: Java 21.0.9 Eclipse Adoptium (64-bit)
+INFO: Load global settings
+INFO: Load global settings (done) | time=123ms
+INFO: Server id: 147B411E-AZ1o_rcjgw1EipgizhUN
+INFO: Loading required plugins
+INFO: Load plugins index
+INFO: Load plugins index (done) | time=36ms
+INFO: Load/download plugins
+INFO: Load/download plugins (done) | time=308ms
+INFO: Process project properties
+INFO: Process project properties (done) | time=0ms
+INFO: Project key: projeto-final-devops
+INFO: Base dir: /home/ubuntu/Downloads/Projeto_final
+INFO: Working dir: /home/ubuntu/Downloads/Projeto_final/.sonar
+INFO: Load project settings for component key: 'projeto-final-devops'
+INFO: Load project settings for component key: 'projeto-final-devops' (done) | time=26ms
+INFO: Load quality profiles
+INFO: Load quality profiles (done) | time=264ms
+INFO: Load active rules
+INFO: Load active rules (done) | time=860ms
+INFO: Load analysis cache
+INFO: Load analysis cache (404) | time=19ms
+INFO: Preprocessing files...
+WARNING: File '/home/ubuntu/Downloads/Projeto_final/.venv/bin/python' is ignored. It is a symbolic link targeting a file not located in project basedir.
+INFO: 3 languages detected in 155 preprocessed files (done) | time=1591ms
+INFO: 21166 files ignored because of scm ignore settings
+INFO: Loading plugins for detected languages
+INFO: Load/download plugins
+INFO: Load/download plugins (done) | time=12982ms
+INFO: Load project repositories
+INFO: Load project repositories (done) | time=199ms
+INFO: Indexing files...
+INFO: Project configuration:
+INFO: 155 files indexed (done) | time=81ms
+INFO: Quality profile for docker: Sonar way
+INFO: Quality profile for py: Sonar way
+INFO: Quality profile for yaml: Sonar way
+INFO: ------------- Run sensors on module projeto-final-devops
+INFO: Load metrics repository
+INFO: Load metrics repository (done) | time=67ms
+INFO: Sensor IaC CloudFormation Sensor [iac]
+INFO: There are no files to be analyzed for the CloudFormation language
+INFO: Sensor IaC CloudFormation Sensor [iac] (done) | time=46ms
+INFO: Sensor IaC cfn-lint report Sensor [iac]
+INFO: Sensor IaC cfn-lint report Sensor [iac] (done) | time=1ms
+INFO: Sensor IaC Kustomization Sensor [iac]
+INFO: Sensor IaC Kustomization Sensor [iac] (done) | time=2ms
+INFO: Sensor IaC hadolint report Sensor [iac]
+INFO: Sensor IaC hadolint report Sensor [iac] (done) | time=0ms
+INFO: Sensor Java Config Sensor [iac]
+INFO: There are no files to be analyzed for the Java language
+INFO: Sensor Java Config Sensor [iac] (done) | time=4ms
+INFO: Sensor IaC Docker Sensor [iac]
+INFO: 2 source files to be analyzed
+INFO: 2/2 source files have been analyzed
+INFO: Sensor IaC Docker Sensor [iac] (done) | time=312ms
+INFO: Sensor Python Sensor [python]
+WARNING: Your code is analyzed as compatible with all Python 3 versions by default. You can get a more precise analysis by setting the exact Python version in your configuration via the parameter "sonar.python.version"
+INFO: Starting global symbols computation
+INFO: 21 source files to be analyzed
+INFO: 21/21 source files have been analyzed
+INFO: Finished step global symbols computation in 1103ms
+INFO: Starting rules execution
+INFO: 21 source files to be analyzed
+INFO: 21/21 source files have been analyzed
+INFO: Finished step rules execution in 2174ms
+INFO: The Python analyzer was able to leverage cached data from previous analyses for 0 out of 21 files. These files were not parsed.
+INFO: Sensor Python Sensor [python] (done) | time=4411ms
+INFO: Sensor Cobertura Sensor for Python coverage [python]
+INFO: Sensor Cobertura Sensor for Python coverage [python] (done) | time=245ms
+INFO: Sensor PythonXUnitSensor [python]
+INFO: Sensor PythonXUnitSensor [python] (done) | time=202ms
+INFO: Sensor Python Dependency Sensor [python]
+INFO: Sensor Python Dependency Sensor [python] (done) | time=8ms
+INFO: Sensor JavaScript inside YAML analysis [javascript]
+INFO: No input files found for analysis
+INFO: Hit the cache for 0 out of 0
+INFO: Miss the cache for 0 out of 0
+INFO: Sensor JavaScript inside YAML analysis [javascript] (done) | time=25ms
+INFO: Sensor CSS Rules [javascript]
+INFO: No CSS, PHP, HTML or VueJS files are found in the project. CSS analysis is skipped.
+INFO: Sensor CSS Rules [javascript] (done) | time=1ms
+INFO: Sensor IaC Kubernetes Sensor [iac]
+INFO: 21 source files to be parsed
+INFO: 21/21 source files have been parsed
+INFO: 21 source files to be analyzed
+INFO: 21/21 source files have been analyzed
+INFO: 21 source files to be checked
+INFO: 21/21 source files have been checked
+INFO: Sensor IaC Kubernetes Sensor [iac] (done) | time=303ms
+INFO: Sensor TextAndSecretsSensor [text]
+INFO: Available processors: 6
+INFO: Using 6 threads for analysis.
+INFO: The property "sonar.tests" is not set. To improve the analysis accuracy, we categorize a file as a test file if any of the following is true:
+  * The filename starts with "test"
+  * The filename contains "test." or "tests."
+  * Any directory in the file path is named: "doc", "docs", "test", "tests", "mock" or "mocks"
+  * Any directory in the file path has a name ending in "test" or "tests"
+
+INFO: Start fetching files for the text and secrets analysis
+INFO: Using Git CLI to retrieve dirty files
+INFO: Retrieving language associated files and files included via "sonar.text.inclusions" that are tracked by git
+INFO: Starting the text and secrets analysis
+INFO: 56 source files to be analyzed for the text and secrets analysis
+INFO: 56/56 source files have been analyzed for the text and secrets analysis
+INFO: 3 files are ignored because they are untracked by git or has been modified
+INFO: Sensor TextAndSecretsSensor [text] (done) | time=489ms
+INFO: ------------- Run sensors on project
+INFO: Sensor Zero Coverage Sensor
+INFO: Sensor Zero Coverage Sensor (done) | time=23ms
+INFO: ------------- Gather SCA dependencies on project
+INFO: Dependency analysis skipped
+INFO: SCM Publisher SCM provider for this project is: git
+INFO: SCM Publisher 44 source files to be analyzed
+INFO: SCM Publisher 35/44 source files have been analyzed (done) | time=648ms
+WARNING: Missing blame information for the following files:
+WARNING:   * user-service/tests/test_integration.py
+WARNING:   * product-service/Dockerfile
+WARNING:   * product-service/products_tests/conftest.py
+WARNING:   * user-service/Dockerfile
+WARNING:   * user-service/tests/conftest.py
+WARNING:   * user-service/tests/test_functional.py
+WARNING:   * product-service/products_tests/test_product_functional.py
+WARNING:   * user-service/tests/helpers/test_helpers.py
+WARNING:   * product-service/products_tests/product_test_helpers/auth_helpers.py
+WARNING: This may lead to missing/broken features in SonarQube
+INFO: CPD Executor 2 files had no CPD blocks
+INFO: CPD Executor Calculating CPD for 19 files
+INFO: CPD Executor CPD calculation finished (done) | time=61ms
+INFO: SCM revision ID '96ce8889576c342b9a7270e95c813a4e218e9381'
+INFO: Analysis report generated in 189ms, dir size=939.6 kB
+INFO: Analysis report compressed in 181ms, zip size=403.2 kB
+INFO: Analysis report uploaded in 98ms
+INFO: ANALYSIS SUCCESSFUL, you can find the results at: http://localhost:9000/dashboard?id=projeto-final-devops
+INFO: Note that you will be able to access the updated dashboard once the server has processed the submitted analysis report
+INFO: More about the report processing at http://localhost:9000/api/ce/task?id=42ceb14b-9390-4f64-8325-5d6c0e1b6a68
+INFO: Analysis total time: 26.092 s
+INFO: SonarScanner Engine completed successfully
+
+DOCKERHUB 
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker login -u guhigawa
+
+i Info → A Personal Access Token (PAT) can be used instead.
+         To create a PAT, visit https://app.docker.com/settings
+         
+         
+Password: 
+
+WARNING! Your credentials are stored unencrypted in '/home/ubuntu/snap/docker/3505/.docker/config.json'.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/go/credential-store/
+
+Login Succeeded
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker build -t guhigawa/user-service:test -f user-service/Dockerfile ./user-service
+[+] Building 103.3s (12/12) FINISHED                                                                                                                        docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                  0.1s
+ => => transferring dockerfile: 804B                                                                                                                                  0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                   2.0s
+ => [auth] library/python:pull token for registry-1.docker.io                                                                                                         0.0s
+ => [internal] load .dockerignore                                                                                                                                     0.0s
+ => => transferring context: 2B                                                                                                                                       0.0s
+ => [1/6] FROM docker.io/library/python:3.11-slim@sha256:b1b81d67b8df73bf6067191790c233ef9e598b863fc1ccf447956138ca466d99                                            10.9s
+ => => resolve docker.io/library/python:3.11-slim@sha256:b1b81d67b8df73bf6067191790c233ef9e598b863fc1ccf447956138ca466d99                                             0.0s
+ => => sha256:37ffa6577b04e98598e2c10432eb8c66cfc1af6c7698b21c6163f8334606aa14 1.29MB / 1.29MB                                                                        2.1s
+ => => sha256:d98f36ba21593a4014243f41ec9c5370abd34f4f65a5d074e41bce23f5f6a165 14.37MB / 14.37MB                                                                      8.3s
+ => => sha256:b1b81d67b8df73bf6067191790c233ef9e598b863fc1ccf447956138ca466d99 10.37kB / 10.37kB                                                                      0.0s
+ => => sha256:ad65166ad2583036804a3f772ec8f1cad733cf77d631c6840ab1ea9231b6b350 1.75kB / 1.75kB                                                                        0.0s
+ => => sha256:d1a45c0fb43d72e0c013ee97d460aa8f49f2c1bbd588b17a558cc6f7078b4276 5.48kB / 5.48kB                                                                        0.0s
+ => => sha256:5435b2dcdf5cb7faa0d5b1d4d54be2c72a776fab9a605336f5067d6e9ecb5976 29.78MB / 29.78MB                                                                      7.6s
+ => => sha256:0816ee351b60c03c7a77a3f50c717891eedd927f4e6a1d59f6cce05268065606 251B / 251B                                                                            2.6s
+ => => extracting sha256:5435b2dcdf5cb7faa0d5b1d4d54be2c72a776fab9a605336f5067d6e9ecb5976                                                                             1.7s
+ => => extracting sha256:37ffa6577b04e98598e2c10432eb8c66cfc1af6c7698b21c6163f8334606aa14                                                                             0.1s
+ => => extracting sha256:d98f36ba21593a4014243f41ec9c5370abd34f4f65a5d074e41bce23f5f6a165                                                                             1.2s
+ => => extracting sha256:0816ee351b60c03c7a77a3f50c717891eedd927f4e6a1d59f6cce05268065606                                                                             0.0s
+ => [internal] load build context                                                                                                                                     0.1s
+ => => transferring context: 160.36kB                                                                                                                                 0.0s
+ => [2/6] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*     59.6s
+ => [3/6] WORKDIR /user-service                                                                                                                                       0.1s 
+ => [4/6] COPY requirements.txt ./requirements.txt                                                                                                                    0.0s 
+ => [5/6] RUN pip install --no-cache-dir -r requirements.txt                                                                                                         22.5s 
+ => [6/6] COPY . .                                                                                                                                                    0.1s 
+ => exporting to image                                                                                                                                                7.5s
+ => => exporting layers                                                                                                                                               7.4s
+ => => writing image sha256:810bba047c39a0470ebecdeeb650c4797cf9beb7bf181857e4c89758fa03fbb9                                                                          0.0s
+ => => naming to docker.io/guhigawa/user-service:test                                                                                                                 0.0s
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker push guhigawa/user-service:test
+The push refers to repository [docker.io/guhigawa/user-service]
+95b8c28270e6: Pushed 
+d51d92a4c85d: Pushed 
+e4b66f484995: Pushed 
+9e1ab451874e: Pushed 
+edeccaa8598c: Pushed 
+b9d46130ce8b: Mounted from library/python 
+6c445a4198d4: Mounted from library/python 
+8076efe3d64e: Mounted from library/python 
+60e70dddd9ea: Mounted from library/python 
+test: digest: sha256:5cfd174e2d3960c88f4c3cb0c59b8e02f92166a721889ca85ff36f6b4d5aaded size: 2207
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -s "https://hub.docker.com/v2/repositories/guhigawa/user-service/tags/" | jq .
+{
+  "count": 1,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "creator": 40979827,
+      "id": 1123722884,
+      "images": [
+        {
+          "architecture": "amd64",
+          "features": "",
+          "variant": null,
+          "digest": "sha256:5cfd174e2d3960c88f4c3cb0c59b8e02f92166a721889ca85ff36f6b4d5aaded",
+          "os": "linux",
+          "os_features": "",
+          "os_version": null,
+          "size": 193156732,
+          "status": "active",
+          "last_pulled": "2026-04-07T17:37:32.591874275Z",
+          "last_pushed": "2026-04-07T17:37:30.943719426Z"
+        }
+      ],
+      "last_updated": "2026-04-07T17:37:31.386668Z",
+      "last_updater": 40979827,
+      "last_updater_username": "guhigawa",
+      "name": "test",
+      "repository": 30698543,
+      "full_size": 193156732,
+      "v2": true,
+      "tag_status": "active",
+      "tag_last_pulled": "2026-04-07T17:37:32.591874275Z",
+      "tag_last_pushed": "2026-04-07T17:37:31.386668Z",
+      "media_type": "application/vnd.docker.container.image.v1+json",
+      "content_type": "image",
+      "digest": "sha256:5cfd174e2d3960c88f4c3cb0c59b8e02f92166a721889ca85ff36f6b4d5aaded"
+    }
+  ]
+}
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker rmi guhigawa/user-service:test
+Untagged: guhigawa/user-service:test
+Untagged: guhigawa/user-service@sha256:5cfd174e2d3960c88f4c3cb0c59b8e02f92166a721889ca85ff36f6b4d5aaded
+Deleted: sha256:810bba047c39a0470ebecdeeb650c4797cf9beb7bf181857e4c89758fa03fbb9
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 
+
+BANDIT SAFETY PIP-AUDIT
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ pip install bandit safety pip-audit
+Defaulting to user installation because normal site-packages is not writeable
+Collecting bandit
+  Downloading bandit-1.9.4-py3-none-any.whl (134 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.7/134.7 KB 1.7 MB/s eta 0:00:00
+Collecting safety
+  Downloading safety-3.7.0-py3-none-any.whl (312 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 312.4/312.4 KB 4.4 MB/s eta 0:00:00
+Collecting pip-audit
+  Downloading pip_audit-2.10.0-py3-none-any.whl (61 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 61.5/61.5 KB 11.1 MB/s eta 0:00:00
+Collecting stevedore>=1.20.0
+  Using cached stevedore-5.7.0-py3-none-any.whl (54 kB)
+Requirement already satisfied: PyYAML>=5.3.1 in /usr/lib/python3/dist-packages (from bandit) (5.4.1)
+Collecting rich
+  Using cached rich-14.3.3-py3-none-any.whl (310 kB)
+Requirement already satisfied: click>=8.0.2 in /usr/lib/python3/dist-packages (from safety) (8.0.3)
+Collecting pydantic>=2.6.0
+  Downloading pydantic-2.12.5-py3-none-any.whl (463 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 463.6/463.6 KB 5.1 MB/s eta 0:00:00
+Collecting safety-schemas==0.0.16
+  Downloading safety_schemas-0.0.16-py3-none-any.whl (39 kB)
+Collecting authlib>=1.2.0
+  Downloading authlib-1.6.9-py2.py3-none-any.whl (244 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 244.2/244.2 KB 4.9 MB/s eta 0:00:00
+Collecting filelock<4.0,>=3.16.1
+  Downloading filelock-3.25.2-py3-none-any.whl (26 kB)
+Collecting jinja2>=3.1.0
+  Using cached jinja2-3.1.6-py3-none-any.whl (134 kB)
+Collecting ruamel-yaml>=0.17.21
+  Using cached ruamel_yaml-0.19.1-py3-none-any.whl (118 kB)
+Collecting typer>=0.16.0
+  Downloading typer-0.24.1-py3-none-any.whl (56 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 56.1/56.1 KB 9.0 MB/s eta 0:00:00
+Requirement already satisfied: packaging>=21.0 in /usr/lib/python3/dist-packages (from safety) (21.3)
+Collecting httpx
+  Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 73.5/73.5 KB 8.5 MB/s eta 0:00:00
+Collecting tenacity>=8.1.0
+  Downloading tenacity-9.1.4-py3-none-any.whl (28 kB)
+Requirement already satisfied: tomli in /home/ubuntu/.local/lib/python3.10/site-packages (from safety) (2.2.1)
+Collecting tomlkit
+  Downloading tomlkit-0.14.0-py3-none-any.whl (39 kB)
+Collecting marshmallow>=3.15.0
+  Downloading marshmallow-4.3.0-py3-none-any.whl (49 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 49.1/49.1 KB 5.3 MB/s eta 0:00:00
+Requirement already satisfied: typing-extensions>=4.7.1 in /home/ubuntu/.local/lib/python3.10/site-packages (from safety) (4.14.1)
+Collecting dparse>=0.6.4
+  Using cached dparse-0.6.4-py3-none-any.whl (11 kB)
+Requirement already satisfied: requests in /usr/lib/python3/dist-packages (from safety) (2.25.1)
+Collecting nltk>=3.9
+  Downloading nltk-3.9.4-py3-none-any.whl (1.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 7.3 MB/s eta 0:00:00
+Collecting packaging>=21.0
+  Using cached packaging-26.0-py3-none-any.whl (74 kB)
+Collecting requests
+  Downloading requests-2.33.1-py3-none-any.whl (64 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 64.9/64.9 KB 2.8 MB/s eta 0:00:00
+Collecting pip-api>=0.0.28
+  Downloading pip_api-0.0.34-py3-none-any.whl (120 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 120.4/120.4 KB 13.6 MB/s eta 0:00:00
+Collecting platformdirs>=4.2.0
+  Downloading platformdirs-4.9.4-py3-none-any.whl (21 kB)
+Collecting cyclonedx-python-lib<12,>=5
+  Downloading cyclonedx_python_lib-11.7.0-py3-none-any.whl (513 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 513.0/513.0 KB 5.7 MB/s eta 0:00:00
+Collecting tomli-w>=1.2.0
+  Downloading tomli_w-1.2.0-py3-none-any.whl (6.7 kB)
+Collecting CacheControl[filecache]>=0.13.0
+  Downloading cachecontrol-0.14.4-py3-none-any.whl (22 kB)
+Collecting pip-requirements-parser>=32.0.0
+  Downloading pip_requirements_parser-32.0.1-py3-none-any.whl (35 kB)
+Requirement already satisfied: cryptography in /usr/lib/python3/dist-packages (from authlib>=1.2.0->safety) (3.4.8)
+Collecting msgpack<2.0.0,>=0.5.2
+  Downloading msgpack-1.1.2-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (406 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 406.1/406.1 KB 7.9 MB/s eta 0:00:00
+Collecting py-serializable<3.0.0,>=2.1.0
+  Downloading py_serializable-2.1.0-py3-none-any.whl (23 kB)
+Collecting packageurl-python<2,>=0.11
+  Downloading packageurl_python-0.17.6-py3-none-any.whl (36 kB)
+Collecting sortedcontainers<3.0.0,>=2.4.0
+  Downloading sortedcontainers-2.4.0-py2.py3-none-any.whl (29 kB)
+Collecting license-expression<31,>=30
+  Downloading license_expression-30.4.4-py3-none-any.whl (120 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 120.6/120.6 KB 11.4 MB/s eta 0:00:00
+Requirement already satisfied: MarkupSafe>=2.0 in /usr/lib/python3/dist-packages (from jinja2>=3.1.0->safety) (2.0.1)
+Collecting backports-datetime-fromisoformat
+  Downloading backports_datetime_fromisoformat-2.0.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (52 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 52.8/52.8 KB 4.2 MB/s eta 0:00:00
+Collecting joblib
+  Downloading joblib-1.5.3-py3-none-any.whl (309 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 309.1/309.1 KB 10.2 MB/s eta 0:00:00
+Collecting regex>=2021.8.3
+  Downloading regex-2026.4.4-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (793 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 793.6/793.6 KB 6.9 MB/s eta 0:00:00
+Collecting tqdm
+  Downloading tqdm-4.67.3-py3-none-any.whl (78 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 78.4/78.4 KB 2.3 MB/s eta 0:00:00
+Requirement already satisfied: pip in /usr/lib/python3/dist-packages (from pip-api>=0.0.28->pip-audit) (22.0.2)
+Requirement already satisfied: pyparsing in /usr/lib/python3/dist-packages (from pip-requirements-parser>=32.0.0->pip-audit) (2.4.7)
+Collecting annotated-types>=0.6.0
+  Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+Collecting typing-inspection>=0.4.2
+  Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+Collecting pydantic-core==2.41.5
+  Downloading pydantic_core-2.41.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 2.7 MB/s eta 0:00:00
+Requirement already satisfied: idna<4,>=2.5 in /usr/lib/python3/dist-packages (from requests->safety) (3.3)
+Requirement already satisfied: urllib3<3,>=1.26 in /usr/lib/python3/dist-packages (from requests->safety) (1.26.5)
+Collecting charset_normalizer<4,>=2
+  Downloading charset_normalizer-3.4.7-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (216 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 216.9/216.9 KB 6.5 MB/s eta 0:00:00
+Collecting certifi>=2023.5.7
+  Using cached certifi-2026.2.25-py3-none-any.whl (153 kB)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /home/ubuntu/.local/lib/python3.10/site-packages (from rich->bandit) (2.19.2)
+Collecting markdown-it-py>=2.2.0
+  Using cached markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+Collecting click>=8.0.2
+  Downloading click-8.3.2-py3-none-any.whl (108 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 108.4/108.4 KB 14.1 MB/s eta 0:00:00
+Collecting shellingham>=1.3.0
+  Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+Collecting annotated-doc>=0.0.2
+  Downloading annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
+Collecting httpcore==1.*
+  Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 78.8/78.8 KB 4.2 MB/s eta 0:00:00
+Collecting anyio
+  Downloading anyio-4.13.0-py3-none-any.whl (114 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 114.4/114.4 KB 3.4 MB/s eta 0:00:00
+Collecting h11>=0.16
+  Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+Collecting boolean.py>=4.0
+  Downloading boolean_py-5.0-py3-none-any.whl (26 kB)
+Collecting mdurl~=0.1
+  Using cached mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Collecting defusedxml<0.8.0,>=0.7.1
+  Downloading defusedxml-0.7.1-py2.py3-none-any.whl (25 kB)
+Requirement already satisfied: exceptiongroup>=1.0.2 in /home/ubuntu/.local/lib/python3.10/site-packages (from anyio->httpx->safety) (1.3.0)
+Installing collected packages: sortedcontainers, boolean.py, typing-inspection, tqdm, tomlkit, tomli-w, tenacity, stevedore, shellingham, ruamel-yaml, regex, pydantic-core, platformdirs, pip-api, packaging, packageurl-python, msgpack, mdurl, license-expression, joblib, jinja2, h11, filelock, defusedxml, click, charset_normalizer, certifi, backports-datetime-fromisoformat, authlib, annotated-types, annotated-doc, requests, pydantic, py-serializable, pip-requirements-parser, nltk, marshmallow, markdown-it-py, httpcore, dparse, anyio, safety-schemas, rich, httpx, cyclonedx-python-lib, CacheControl, typer, bandit, safety, pip-audit
+Successfully installed CacheControl-0.14.4 annotated-doc-0.0.4 annotated-types-0.7.0 anyio-4.13.0 authlib-1.6.9 backports-datetime-fromisoformat-2.0.3 bandit-1.9.4 boolean.py-5.0 certifi-2026.2.25 charset_normalizer-3.4.7 click-8.3.2 cyclonedx-python-lib-11.7.0 defusedxml-0.7.1 dparse-0.6.4 filelock-3.25.2 h11-0.16.0 httpcore-1.0.9 httpx-0.28.1 jinja2-3.1.6 joblib-1.5.3 license-expression-30.4.4 markdown-it-py-4.0.0 marshmallow-4.3.0 mdurl-0.1.2 msgpack-1.1.2 nltk-3.9.4 packageurl-python-0.17.6 packaging-26.0 pip-api-0.0.34 pip-audit-2.10.0 pip-requirements-parser-32.0.1 platformdirs-4.9.4 py-serializable-2.1.0 pydantic-2.12.5 pydantic-core-2.41.5 regex-2026.4.4 requests-2.33.1 rich-14.3.3 ruamel-yaml-0.19.1 safety-3.7.0 safety-schemas-0.0.16 shellingham-1.5.4 sortedcontainers-2.4.0 stevedore-5.7.0 tenacity-9.1.4 tomli-w-1.2.0 tomlkit-0.14.0 tqdm-4.67.3 typer-0.24.1 typing-inspection-0.4.2
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ bandit --version
+safety --version
+pip-audit --version
+bandit 1.9.4
+  python version = 3.10.12 (main, Mar  3 2026, 11:56:32) [GCC 11.4.0]
+safety, version 3.7.0
+pip-audit 2.10.0
+
+BANDIT TEST
+(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ bandit -r user-service/ product-service/
+Code scanned:
+        Total lines of code: 3930
+        Total lines skipped (#nosec): 0
+
+Run metrics:
+        Total issues (by severity):
+                Undefined: 0
+                Low: 238
+                Medium: 25
+                High: 0
+        Total issues (by confidence):
+                Undefined: 0
+                Low: 23
+                Medium: 20
+                High: 220
+Files skipped (0):
+
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ bandit -c .bandit -r user-service/ product-service/
+[main]  INFO    profile include tests: None
+[main]  INFO    profile exclude tests: B101,B106,B113
+[main]  INFO    cli include tests: None
+[main]  INFO    cli exclude tests: None
+[main]  INFO    using config: .bandit
+[main]  INFO    running on Python 3.10.12
+Run started:2026-04-07 20:11:30.048568
+
+Test results:
+>> Issue: [B104:hardcoded_bind_all_interfaces] Possible binding to all interfaces.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-605 (https://cwe.mitre.org/data/definitions/605.html)
+   More Info: https://bandit.readthedocs.io/en/1.7.5/plugins/b104_hardcoded_bind_all_interfaces.html
+   Location: product-service/product_app.py:612:21
+611         if verify_db_setup():
+612             app.run(host="0.0.0.0",port=port,debug=debug_mode)
+613         else:
+
+--------------------------------------------------
+>> Issue: [B104:hardcoded_bind_all_interfaces] Possible binding to all interfaces.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-605 (https://cwe.mitre.org/data/definitions/605.html)
+   More Info: https://bandit.readthedocs.io/en/1.7.5/plugins/b104_hardcoded_bind_all_interfaces.html
+   Location: user-service/app.py:753:21
+752         if verify_db_setup():
+753             app.run(host="0.0.0.0",port=port,debug=debug_mode)
+754         else:
+
+--------------------------------------------------
+
+Code scanned:
+        Total lines of code: 1303
+        Total lines skipped (#nosec): 0
+
+Run metrics:
+        Total issues (by severity):
+                Undefined: 0
+                Low: 0
+                Medium: 2
+                High: 0
+        Total issues (by confidence):
+                Undefined: 0
+                Low: 0
+                Medium: 2
+                High: 0
+Files skipped (0):
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ bandit -c .bandit -r user-service/ product-service/ --severity-level high
+[main]  INFO    profile include tests: None
+[main]  INFO    profile exclude tests: B113,B106,B101
+[main]  INFO    cli include tests: None
+[main]  INFO    cli exclude tests: None
+[main]  INFO    using config: .bandit
+[main]  INFO    running on Python 3.10.12
+Run started:2026-04-07 20:11:42.117816
+
+Test results:
+        No issues identified.
+
+Code scanned:
+        Total lines of code: 1303
+        Total lines skipped (#nosec): 0
+
+Run metrics:
+        Total issues (by severity):
+                Undefined: 0
+                Low: 0
+                Medium: 2
+                High: 0
+        Total issues (by confidence):
+                Undefined: 0
+                Low: 0
+                Medium: 2
+                High: 0
+Files skipped (0):
+
+SAFETY TEST
+safety check -r requirements/staging_requirements.txt
+ REPORT 
+
+  Safety v3.7.0 is scanning for Vulnerabilities...
+  Scanning dependencies in your files:
+
+  -> requirements/staging_requirements.txt
+
+  Using open-source vulnerability database
+  Found and scanned 16 packages
+  Timestamp 2026-04-07 18:56:47
+  0 vulnerabilities reported
+  0 vulnerabilities ignored
++=========================================================================================================================================================================+
+
+ No known security vulnerabilities reported. 
+
++=========================================================================================================================================================================+
+
+
++===========================================================================================================================================================================================+
+
+
+DEPRECATED: this command (`check`) has been DEPRECATED, and will be unsupported beyond 01 June 2024.
+
+
+We highly encourage switching to the new `scan` command which is easier to use, more powerful, and can be set up to mimic the deprecated command if required.
+
+
++===========================================================================================================================================================================================+
+
+
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ pip-audit -r requirements/staging_requirements.txt
+No known vulnerabilities found
+
+TRIVY
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+aquasecurity/trivy info checking GitHub for latest tag
+aquasecurity/trivy info found version: 0.69.3 for v0.69.3/Linux/64bit
+aquasecurity/trivy info installed /usr/local/bin/trivy
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ trivy --version
+Version: 0.69.3
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ trivy image --severity CRITICAL,HIGH guhigawa/user-service:test
+2026-04-07T20:11:30+01:00       INFO    [vulndb] Need to update DB
+2026-04-07T20:11:30+01:00       INFO    [vulndb] Downloading vulnerability DB...
+2026-04-07T20:11:30+01:00       INFO    [vulndb] Downloading artifact...        repo="mirror.gcr.io/aquasec/trivy-db:2"
+89.55 MiB / 89.55 MiB [--------------------------------------------------------------------------------------------------------------------------] 100.00% 1.81 MiB p/s 50s
+2026-04-07T20:12:24+01:00       INFO    [vulndb] Artifact successfully downloaded       repo="mirror.gcr.io/aquasec/trivy-db:2"
+2026-04-07T20:12:24+01:00       INFO    [vuln] Vulnerability scanning is enabled
+2026-04-07T20:12:24+01:00       INFO    [secret] Secret scanning is enabled
+2026-04-07T20:12:24+01:00       INFO    [secret] If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2026-04-07T20:12:24+01:00       INFO    [secret] Please see https://trivy.dev/docs/v0.69/guide/scanner/secret#recommendation for faster secret detection
+2026-04-07T20:13:05+01:00       INFO    [python] Licenses acquired from one or more METADATA files may be subject to additional terms. Use `--debug` flag to see all affected packages.
+2026-04-07T20:13:06+01:00       INFO    Detected OS     family="debian" version="13.4"
+2026-04-07T20:13:06+01:00       INFO    [debian] Detecting vulnerabilities...   os_version="13" pkg_num=188
+2026-04-07T20:13:07+01:00       INFO    Number of language-specific files       num=1
+2026-04-07T20:13:07+01:00       INFO    [python-pkg] Detecting vulnerabilities...
+2026-04-07T20:13:07+01:00       WARN    Using severities from other vendors for some vulnerabilities. Read https://trivy.dev/docs/v0.69/guide/scanner/vulnerability#severity-selection for details.
+2026-04-07T20:13:09+01:00       INFO    Table result includes only package filenames. Use '--format json' option to get the full path to the package file.
+
+Report Summary
+
+┌──────────────────────────────────────────────────────────────────────────────────┬────────────┬─────────────────┬─────────┐
+│                                      Target                                      │    Type    │ Vulnerabilities │ Secrets │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ guhigawa/user-service:test (debian 13.4)                                         │   debian   │       48        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/PyJWT-2.10.1.dist-info/METADATA           │ python-pkg │        1        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/blinker-1.9.0.dist-info/METADATA          │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/certifi-2026.2.25.dist-info/METADATA      │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/cffi-2.0.0.dist-info/METADATA             │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/charset_normalizer-3.4.7.dist-info/METAD- │ python-pkg │        0        │    -    │
+│ ATA                                                                              │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/click-8.3.2.dist-info/METADATA            │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/cryptography-46.0.5.dist-info/METADATA    │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/deprecated-1.3.1.dist-info/METADATA       │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/flask-3.1.3.dist-info/METADATA            │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/googleapis_common_protos-1.59.1.dist-inf- │ python-pkg │        0        │    -    │
+│ o/METADATA                                                                       │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/grpcio-1.80.0.dist-info/METADATA          │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/idna-3.11.dist-info/METADATA              │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/importlib_metadata-7.0.0.dist-info/METAD- │ python-pkg │        0        │    -    │
+│ ATA                                                                              │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/itsdangerous-2.2.0.dist-info/METADATA     │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/jinja2-3.1.6.dist-info/METADATA           │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/markupsafe-3.0.3.dist-info/METADATA       │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_api-1.24.0.dist-info/METAD- │ python-pkg │        0        │    -    │
+│ ATA                                                                              │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_distro-0.45b0.dist-info/ME- │ python-pkg │        0        │    -    │
+│ TADATA                                                                           │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_exporter_jaeger-1.21.0.dis- │ python-pkg │        0        │    -    │
+│ t-info/METADATA                                                                  │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_exporter_jaeger_proto_grpc- │ python-pkg │        0        │    -    │
+│ -1.21.0.dist-info/METADATA                                                       │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_exporter_jaeger_thrift-1.2- │ python-pkg │        0        │    -    │
+│ 1.0.dist-info/METADATA                                                           │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation-0.45b0.dis- │ python-pkg │        0        │    -    │
+│ t-info/METADATA                                                                  │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_dbapi-0.45- │ python-pkg │        0        │    -    │
+│ b0.dist-info/METADATA                                                            │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_flask-0.45- │ python-pkg │        0        │    -    │
+│ b0.dist-info/METADATA                                                            │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_logging-0.- │ python-pkg │        0        │    -    │
+│ 45b0.dist-info/METADATA                                                          │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_pymysql-0.- │ python-pkg │        0        │    -    │
+│ 45b0.dist-info/METADATA                                                          │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_requests-0- │ python-pkg │        0        │    -    │
+│ .45b0.dist-info/METADATA                                                         │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_wsgi-0.45b- │ python-pkg │        0        │    -    │
+│ 0.dist-info/METADATA                                                             │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_sdk-1.24.0.dist-info/METAD- │ python-pkg │        0        │    -    │
+│ ATA                                                                              │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_semantic_conventions-0.45b- │ python-pkg │        0        │    -    │
+│ 0.dist-info/METADATA                                                             │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/opentelemetry_util_http-0.45b0.dist-info- │ python-pkg │        0        │    -    │
+│ /METADATA                                                                        │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/packaging-26.0.dist-info/METADATA         │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/pip-24.0.dist-info/METADATA               │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/protobuf-4.25.9.dist-info/METADATA        │ python-pkg │        1        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/pycparser-3.0.dist-info/METADATA          │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/pymysql-1.1.2.dist-info/METADATA          │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/python_dotenv-1.1.1.dist-info/METADATA    │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/requests-2.32.5.dist-info/METADATA        │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools-79.0.1.dist-info/METADATA      │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/autocommand-2.2.2.dis- │ python-pkg │        0        │    -    │
+│ t-info/METADATA                                                                  │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/backports.tarfile-1.2- │ python-pkg │        0        │    -    │
+│ .0.dist-info/METADATA                                                            │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/importlib_metadata-8.- │ python-pkg │        0        │    -    │
+│ 0.0.dist-info/METADATA                                                           │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/inflect-7.3.1.dist-in- │ python-pkg │        0        │    -    │
+│ fo/METADATA                                                                      │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/jaraco.collections-5.- │ python-pkg │        0        │    -    │
+│ 1.0.dist-info/METADATA                                                           │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/jaraco.context-5.3.0.- │ python-pkg │        1        │    -    │
+│ dist-info/METADATA                                                               │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/jaraco.functools-4.0.- │ python-pkg │        0        │    -    │
+│ 1.dist-info/METADATA                                                             │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/jaraco.text-3.12.1.di- │ python-pkg │        0        │    -    │
+│ st-info/METADATA                                                                 │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/more_itertools-10.3.0- │ python-pkg │        0        │    -    │
+│ .dist-info/METADATA                                                              │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/packaging-24.2.dist-i- │ python-pkg │        0        │    -    │
+│ nfo/METADATA                                                                     │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/platformdirs-4.2.2.di- │ python-pkg │        0        │    -    │
+│ st-info/METADATA                                                                 │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/tomli-2.0.1.dist-info- │ python-pkg │        0        │    -    │
+│ /METADATA                                                                        │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/typeguard-4.3.0.dist-- │ python-pkg │        0        │    -    │
+│ info/METADATA                                                                    │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/typing_extensions-4.1- │ python-pkg │        0        │    -    │
+│ 2.2.dist-info/METADATA                                                           │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/wheel-0.45.1.dist-inf- │ python-pkg │        1        │    -    │
+│ o/METADATA                                                                       │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/zipp-3.19.2.dist-info- │ python-pkg │        0        │    -    │
+│ /METADATA                                                                        │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/thrift-0.22.0.dist-info/METADATA          │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/typing_extensions-4.15.0.dist-info/METAD- │ python-pkg │        0        │    -    │
+│ ATA                                                                              │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/urllib3-2.6.3.dist-info/METADATA          │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/werkzeug-3.1.6.dist-info/METADATA         │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/wheel-0.45.1.dist-info/METADATA           │ python-pkg │        1        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/wrapt-1.17.3.dist-info/METADATA           │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/zipp-3.23.0.dist-info/METADATA            │ python-pkg │        0        │    -    │
+└──────────────────────────────────────────────────────────────────────────────────┴────────────┴─────────────────┴─────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+guhigawa/user-service:test (debian 13.4)
+
+Total: 48 (HIGH: 48, CRITICAL: 0)
+
+┌────────────────┬────────────────┬──────────┬──────────┬───────────────────┬───────────────┬──────────────────────────────────────────────────────────────┐
+│    Library     │ Vulnerability  │ Severity │  Status  │ Installed Version │ Fixed Version │                            Title                             │
+├────────────────┼────────────────┼──────────┼──────────┼───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
+│ libncursesw6   │ CVE-2025-69720 │ HIGH     │ affected │ 6.5+20250216-2    │               │ ncurses: ncurses: Buffer overflow vulnerability may lead to  │
+│                │                │          │          │                   │               │ arbitrary code execution.                                    │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-69720                   │
+├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
+│ libnghttp2-14  │ CVE-2026-27135 │          │          │ 1.64.0-1.1        │               │ nghttp2: nghttp2: Denial of Service via malformed HTTP/2     │
+│                │                │          │          │                   │               │ frames after session termination...                          │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-27135                   │
+├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
+│ libsystemd0    │ CVE-2026-29111 │          │          │ 257.9-1~deb13u1   │               │ systemd: systemd: Arbitrary code execution or Denial of      │
+│                │                │          │          │                   │               │ Service via spurious IPC...                                  │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-29111                   │
+├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
+│ libtinfo6      │ CVE-2025-69720 │          │          │ 6.5+20250216-2    │               │ ncurses: ncurses: Buffer overflow vulnerability may lead to  │
+│                │                │          │          │                   │               │ arbitrary code execution.                                    │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-69720                   │
+├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
+│ libudev1       │ CVE-2026-29111 │          │          │ 257.9-1~deb13u1   │               │ systemd: systemd: Arbitrary code execution or Denial of      │
+│                │                │          │          │                   │               │ Service via spurious IPC...                                  │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-29111                   │
+├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
+│ linux-libc-dev │ CVE-2013-7445  │          │          │ 6.12.74-2         │               │ kernel: memory exhaustion via crafted Graphics Execution     │
+│                │                │          │          │                   │               │ Manager (GEM) objects                                        │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2013-7445                    │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2019-19449 │          │          │                   │               │ kernel: mounting a crafted f2fs filesystem image can lead to │
+│                │                │          │          │                   │               │ slab-out-of-bounds read...                                   │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2019-19449                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2019-19814 │          │          │                   │               │ kernel: out-of-bounds write in __remove_dirty_segment in     │
+│                │                │          │          │                   │               │ fs/f2fs/segment.c                                            │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2019-19814                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2021-3847  │          │          │                   │               │ kernel: low-privileged user privileges escalation            │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2021-3847                    │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2021-3864  │          │          │                   │               │ kernel: descendant's dumpable setting with certain SUID      │
+│                │                │          │          │                   │               │ binaries                                                     │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2021-3864                    │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2024-21803 │          │          │                   │               │ kernel: bluetooth: use-after-free vulnerability in           │
+│                │                │          │          │                   │               │ af_bluetooth.c                                               │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2024-21803                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2024-58015 │          │          │                   │               │ kernel: wifi: ath12k: Fix for out-of bound access error      │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2024-58015                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2024-58093 │          │          │                   │               │ kernel: Linux kernel: PCI/ASPM use-after-free during         │
+│                │                │          │          │                   │               │ hot-unplug                                                   │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2024-58093                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-22104 │          │          │                   │               │ kernel: ibmvnic: Use kernel helpers for hex dumps            │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-22104                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-38137 │          │          │                   │               │ kernel: PCI/pwrctrl: Cancel outstanding rescan work when     │
+│                │                │          │          │                   │               │ unregistering                                                │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38137                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-38187 │          │          │                   │               │ kernel: drm/nouveau: fix a use-after-free in                 │
+│                │                │          │          │                   │               │ r535_gsp_rpc_push()                                          │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38187                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-38204 │          │          │                   │               │ kernel: jfs: fix array-index-out-of-bounds read in           │
+│                │                │          │          │                   │               │ add_missing_indices                                          │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38204                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-38206 │          │          │                   │               │ kernel: Kernel: Double free vulnerability in exFAT           │
+│                │                │          │          │                   │               │ filesystem can lead to denial...                             │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38206                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-38421 │          │          │                   │               │ kernel: platform/x86/amd: pmf: Use device managed            │
+│                │                │          │          │                   │               │ allocations                                                  │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38421                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-38584 │          │          │                   │               │ kernel: padata: Fix pd UAF once and for all                  │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38584                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-38627 │          │          │                   │               │ kernel: f2fs: compress: fix UAF of f2fs_inode_info in        │
+│                │                │          │          │                   │               │ f2fs_free_dic                                                │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38627                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-38636 │          │          │                   │               │ kernel: rv: Use strings in da monitors tracepoints           │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38636                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-39859 │          │          │                   │               │ kernel: ptp: ocp: fix use-after-free bugs causing by         │
+│                │                │          │          │                   │               │ ptp_ocp_watchdog                                             │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-39859                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-39862 │          │          │                   │               │ kernel: wifi: mt76: mt7915: fix list corruption after        │
+│                │                │          │          │                   │               │ hardware restart                                             │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-39862                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-39958 │          │          │                   │               │ kernel: iommu/s390: Make attach succeed when the device was  │
+│                │                │          │          │                   │               │ surprise removed                                             │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-39958                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-40064 │          │          │                   │               │ kernel: smc: Fix use-after-free in __pnet_find_base_ndev()   │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-40064                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-40135 │          │          │                   │               │ kernel: ipv6: use RCU in ip6_xmit()                          │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-40135                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-40158 │          │          │                   │               │ kernel: ipv6: use RCU in ip6_output()                        │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-40158                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-40168 │          │          │                   │               │ kernel: smc: Use __sk_dst_get() and dst_dev_rcu() in         │
+│                │                │          │          │                   │               │ smc_clc_prfx_match()                                         │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-40168                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-71152 │          │          │                   │               │ kernel: net: dsa: properly keep track of conduit reference   │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-71152                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2025-71221 │          │          │                   │               │ kernel: dmaengine: mmp_pdma: Fix race condition in           │
+│                │                │          │          │                   │               │ mmp_pdma_residue()                                           │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-71221                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23102 │          │          │                   │               │ kernel: Linux kernel: Denial of Service due to incorrect SVE │
+│                │                │          │          │                   │               │ context restoration...                                       │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23102                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23171 │          │          │                   │               │ kernel: Linux kernel: Use-after-free in bonding module can   │
+│                │                │          │          │                   │               │ cause system crash or...                                     │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23171                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23208 │          │          │                   │               │ kernel: ALSA: usb-audio: Prevent excessive number of frames  │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23208                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23226 │          │          │                   │               │ kernel: ksmbd: add chann_lock to protect ksmbd_chann_list    │
+│                │                │          │          │                   │               │ xarray                                                       │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23226                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23227 │          │          │                   │               │ kernel: drm/exynos: vidi: use ctx->lock to protect struct    │
+│                │                │          │          │                   │               │ vidi_context member variables related...                     │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23227                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23231 │          │          │                   │               │ kernel: kernel: Privilege escalation or denial of service    │
+│                │                │          │          │                   │               │ via use-after-free in nf_tables_addchain()...                │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23231                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23243 │          │          │                   │               │ kernel: Linux kernel: Denial of service and memory           │
+│                │                │          │          │                   │               │ corruption in RDMA umad...                                   │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23243                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23270 │          │          │                   │               │ kernel: Linux kernel: Use-after-free in traffic control      │
+│                │                │          │          │                   │               │ (act_ct) may lead to denial...                               │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23270                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23375 │          │          │                   │               │ kernel: mm: thp: deny THP for files on anonymous inodes      │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23375                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23392 │          │          │                   │               │ kernel: netfilter: nf_tables: release flowtable after rcu    │
+│                │                │          │          │                   │               │ grace period on error                                        │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23392                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23401 │          │          │                   │               │ kernel: KVM: x86/mmu: Drop/zap existing present SPTE even    │
+│                │                │          │          │                   │               │ when creating an MMIO...                                     │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23401                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23450 │          │          │                   │               │ kernel: net/smc: fix NULL dereference and UAF in             │
+│                │                │          │          │                   │               │ smc_tcp_syn_recv_sock()                                      │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23450                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-23455 │          │          │                   │               │ kernel: netfilter: nf_conntrack_h323: check for zero length  │
+│                │                │          │          │                   │               │ in DecodeQ931()                                              │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23455                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-31402 │          │          │                   │               │ kernel: nfsd: fix heap overflow in NFSv4.0 LOCK replay cache │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-31402                   │
+│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│                │ CVE-2026-31408 │          │          │                   │               │ kernel: Bluetooth: SCO: Fix use-after-free in                │
+│                │                │          │          │                   │               │ sco_recv_frame() due to missing sock_hold                    │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-31408                   │
+├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
+│ ncurses-base   │ CVE-2025-69720 │          │          │ 6.5+20250216-2    │               │ ncurses: ncurses: Buffer overflow vulnerability may lead to  │
+│                │                │          │          │                   │               │ arbitrary code execution.                                    │
+│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-69720                   │
+├────────────────┤                │          │          │                   ├───────────────┤                                                              │
+│ ncurses-bin    │                │          │          │                   │               │                                                              │
+│                │                │          │          │                   │               │                                                              │
+│                │                │          │          │                   │               │                                                              │
+└────────────────┴────────────────┴──────────┴──────────┴───────────────────┴───────────────┴──────────────────────────────────────────────────────────────┘
+
+Python (python-pkg)
+
+Total: 5 (HIGH: 5, CRITICAL: 0)
+
+┌───────────────────────────┬────────────────┬──────────┬────────┬───────────────────┬────────────────┬──────────────────────────────────────────────────────────────┐
+│          Library          │ Vulnerability  │ Severity │ Status │ Installed Version │ Fixed Version  │                            Title                             │
+├───────────────────────────┼────────────────┼──────────┼────────┼───────────────────┼────────────────┼──────────────────────────────────────────────────────────────┤
+│ PyJWT (METADATA)          │ CVE-2026-32597 │ HIGH     │ fixed  │ 2.10.1            │ 2.12.0         │ pyjwt: PyJWT accepts unknown `crit` header extensions (RFC   │
+│                           │                │          │        │                   │                │ 7515 §4.1.11 MUST violation)...                              │
+│                           │                │          │        │                   │                │ https://avd.aquasec.com/nvd/cve-2026-32597                   │
+├───────────────────────────┼────────────────┤          │        ├───────────────────┼────────────────┼──────────────────────────────────────────────────────────────┤
+│ jaraco.context (METADATA) │ CVE-2026-23949 │          │        │ 5.3.0             │ 6.1.0          │ jaraco.context: jaraco.context: Path traversal via malicious │
+│                           │                │          │        │                   │                │ tar archives                                                 │
+│                           │                │          │        │                   │                │ https://avd.aquasec.com/nvd/cve-2026-23949                   │
+├───────────────────────────┼────────────────┤          │        ├───────────────────┼────────────────┼──────────────────────────────────────────────────────────────┤
+│ protobuf (METADATA)       │ CVE-2026-0994  │          │        │ 4.25.9            │ 6.33.5, 5.29.6 │ python: protobuf: Protobuf: Denial of Service due to         │
+│                           │                │          │        │                   │                │ recursion depth bypass                                       │
+│                           │                │          │        │                   │                │ https://avd.aquasec.com/nvd/cve-2026-0994                    │
+├───────────────────────────┼────────────────┤          │        ├───────────────────┼────────────────┼──────────────────────────────────────────────────────────────┤
+│ wheel (METADATA)          │ CVE-2026-24049 │          │        │ 0.45.1            │ 0.46.2         │ wheel: wheel: Privilege Escalation or Arbitrary Code         │
+│                           │                │          │        │                   │                │ Execution via malicious wheel file...                        │
+│                           │                │          │        │                   │                │ https://avd.aquasec.com/nvd/cve-2026-24049                   │
+│                           │                │          │        │                   │                │                                                              │
+│                           │                │          │        │                   │                │                                                              │
+│                           │                │          │        │                   │                │                                                              │
+│                           │                │          │        │                   │                │                                                              │
+└───────────────────────────┴────────────────┴──────────┴────────┴───────────────────┴────────────────┴──────────────────────────────────────────────────────────────┘

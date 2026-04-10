@@ -1,4 +1,5 @@
 import jwt,datetime,os,pymysql,logging, time;
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Flask, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -254,7 +255,6 @@ def login():
 
         auth = request.authorization
         data = {}
-        #Nao deveria colocar span.set_attribute http.method e http.route /login?
 
         #check db for username and password
         #determining the authentication method
@@ -328,7 +328,7 @@ def login():
                         token = jwt.encode({
                             "user_id": user['id'],
                             "email": user['email'],
-                            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+                            "exp": datetime.now(timezone.utc) + timedelta(hours=1)
                         }, app.config['SECRET_KEY'], algorithm="HS256")
                         token_span.set_attribute("token.generated", True)
                         token_span.set_attribute("user.id", user['id'])
@@ -565,7 +565,7 @@ def logout():
                                                                 })
             return jsonify({"message": "Logout successful",
                             "user_id": user_id,
-                            "timestamp": datetime.datetime.utcnow().isoformat()
+                            "timestamp": datetime.now(timezone.utc).isoformat()
                             }), 200
         except jwt.ExpiredSignatureError:
             logging.warning("Logout attempt with expired token")
@@ -635,7 +635,7 @@ def health_detailed():
 
         return jsonify({"status": status,
                         "service": "user-service", 
-                        "timestamp": datetime.datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                         "checks": checks
                             
                         }), 200 if all_healthy else 503
@@ -644,7 +644,7 @@ def health_detailed():
 def metrics():
         return jsonify({
             "service": "user-service",
-            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "active_endpoints": ["/register", "/login", "/profile", "/users/<id>", "/health", "/metrics"]
         })
 

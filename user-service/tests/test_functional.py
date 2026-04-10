@@ -63,10 +63,9 @@ class TestUserServiceFunctional:
         return f"func_test_{timestamp}@example.com"
 
 
-    def test_complete_user_lifecycle(self):
+    def test_complete_user_lifecycle(self, valid_password):
 
         email = self.generate_unique_email()
-        valid_password = "StrongPass123!"
         print(f"Testing with email: {email}")
 
         # Register user
@@ -131,16 +130,9 @@ class TestUserServiceFunctional:
         print("Functional user lifecycle test completed successfully")
 
     
-    def test_registration_with_weak_password(self): 
+    def test_registration_with_weak_password(self, weak_passwords_list): 
         email = self.generate_unique_email()
-        weak_passwords = ["short", #short password
-                         "noupper123", #no uppercase letters
-                         "NOLOWER123", #no lowercase letters
-                         "NoNumber",   #no numbers
-                         "",       #empty password
-                         "  ",      #only spaces
-                            "NoSpecial123", #no special characters
-                         ]
+        weak_passwords = weak_passwords_list
         for i, weak_pass in enumerate(weak_passwords):
             email = f"weakpass_test_{i}_{int(time.time())}@example.com"
             
@@ -155,7 +147,7 @@ class TestUserServiceFunctional:
             assert any (keyword in error_msg for keyword in ["must", "password", "characters", "least"])
 
 
-    def test_registration_with_invalid_email(self):
+    def test_registration_with_invalid_email(self, valid_password):
         invalid_emails = ["plainaddress", #missing @
                           "@domain.com", #missing local part
                             "user@.com", #missing domain name
@@ -163,7 +155,7 @@ class TestUserServiceFunctional:
                             "", #empty email
                         ]
         for i, invalid_email in enumerate(invalid_emails):
-            password = "ValidPass123!"
+            password = valid_password
             invalid_email_response = requests.post(f"{BASE_URL}/register", json={
                 "email": invalid_email,
                 "password": password}, timeout=5)
@@ -176,7 +168,7 @@ class TestUserServiceFunctional:
             assert "email" in error_data["error"].lower(), f"Unexpected error message for invalid email '{invalid_email}': {error_data['error']}"
 
     
-    def test_rapid_registration_attempts(self):
+    def test_rapid_registration_attempts(self,valid_password):
         print("Testing rapid registration attempts to check rate limiting")
 
         base_email = f"ratelimit{int(time.time())}"
@@ -188,7 +180,7 @@ class TestUserServiceFunctional:
             try:
                 rapid_registration_response = requests.post(f"{BASE_URL}/register", json={
                     "email": email,
-                    "password":"ValidPass123!"}, timeout=5)
+                    "password": valid_password}, timeout=5)
                 
                 if rapid_registration_response.status_code in [200,201]:
                     successful_registrations += 1

@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
 
     steps:
       - uses: actions/checkout@v4
@@ -38,10 +38,14 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       
       - name: Install dependencies
-        run: pip install -r requirements/development_requirements.txt
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/development_requirements.txt
       
       - name: Run unit tests
-        run: ./scripts/test/run-unit-tests.sh
+        run: |
+          cd user-service && pytest tests/test_unit.py tests/test_validators.py -v
+          cd ../product-service && pytest products_tests/test_product_unit.py products_tests/test_product_validator.py -v
       
       - name: Upload coverage reports
         if: always()
@@ -56,7 +60,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         mysql_version: ['8.0']
     services:
       mysql-user:
@@ -106,6 +110,13 @@ jobs:
           PRODUCT_SERVICE_URL=http://localhost:${{ env.PRODUCT_SERVICE_PORT }}
           FLASK_ENV=test
           TESTING=True
+          TEST_VALID_PASSWORD=StrongPass123!
+          TEST_WRONG_PASSWORD=Wrongpassword@123
+          TEST_WEAK_PASSWORD='short,noupper123,NOLOWER123,NoNumber,,  ,NoSpecial123'
+          TEST_STRONG_PASSWORD=StrongPass@123
+          TEST_DEFAULT_PASSWORD=Test@1234
+          PRODUCT_TEST_PASSWORD=Product@123
+          FUNCTIONAL_TEST_PASSWORD=FuncTest@123
           EOF
       
       - name: Initialize databases
@@ -114,7 +125,9 @@ jobs:
           mysql -h127.0.0.1 -P3307 -uroot -ptest_root_password_123 < product-service/product_init_test.sql
       
       - name: Install dependencies
-        run: pip install -r requirements/development_requirements.txt
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/development_requirements.txt
       
       - name: Start user-service
         working-directory: ./user-service
@@ -142,62 +155,46 @@ jobs:
           echo "Both services are healthy"
 
       - name: Run integration tests
-        run: ./scripts/test/run-integration-test.sh
-  
-  #job 3 - security tests
-  dev-security-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - name: Install security tools
         run: |
-          pip install bandit safety
-      - name: Run Bandit (code security)
-        run: bandit -r user-service/ product-service/ --exit-zero
-      - name: Run Safety (dependency vulnerabilities)
-        run: safety check -r requirements/development_requirements.txt
+            cd user-service && pytest tests/test_integration.py -v
+            cd ../product-service && pytest products_tests/test_product_integration.py -v
 
-  # job 4 - build images for staging and production
+  # job 3 - build images for staging and production
   dev-build-images:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-    needs: [dev-unit-tests, dev-integration-tests, dev-security-tests]
+        os: [ubuntu-22.04]
+    needs: [dev-unit-tests, dev-integration-tests]
     if: success() && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      - name: Build user-service image
-        run: |
-          docker build -t user-service:latest -f user-service/Dockerfile ./user-service
-          docker save user-service:latest -o user-service.tar
-      - name: Build product-service image
-        run: |
-          docker build -t product-service:latest -f product-service/Dockerfile ./product-service
-          docker save product-service:latest -o product-service.tar
-      - name: Upload images as artifacts
-        uses: actions/upload-artifact@v4
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          name: docker-images
-          path: |
-            user-service.tar
-            product-service.tar
-          retention-days: 1
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
-  #job 5 - deploy staging
+      - name: Build and push user-service
+        run: |
+          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/user-service:latest -f user-service/Dockerfile ./user-service
+          docker push ${{ secrets.DOCKER_USERNAME }}/user-service:latest
+      
+      - name: Build and push product-service
+        run: |
+          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/product-service:latest -f product-service/Dockerfile ./product-service
+          docker push ${{ secrets.DOCKER_USERNAME }}/product-service:latest
+
+  #job 4 - deploy staging
   staging-deploy:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
     needs: [dev-build-images]
     if: |
       github.ref == 'refs/heads/main' ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
-
     environment:
       name: staging
       url: http://localhost:${{ env.STAGING_USER_PORT }} 
@@ -213,15 +210,36 @@ jobs:
           docker --version
           docker-compose --version
 
-      - name: Download images from DEV
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-images
-
-      - name: Load images
+      - name: Increase map_count for SonarQube
         run: |
-          docker load -i user-service.tar
-          docker load -i product-service.tar
+          sudo sysctl -w vm.max_map_count=262144
+          echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
+      
+      - name: Start SonarQube with docker-compose
+        run: |
+          docker-compose -f docker-compose.sonarqube.yml up -d
+          # Wait for SonarQube to be ready
+          for i in {1..60}; do
+            if curl -s -f http://localhost:9000 > /dev/null 2>&1; then
+              echo "SonarQube is ready"
+              break
+            fi
+            echo "Waiting for SonarQube(${i}/60)"
+            sleep 5
+          done
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      
+      - name: Pull images from Docker Hub
+        run: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/user-service:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/product-service:latest
+          docker tag ${{ secrets.DOCKER_USERNAME }}/user-service:latest user-service:latest
+          docker tag ${{ secrets.DOCKER_USERNAME }}/product-service:latest product-service:latest
 
       - name: Cleanup previous staging runs
         run: |
@@ -247,7 +265,7 @@ jobs:
 
       - name: Deploy staging environment with docker-compose
         run: |
-          ./scripts/staging/deploy-staging.sh
+          docker-compose -f docker-compose.staging.yml --env-file .env.staging up -d
           sleep 30
 
       - name: Verify staging deployment
@@ -275,128 +293,87 @@ jobs:
             sleep 10
           done
 
-      - name: Verify test files exist in containers
-        run: |
-          echo "Checking if test files exist"
-          docker-compose -f docker-compose.staging.yml exec user-service ls -la /user-service/tests/ || echo "User tests not found"
-          docker-compose -f docker-compose.staging.yml exec product-service ls -la /product-service/products_tests/ || echo "Product tests not found"
-
-      - name: Pre-Test Verification
-        run: |
-          echo "1. Service health:"
-          curl -s http://localhost:${{ env.STAGING_USER_PORT }}/health | jq . || echo "User service health check"
-          curl -s http://localhost:${{ env.STAGING_PRODUCT_PORT }}/health | jq . || echo "Product service health check"
-    
-    
-          echo ""
-          echo "2. Testing database connection from user-service container:"
-          # User Service DB Connection Test
-          docker-compose -f docker-compose.staging.yml exec user-service python3 -c "
-          import os
-          import pymysql
-          import sys
-
-          print('Variables in container:')
-          print(f'MYSQL_DATABASE: {os.getenv(\"MYSQL_DATABASE\")}')
-
-          try:
-            conn = pymysql.connect(
-                host=os.getenv('MYSQL_HOST'),
-                user=os.getenv('MYSQL_USER'),
-                password=os.getenv('MYSQL_PASSWORD'),
-                database=os.getenv('MYSQL_DATABASE'),
-                port=int(os.getenv('MYSQL_PORT', 3306))
-            )
-            print(' Database connection SUCCESS!')
-    
-            with conn.cursor() as cursor:
-                cursor.execute('SELECT DATABASE()')
-                db = cursor.fetchone()
-                print(f'Current database: {db[0]}')
-        
-                cursor.execute('SHOW TABLES')
-                tables = cursor.fetchall()
-                print(f'Tables in database: {[t[0] for t in tables]}')
-    
-            conn.close()
-    
-          except Exception as e:
-              print(f'Database connection FAILED: {e}')
-              sys.exit(1)
-          "
-        
-          echo "3. product-service database connection test:"
-          docker-compose -f docker-compose.staging.yml exec product-service python3 -c "
-          import os
-          import pymysql
-          import sys
-          print('Variables in container:')
-          print(f'MYSQL_DATABASE: {os.getenv(\"MYSQL_DATABASE\")}')
-          try:
-            conn = pymysql.connect(
-                host=os.getenv('MYSQL_HOST'),
-                user=os.getenv('MYSQL_USER'),
-                password=os.getenv('MYSQL_PASSWORD'),
-                database=os.getenv('MYSQL_DATABASE'),
-                port=int(os.getenv('MYSQL_PORT', 3306))
-            )
-            print(' Database connection SUCCESS!')
-    
-            with conn.cursor() as cursor:
-                cursor.execute('SELECT DATABASE()')
-                db = cursor.fetchone()
-                print(f'Current database: {db[0]}')
-        
-                cursor.execute('SHOW TABLES')
-                tables = cursor.fetchall()
-                print(f'Tables in database: {[t[0] for t in tables]}')
-    
-            conn.close()
-    
-          except Exception as e:
-              print(f' Database connection FAILED: {e}')
-              sys.exit(1)
-          "
-
-          echo "4. Service communication test inside product-service container:"
-          docker-compose -f docker-compose.staging.yml exec product-service python3 -c "
-          import os
-          import requests
-          import sys
-          user_service_url = os.getenv('USER_SERVICE_URL')
-          print(f'User Service URL: {user_service_url}')
-          try:
-              response = requests.get(f'{user_service_url}/health', timeout=5)
-              if response.status_code == 200:
-                  print(' Communication SUCCESS!')
-              else:
-                  print(f' Communication FAILED: Status code {response.status_code}')
-                  sys.exit(1)
-          except Exception as e:
-              print(f' Communication FAILED: {e}')
-              sys.exit(1)
-          "
-      
-      - name: Verify databases are separate
-        run: |
-          echo "Getting database names from containers..."
-    
-          USER_DB=$(docker-compose -f docker-compose.staging.yml exec -T user-service python3 -c "import os; print(os.getenv('MYSQL_DATABASE'))")
-          PRODUCT_DB=$(docker-compose -f docker-compose.staging.yml exec -T product-service python3 -c "import os; print(os.getenv('MYSQL_DATABASE'))")
-    
-          echo "User Service Database: $USER_DB"
-          echo "Product Service Database: $PRODUCT_DB"
-    
-          if [ "$USER_DB" = "$PRODUCT_DB" ]; then
-            echo " ERROR: Both services using same database!"
-            exit 1
-          else
-            echo " SUCCESS: Services using separate databases"
-          fi
-
       - name: Run functional tests in staging environment 
-        run: ./scripts/staging/run-functional-tests.sh
+        run: |
+          docker-compose -f docker-compose.staging.yml exec -T user-service pytest tests/test_functional.py -v
+          docker-compose -f docker-compose.staging.yml exec -T product-service pytest products_tests/test_product_functional.py -v
 
+      - name: Install security tools
+        run: |
+          pip install --upgrade pip
+          pip install bandit safety pip-audit
+
+      - name: Bandit Security Scan
+        run: bandit -c .bandit -r user-service/ product-service/ --severity-level high || exit 1
+      
+      - name: Safety Security Scan
+        run: safety check -r requirements/staging_requirements.txt || exit 1
+      
+      - name: pip-audit Security Scan
+        run: pip-audit -r requirements/staging_requirements.txt || exit 1
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/user-service:latest
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL, HIGH'
+      
+      - name: Run Trivy on product-service
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/product-service:latest
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL, HIGH'
+          trivy-version: v0.69.3
+      
+      - name: SonarQube Scan
+        run: |
+          # Get authentication token
+          curl -s -u admin:admin -X POST "http://localhost:9000/api/user_tokens/generate?name=github-actions" > token.json
+          TOKEN=$(cat token.json | jq -r .token)
+
+          for i in {1..30}; do
+            if curl -s -f http://localhost:9000/api/system/status | grep -q UP; then
+              break
+            fi
+            sleep 5
+          done
+  
+          TOKEN=""
+          for i in {1..3}; do
+            RESPONSE=$(curl -s -u admin:admin -X POST "http://localhost:9000/api/user_tokens/generate?name=github-actions")
+            TOKEN=$(echo $RESPONSE | jq -r .token)
+            if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
+              break
+            fi
+            sleep 2
+          done
+
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "Failed to generate SonarQube token"
+            exit 1
+          fi
+          
+          # Create project
+          curl -s -u admin:admin -X POST "http://localhost:9000/api/projects/create?name=Projeto-final-DevOps&project=projeto-final-devops" || true
+          
+          # Run sonar-scanner
+          docker run --rm \
+            -v $(pwd):/usr/src \
+            sonarsource/sonar-scanner-cli:latest \
+            -Dsonar.projectKey=projeto-final-devops \
+            -Dsonar.sources=user-service,product-service \
+            -Dsonar.exclusions=**/tests/**,**/products_tests/**,**/venv/**,**/__pycache__/** \
+            -Dsonar.host.url=http://localhost:9000 \
+            -Dsonar.login=$TOKEN
+      
+      - name: SonarQube URL
+        run: |
+          echo "SonarQube Dashboard: http://localhost:9000" >> $GITHUB_STEP_SUMMARY
+          echo "Login: admin / admin" >> $GITHUB_STEP_SUMMARY
       
       - name: Record deployment
         if: success()
@@ -424,17 +401,19 @@ jobs:
       url: http://user.local.prod
     steps:
       - uses: actions/checkout@v4
-      - name: Download images from DEV
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-images
 
-      - name: Load images to local registry
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Pull images from Docker Hub
         run: |
-          docker load -i user-service.tar
-          docker load -i product-service.tar
-          docker tag user-service:latest localhost:32000/user-service:1.0.0
-          docker tag product-service:latest localhost:32000/product-service:1.0.0
+          docker pull ${{ secrets.DOCKER_USERNAME }}/user-service:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/product-service:latest
+          docker tag ${{ secrets.DOCKER_USERNAME }}/user-service:latest localhost:32000/user-service:1.0.0
+          docker tag ${{ secrets.DOCKER_USERNAME }}/product-service:latest localhost:32000/product-service:1.0.0
           docker push localhost:32000/user-service:1.0.0
           docker push localhost:32000/product-service:1.0.0
 

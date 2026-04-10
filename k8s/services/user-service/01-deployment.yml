@@ -13,10 +13,10 @@ spec:
     matchLabels:
       app: user-service
   strategy:
-    type: RollingUpdate #used to avoid downtime when updating the app
+    type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1 #Max number of pod creation in case of updates in a pod
-      maxUnavailable: 0 #Max number of pods that can be unnavailable
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -24,6 +24,7 @@ spec:
         component: backend
         service: user
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: user-service
         image: localhost:32000/user-service:1.0.0
@@ -35,7 +36,7 @@ spec:
               name: app-secrets
               key: SECRET_KEY
         - name: MYSQL_HOST
-          value: "mysql-user.projeto-final.svc.cluster.local" #Automatic generated in service from database DNS rule: <service-name>.<namespace>.svc.cluster.local
+          value: "mysql-user.projeto-final.svc.cluster.local"
         - name: MYSQL_USER
           valueFrom:
             configMapKeyRef:
@@ -115,6 +116,11 @@ spec:
         securityContext:
           runAsUser: 1000
           allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true #Not allow changes in the pods disk
-       
-
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: tmp-storage
+          mountPath: /tmp
+      volumes:
+      - name: tmp-storage
+        emptyDir:
+          sizeLimit: 1Gi

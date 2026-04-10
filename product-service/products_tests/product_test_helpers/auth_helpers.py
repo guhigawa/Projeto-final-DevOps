@@ -4,17 +4,17 @@ class ProductAuthHelpers:
     
     def __init__(self):
         self.user_service_url = os.getenv("USER_SERVICE_URL","http://localhost:3001")
-
+        self.test_password = os.getenv('PRODUCT_TEST_PASSWORD', 'Product@123')
     
     def create_test_user(self):
         unique_id = uuid.uuid4().hex[:8]
         email = f"product_test{unique_id}@example.com" 
 
-        register_response = requests.post(f"{self.user_service_url}/register", json={"email":email,"password":"Product@123"})
+        register_response = requests.post(f"{self.user_service_url}/register", json={"email":email,"password":self.test_password})
 
         time.sleep(0.5) # Pause to avoid race conditions
 
-        login_response = requests.post(f"{self.user_service_url}/login",json={"email":email,"password":"Product@123"})
+        login_response = requests.post(f"{self.user_service_url}/login",json={"email":email,"password":self.test_password})
 
         if login_response.status_code == 200:
             login_data = login_response.json()
@@ -26,7 +26,7 @@ class ProductAuthHelpers:
             }
         else:
             time.sleep(0.5)
-            login_response = requests.post(f"{self.user_service_url}/login",json={"email":email,"password":"Product@123"})
+            login_response = requests.post(f"{self.user_service_url}/login",json={"email":email,"password":self.test_password})
             if login_response.status_code == 200:
                 login_data = login_response.json()
                 return{

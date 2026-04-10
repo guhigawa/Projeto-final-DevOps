@@ -85,24 +85,31 @@ Apesar de público, **nenhuma credencial sensível** está no repositório:
 
 ## 4. Estrutura de Diretórios
 Projeto_final
-├──.github
-├──.venv
-├──.vscode
+├── actions-runner
+├── .bandit
+├── docker-compose.sonarqube.yml
 ├── docker-compose.staging.yml
 ├── docker-compose.yml
+├── .dockerignore
 ├── documentation
+├── .env
+├── .env.staging
 ├── generate_hashed_password.py
+├── .git
+├── .github
+├── .gitignore
 ├── k8s
 ├── Makefile
 ├── monitoring
-├── pipeline.png
 ├── product-service
 ├── README.md
 ├── requirements
 ├── requirements.txt.backup
 ├── scripts
+├── .sonar
 ├── user-service
-└── venv
+├── .venv
+└── .vscode
 
 ## 5. Configuração dos Ambientes
 
@@ -136,17 +143,26 @@ curl http://localhost:3002/health
 
 ### Jobs do Pipeline:
 
-| Job | Descrição | Ambiente |
-|-----|-----------|----------|
-| `dev-unit-tests` | Testes unitários e validadores | DEV |
-| `dev-integration-tests` | Testes de integração com MySQL | DEV |
-| `dev-security-tests` | Testes de segurança (Bandit + Safety) | DEV |
-| `dev-build-images` | Build das imagens (uma única vez) | DEV |
-| `staging-deploy` | Deploy em staging e testes funcionais | STG |
-| `deploy-production` | Deploy em produção (Kubernetes) | PRD |
+| Job | Ambiente | Descrição |
+|-----|----------|-----------|
+| `dev-unit-tests` | DEV | Testes unitários |
+| `dev-integration-tests` | DEV | Testes de integração |
+| `dev-build-images` | DEV | Build e push para Docker Hub |
+| `staging-deploy` | STG | Deploy + testes funcionais + testes segurança |
+| `deploy-production` | PRD | Deploy no Kubernetes (self-hosted) |
 
 ### Fluxo do Pipeline
 [Push/PR] → [dev-unit-tests] → [dev-integration-tests] → [dev-security-tests] → [dev-build-images] → [staging-deploy] → [deploy-production]
+
+### Ferramentas de Segurança no STG
+
+| Ferramenta | Finalidade | Falha se... |
+|------------|------------|--------------|
+| **Bandit** | Análise de segurança do código | Encontrar HIGH severity |
+| **Safety** | Vulnerabilidades em bibliotecas | Encontrar vulnerabilidades |
+| **pip-audit** | Auditoria de dependências | Encontrar vulnerabilidades |
+| **Trivy** | Vulnerabilidades em containers | Encontrar CRITICAL/HIGH |
+| **SonarQube** | Qualidade de código | Apenas análise (não falha) |
 
 O deploy em produção utiliza um **self-hosted runner** configurado na VM com MicroK8s. O job baixa as imagens construídas no DEV e realiza o deploy no Kubernetes.
 
@@ -165,7 +181,7 @@ curl http://product.local.prod/health
 | Testes unitários | 55 | ok |
 | Testes de integração | ~11 | ok |
 | Testes funcionais | 11 | ok |
-| Testes de segurança | Bandit + Safety | ok |
+| Testes de segurança | Bandit + Safety + pip-audit| ok |
 
 ### 7.1 Testes de Segurança
 
@@ -173,17 +189,27 @@ curl http://product.local.prod/health
 
 O projeto inclui testes de segurança automatizados:
 
-- **Bandit**: análise de vulnerabilidades no código (253 Low, 25 Medium issues em testes - aceitáveis)
-- **Safety**: verificação de vulnerabilidades em bibliotecas (corrigidas)
-
 ```bash
 make test-vulnerability
 ```
 
-| Ferramenta| Resultado | Status |
-|-----------|-----------|--------|
-|Bandit|230 Low, 25 Medium issues (todos em arquivos de teste)|Aceitável|
-|Safety|Nenhuma vulnerabilidade crítica|OK|
+| Ferramenta | Finalidade | Comando |
+|------------|------------|---------|
+| **Bandit** | Análise de segurança do código | `bandit -c .bandit -r user-service/ product-service/` |
+| **Safety** | Vulnerabilidades em bibliotecas | `safety check -r requirements/staging_requirements.txt` |
+| **pip-audit** | Auditoria de dependências | `pip-audit -r requirements/staging_requirements.txt` |
+| **Trivy** | Vulnerabilidades em containers | `trivy image --severity CRITICAL,HIGH <image>` |
+| **SonarQube** | Qualidade de código | Executado no CI |
+
+### Principais resultados
+- Bandit: Nenhuma vulnerabilidade HIGH
+- Safety: Nenhuma vulnerabilidade
+- pip-audit: Nenhuma vulnerabilidade
+- Trivy: Vulnerabilidades do sistema base 
+- SonarQube: Análise disponível em http://localhost:9000
+
+![alt text](documentation/sonarcloud_local.png)
+*Figura 3: Sonarqube overview*
 
 ## 8. Monitoramento com Jaeger
 O Projeto utilzar Jaeger para rastrear a requisição de serviços
@@ -394,13 +420,14 @@ Monitoring (Jaeger) implementado
 
 ## 12. Self-Hosted Runner
 
-O deploy em produção utiliza um **self-hosted runner** configurado na VM com MicroK8s. Isso permite que o GitHub Actions execute comandos `kubectl` e `docker` diretamente no cluster.
-
+O deploy em produção utiliza um **self-hosted runner** configurado na VM com MicroK8s. 
 ### Configuração do Runner
 
 ```bash
 # Na VM com MicroK8s
-mkdir actions-runner && cd actions-runner
+mkdir -p ~/actions-runner && cd ~/actions-runner
+curl -o actions-runner-linux-x64-2.323.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.323.0/actions-runner-linux-x64-2.323.0.tar.gz
+tar xzf ./actions-runner-linux-x64-2.323.0.tar.gz
 ./config.sh --url https://github.com/guhigawa/Projeto-final-DevOps --token <TOKEN>
 sudo ./svc.sh install
 sudo ./svc.sh start

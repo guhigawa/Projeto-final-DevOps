@@ -15,8 +15,6 @@ USER_FUNC_EXIT=$?
 docker-compose -f docker-compose.staging.yml --env-file .env.staging exec -T product-service pytest products_tests/test_product_functional.py -v
 PRODUCT_FUNC_EXIT=$?
 
-#cleaning
-docker-compose -f docker-compose.staging.yml --env-file .env.staging down -v
 
 #Results
 if [ $USER_FUNC_EXIT -eq 0 ] && [ $PRODUCT_FUNC_EXIT -eq 0 ]; then

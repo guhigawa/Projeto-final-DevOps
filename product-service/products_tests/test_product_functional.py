@@ -133,21 +133,22 @@ class ProductFunctionalHelpers:
     @staticmethod
     def create_test_user() -> Dict:
         email = ProductFunctionalHelpers.generate_unique_email()
+        test_password = os.environ.get('FUNCTIONAL_TEST_PASSWORD', 'FuncTest@123')
 
-        register_response = requests.post(f"{USER_SERVICE_URL}/register", json={"email": email, "password": "FuncTest@123"},timeout=10)
+        register_response = requests.post(f"{USER_SERVICE_URL}/register", json={"email": email, "password": test_password},timeout=10)
 
         if register_response.status_code not in [200,201]:
             raise Exception(f"User registration failed during product functional test setup: {register_response.text}")
         time.sleep(1)
 
-        login_response = requests.post(f"{USER_SERVICE_URL}/login",json={"email": email, "password": "FuncTest@123"},timeout=10)
+        login_response = requests.post(f"{USER_SERVICE_URL}/login",json={"email": email, "password": test_password},timeout=10)
 
         if login_response.status_code != 200:
             # Retry once
             time.sleep(1)
             login_response = requests.post(
                 f"{USER_SERVICE_URL}/login",
-                json={"email": email, "password": "FuncTest@123"},
+                json={"email": email, "password": test_password},
                 timeout=10
             )
         

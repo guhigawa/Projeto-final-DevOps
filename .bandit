@@ -1,0 +1,18 @@
+# Exclude test directories
+exclude_dirs:
+  - user-service/tests
+  - product-service/products_tests
+  - user-service/tests/evidence
+  - product-service/products_tests/products_evidence
+
+# Skip low severity issues from test files
+skips:
+  - B101  # assert_used (normal in tests)
+  - B106  # hardcoded_password_funcarg (test data)
+  - B113  # request_without_timeout (tests only)
+
+# Only fail on HIGH severity issues
+severity: high
+
+# Show only issues that would cause failure
+verbose: False

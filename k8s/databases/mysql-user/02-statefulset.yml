@@ -20,6 +20,7 @@ spec:
         component: database
         service: user
     spec: 
+      automountServiceAccountToken: false
       terminationGracePeriodSeconds: 10
       containers:
       - name: mysql
@@ -76,9 +77,11 @@ spec:
           requests:
             memory: "512Mi"
             cpu: "250m"
+            ephemeral-storage: "1Gi"
           limits:
             memory: "1Gi"
             cpu: "500m"
+            ephemeral-storage: "2Gi"
         securityContext:
           runAsUser: 1001
           allowPrivilegeEscalation: false

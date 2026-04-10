@@ -182,12 +182,12 @@ class TestUserServiceAuthentication:
             pytest.fail(f"Test failed due to exception: {str(e)}")
     
 
-    def test_user_login_wrong_password(self, test_helpers, evidence_logger, registered_user):
+    def test_user_login_wrong_password(self, test_helpers, evidence_logger, registered_user, wrong_password):
         test_name = "Login with wrong password"
         try:
             email, _ = registered_user
 
-            login_response = test_helpers.login_user(email=email, password="Wrongpassword@123")
+            login_response = test_helpers.login_user(email=email, password=wrong_password)
 
             success = login_response.status_code == 401
             details = f"Expected 401, got {login_response.status_code}"
@@ -308,14 +308,14 @@ class TestUserServiceProfile:
 class TestUserServiceSecurity:
 
 
-    def test_registration_weak_password(self, test_helpers, evidence_logger):
+    def test_registration_weak_password(self, test_helpers, evidence_logger, weak_passwords_list):
         test_name = "Registration with weak password"
         try:
-            email = test_helpers.generate_unique_email()
-
-            response, _ = test_helpers.register_user(
-                email = email,
-                password = "weak"
+            for weak_pass in weak_passwords_list:
+                email = test_helpers.generate_unique_email()
+                response, _ = test_helpers.register_user(
+                    email=email,
+                    password=weak_pass
             )
 
             success = response.status_code == 400
@@ -328,13 +328,13 @@ class TestUserServiceSecurity:
             pytest.fail(f"Test failed: {str(e)}")
     
 
-    def test_registration_invalid_email(self, test_helpers, evidence_logger):
+    def test_registration_invalid_email(self, test_helpers, evidence_logger, valid_password):
         test_name = "Registration with invalid email"
 
         try:
             response,_ = test_helpers.register_user(
                 email = "invalid-email",
-                password = "StrongPass@123"
+                password = valid_password
             )
 
             success = response.status_code == 400
