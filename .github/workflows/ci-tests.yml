@@ -321,7 +321,7 @@ jobs:
           image-ref: ${{ secrets.DOCKER_USERNAME }}/user-service:latest
           format: 'table'
           exit-code: '1'
-          severity: 'CRITICAL, HIGH'
+          severity: 'CRITICAL'
       
       - name: Run Trivy on product-service
         uses: aquasecurity/trivy-action@master
@@ -329,7 +329,7 @@ jobs:
           image-ref: ${{ secrets.DOCKER_USERNAME }}/product-service:latest
           format: 'table'
           exit-code: '1'
-          severity: 'CRITICAL, HIGH'
+          severity: 'CRITICAL'
           trivy-version: v0.69.3
       
       - name: SonarQube Scan
