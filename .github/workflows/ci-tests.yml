@@ -265,7 +265,10 @@ jobs:
 
       - name: Deploy staging environment with docker-compose
         run: |
-          docker-compose -f docker-compose.staging.yml --env-file .env.staging up -d
+          cp requirements/staging_requirements.txt user-service/requirements.txt
+          cp requirements/staging_requirements.txt product-service/requirements.txt
+
+          docker-compose -f docker-compose.staging.yml --env-file .env.staging up -d --build
           sleep 30
 
       - name: Verify staging deployment
@@ -295,8 +298,8 @@ jobs:
 
       - name: Run functional tests in staging environment 
         run: |
-          docker-compose -f docker-compose.staging.yml exec -T user-service pytest tests/test_functional.py -v
-          docker-compose -f docker-compose.staging.yml exec -T product-service pytest products_tests/test_product_functional.py -v
+          docker-compose -f docker-compose.staging.yml --env-file .env.staging exec -T user-service pytest tests/test_functional.py -v
+          docker-compose -f docker-compose.staging.yml --env-file .env.staging exec -T product-service pytest products_tests/test_product_functional.py -v
 
       - name: Install security tools
         run: |
