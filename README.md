@@ -152,7 +152,7 @@ curl http://localhost:3002/health
 | `deploy-production` | PRD | Deploy no Kubernetes (self-hosted) |
 
 ### Fluxo do Pipeline
-[Push/PR] → [dev-unit-tests] → [dev-integration-tests] → [dev-security-tests] → [dev-build-images] → [staging-deploy] → [deploy-production]
+[Push/PR] → [dev-unit-tests] → [dev-integration-tests] → [dev-build-images] → [staging-deploy + security testes] → [deploy-production]
 
 ### Ferramentas de Segurança no STG
 
