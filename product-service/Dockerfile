@@ -23,7 +23,8 @@ WORKDIR /product-service
 
 COPY requirements.txt ./requirements.txt
 
-RUN pip install --no-cache-dir setuptools==79.0.1 wheel==0.46.3 && \
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir setuptools==79.0.1 wheel==0.46.3 && \
     pip install --no-cache-dir -r requirements.txt && \
     pip install --upgrade wheel jaraco.context
 
