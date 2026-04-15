@@ -2,7 +2,7 @@ import pytest, sys, os
 from unittest.mock import Mock, patch, MagicMock
 from unittest import mock
 
-sys.path.insert(0, '/home/ubuntu/Downloads/Projeto_final/product-service')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../product-service')))
 
 
 from product_app import app, token_required, get_db_connection

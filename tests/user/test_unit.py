@@ -1,7 +1,7 @@
 import pytest, sys, os
 from unittest.mock import Mock, patch, MagicMock
 
-sys.path.insert(0, '/home/ubuntu/Downloads/Projeto_final/user-service')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../user-service')))
 
 from app import app, token_required, get_db_connection, token_blacklist, blacklist_expiry
 from pymysql import Error

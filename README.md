@@ -85,6 +85,7 @@ Apesar de público, **nenhuma credencial sensível** está no repositório:
 
 ## 4. Estrutura de Diretórios
 Projeto_final
+.
 ├── actions-runner
 ├── .bandit
 ├── docker-compose.sonarqube.yml
@@ -102,14 +103,43 @@ Projeto_final
 ├── Makefile
 ├── monitoring
 ├── product-service
+├── .pytest_cache
 ├── README.md
 ├── requirements
 ├── requirements.txt.backup
 ├── scripts
 ├── .sonar
+├── sonar-project.properties
+├── tests
+├── .trivyignore
 ├── user-service
 ├── .venv
 └── .vscode
+
+## 4.1 Comandos Makefile Disponíveis
+
+O projeto utiliza um Makefile para automatizar tarefas comuns:
+
+| Comando | Descrição |
+|---------|-----------|
+| `make setup` | Cria `.venv` e instala dependências |
+| `make dev` | Sobe ambiente DEV (Docker Compose) |
+| `make staging` | Sobe ambiente STAGING |
+| `make prod` | Deploy para produção (K8s) |
+| `make test-unit` | Executa testes unitários (55 testes) |
+| `make test-integration` | Executa testes de integração (30 testes) |
+| `make test-functional` | Executa testes funcionais (11 testes) |
+| `make test-all` | Executa TODOS os testes (96 testes) |
+| `make test-security` | Executa testes de segurança (Bandit, Safety, pip-audit) |
+| `make test-security-trivy` | Escaneia containers com Trivy |
+| `make sonar-start` | Inicia SonarQube local |
+| `make sonar-stop` | Para SonarQube local |
+| `make sonar-scan` | Executa análise SonarQube |
+| `make clean` | Limpa arquivos de cache (`__pycache__`, `.pytest_cache`) |
+| `make clean-containers` | Para containers DEV + STAGING |
+| `make clean-prod` | Remove recursos do Kubernetes |
+| `make clean-all` | Limpa TUDO (cache + containers + K8s) |
+| `make zip` | Cria ZIP para entrega |
 
 ## 5. Configuração dos Ambientes
 
@@ -135,6 +165,24 @@ make dev
 curl http://localhost:3001/health
 curl http://localhost:3002/health
 ```
+## 5.2 Variáveis de Ambiente
+
+### Desenvolvimento (`.env`)
+```bash
+SECRET_KEY=sua_chave_secreta_jwt
+MYSQL_HOST=localhost
+MYSQL_USER=user
+MYSQL_PASSWORD=password
+MYSQL_DATABASE=auth_db
+MYSQL_PORT=3306
+```
+### Staging(.env.staging)
+STAGING_SECRET_KEY=chave_staging
+STAGING_USER_MYSQL_PASSWORD=senha_user
+STAGING_PRODUCT_MYSQL_PASSWORD=senha_product
+STAGING_DB_ROOT_PASSWORD=senha_root
+STAGING_USER_PORT=4001
+STAGING_PRODUCT_PORT=4002
 
 ## 6. Pipeline CI/CD
 
@@ -176,12 +224,12 @@ curl http://product.local.prod/health
 
 ## 7. Testes manuais e Testes automatizados
 
-| Tipo | Quantidade | Status |
-|------|------------|--------|
-| Testes unitários | 55 | ok |
-| Testes de integração | ~11 | ok |
-| Testes funcionais | 11 | ok |
-| Testes de segurança | Bandit + Safety + pip-audit| ok |
+| Tipo | Quantidade | Status | Comando |
+|------|------------|--------|---------|
+| Testes unitários | 55 | ok | `make test-unit` |
+| Testes de integração | 30 | ok | `make test-integration` |
+| Testes funcionais | 11 | ok | `make test-functional` |
+| **TOTAL** | **96** | ok | `make test-all` |
 
 ### 7.1 Testes de Segurança
 
@@ -198,7 +246,7 @@ make test-vulnerability
 | **Bandit** | Análise de segurança do código | `bandit -c .bandit -r user-service/ product-service/` |
 | **Safety** | Vulnerabilidades em bibliotecas | `safety check -r requirements/staging_requirements.txt` |
 | **pip-audit** | Auditoria de dependências | `pip-audit -r requirements/staging_requirements.txt` |
-| **Trivy** | Vulnerabilidades em containers | `trivy image --severity CRITICAL,HIGH <image>` |
+| **Trivy** | Vulnerabilidades em containers | `trivy image --severity CRITICAL,HIGH, MEDIUM <image>` |
 | **SonarQube** | Qualidade de código | Executado no CI |
 
 ### Principais resultados
