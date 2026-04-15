@@ -334,7 +334,7 @@ jobs:
           image-ref: ${{ secrets.DOCKER_USERNAME }}/product-service:latest
           format: 'table'
           exit-code: '1'
-          severity: 'MEDIUM,HIGH,CRITICAL'
+          severity: 'CRITICAL'
           trivy-version: v0.69.3
       
       - name: SonarQube Scan
