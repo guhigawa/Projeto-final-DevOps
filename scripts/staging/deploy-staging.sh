@@ -19,6 +19,9 @@ cd "$PROJECT_ROOT"
 cp requirements/staging_requirements.txt user-service/requirements.txt
 cp requirements/staging_requirements.txt product-service/requirements.txt
 
+cp -r tests/user user-service/tests
+cp -r tests/product product-service/tests
+
 #Build and start the staging environment
 echo "building and starting the staging environment"
 docker-compose -f docker-compose.staging.yml --env-file .env.staging up -d --build 

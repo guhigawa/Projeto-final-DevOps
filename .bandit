@@ -4,15 +4,17 @@ exclude_dirs:
   - product-service/products_tests
   - user-service/tests/evidence
   - product-service/products_tests/products_evidence
+  - tests/
 
 # Skip low severity issues from test files
 skips:
   - B101  # assert_used (normal in tests)
   - B106  # hardcoded_password_funcarg (test data)
   - B113  # request_without_timeout (tests only)
+  - B104  # hardcoded_bind_all_interfaces (needed for Docker/K8s)
 
 # Only fail on HIGH severity issues
-severity: high
+severity: medium
 
 # Show only issues that would cause failure
 verbose: False
