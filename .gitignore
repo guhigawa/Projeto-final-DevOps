@@ -31,6 +31,8 @@ generate_hashed_password.py
 k8s/02-secrets-producao.yml
 actions-runner/
 .sonar/
+.scannerwork/
+sonar-report.json
 **/products_evidence/
 **/evidence/
 requirements.txt.backup

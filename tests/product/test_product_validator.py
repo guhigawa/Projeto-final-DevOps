@@ -1,5 +1,7 @@
-import pytest
+import pytest, sys, os
 from product_validator import ProductValidator
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../product-service')))
 
 class TestProductValidator:
 

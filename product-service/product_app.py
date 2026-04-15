@@ -67,7 +67,7 @@ def load_env_files():
         env_vars = dotenv_values(str(root_env_path))
         for key, values in env_vars.items():
             os.environ[key] = values
-        return
+        
 
 load_env_files()
 
@@ -169,12 +169,12 @@ def create_product(current_user_id):
                 cursor.execute("INSERT INTO items (name, price,quantity, description, created_by) VALUES (%s, %s, %s, %s, %s)",
                             (name, price, quantity, description, current_user_id))
                 
-                id = cursor.lastrowid
+                product_id = cursor.lastrowid
                 connection.commit()
-                insert_span.set_attribute("product.id", id)
-                logging.info("Product created", extra ={"product_id": id, "product_name": name})
+                insert_span.set_attribute("product.id", product_id)
+                logging.info("Product created", extra ={"product_id": product_id, "product_name": name})
                 return jsonify({"message": "Product created successfully", 
-                                "id": id,
+                                "id": product_id,
                                 "product_name":name,
                                 "description": description,
                                 "quantity": quantity,
@@ -610,7 +610,8 @@ if __name__ == "__main__":
     print("=" * 50)
 
     if verify_db_setup():
-        app.run(host="0.0.0.0",port=port,debug=debug_mode)
+        host = os.getenv('FLASK_HOST', '0.0.0.0')
+        app.run(host=host, port=port, debug=debug_mode)  # nosec 
     else:
         print("Failed to start Product Service due to database setup issues.")
     

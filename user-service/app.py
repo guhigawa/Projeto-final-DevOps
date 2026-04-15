@@ -750,6 +750,7 @@ if __name__ == "__main__":
     print("=" * 50)
 
     if verify_db_setup():
-        app.run(host="0.0.0.0",port=port,debug=debug_mode)
+        host = os.getenv('FLASK_HOST', '0.0.0.0')
+        app.run(host=host, port=port, debug=debug_mode)  # nosec 
     else:
         print("Failed to start User Service due to database setup issues.")

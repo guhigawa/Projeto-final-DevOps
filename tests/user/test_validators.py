@@ -1,5 +1,7 @@
-import pytest
+import pytest, sys, os
 from validators import Validators
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../user-service')))
 
 class TestValidators:
 

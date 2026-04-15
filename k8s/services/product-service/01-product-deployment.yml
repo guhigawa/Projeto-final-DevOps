@@ -57,6 +57,8 @@ spec:
             configMapKeyRef:
               name: pd-app-config
               key: PRODUCT_MYSQL_PORT
+        - name: FLASK_HOST
+          value: "127.0.0.1"
         - name: FLASK_ENV
           valueFrom:
             configMapKeyRef:

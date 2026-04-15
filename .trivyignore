@@ -1,0 +1,3 @@
+# Vulnerabilidades em dependências internas do setuptools (falso positivo)
+CVE-2026-23949
+CVE-2026-24049

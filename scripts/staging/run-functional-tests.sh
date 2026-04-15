@@ -12,7 +12,7 @@ docker-compose -f docker-compose.staging.yml --env-file .env.staging exec -T use
 USER_FUNC_EXIT=$?
 
 #Product-service functional tests
-docker-compose -f docker-compose.staging.yml --env-file .env.staging exec -T product-service pytest products_tests/test_product_functional.py -v
+docker-compose -f docker-compose.staging.yml --env-file .env.staging exec -T product-service pytest tests/test_product_functional.py -v
 PRODUCT_FUNC_EXIT=$?
 
 

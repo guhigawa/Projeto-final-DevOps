@@ -1,4 +1,6 @@
-import pytest, requests, os
+import pytest, requests, os, sys
+
+sys.path.insert(0, '/home/ubuntu/Downloads/Projeto_final/product-service')
 
 from product_test_helpers.auth_helpers import ProductAuthHelpers
 from product_test_helpers.product_tester_helpers import TestProductHelpers

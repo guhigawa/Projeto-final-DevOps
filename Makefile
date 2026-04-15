@@ -68,7 +68,7 @@ test-all: test-unit test-integration test-functional test-security
 
 test-security-bandit:
 	@echo "Executing Bandit security tests"
-	@. .venv/bin/activate && bandit -c .bandit -r user-service/ product-service/ --severity-level high || true
+	@. .venv/bin/activate && bandit -c .bandit -r user-service/ product-service/ --severity-level medium || true
 
 test-security-safety:
 	@echo "Executing Safety vulnerability scan"
@@ -83,10 +83,10 @@ test-security: test-security-bandit test-security-safety test-security-pipaudit
 
 test-security-trivy:
 	@echo "Executing Trivy vulnerability scan on images"
-	@echo "Scanning user-service image..."
+	@echo "Scanning user-service image"
 	@trivy image --severity HIGH,CRITICAL --exit-code 0 --no-progress projeto_final-user-service:latest || true
 	@echo ""
-	@echo "Scanning product-service image..."
+	@echo "Scanning product-service image"
 	@trivy image --severity HIGH,CRITICAL --exit-code 0 --no-progress projeto_final-product-service:latest || true
 
 sonar-start:
@@ -147,6 +147,11 @@ clean:
 
 # Clean containers
 clean-containers:
+	@echo "Removing test directories from services"
+	@rm -rf user-service/tests
+	@rm -rf product-service/tests
+	@echo "Test directories removed"
+
 	@echo "Stopping DEV and STAGING containers"
 	@docker-compose -f docker-compose.yml down 2>/dev/null || true
 	@docker-compose -f docker-compose.staging.yml --env-file .env.staging down -v 2>/dev/null || true
