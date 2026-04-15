@@ -209,7 +209,7 @@ STAGING_PRODUCT_PORT=4002
 | **Bandit** | Análise de segurança do código | Encontrar HIGH severity |
 | **Safety** | Vulnerabilidades em bibliotecas | Encontrar vulnerabilidades |
 | **pip-audit** | Auditoria de dependências | Encontrar vulnerabilidades |
-| **Trivy** | Vulnerabilidades em containers | Encontrar CRITICAL/HIGH |
+| **Trivy** | Vulnerabilidades em containers | Encontrar CRITICAL |
 | **SonarQube** | Qualidade de código | Apenas análise (não falha) |
 
 O deploy em produção utiliza um **self-hosted runner** configurado na VM com MicroK8s. O job baixa as imagens construídas no DEV e realiza o deploy no Kubernetes.
