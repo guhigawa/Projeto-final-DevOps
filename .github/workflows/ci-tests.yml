@@ -45,7 +45,7 @@ jobs:
       - name: Run unit tests
         run: |
           pytest tests/user/test_unit.py tests/user/test_validators.py -v
-          pytest tests/product/test_unit.py tests/product/test_validator.py -v
+          pytest tests/product/test_product_unit.py tests/product/test_product_validator.py -v
       
       - name: Upload coverage reports
         if: always()
@@ -157,7 +157,7 @@ jobs:
       - name: Run integration tests
         run: |
             pytest tests/user/test_integration.py -v
-            pytest tests/product/test_integration.py -v
+            pytest tests/product/test_product_integration.py -v
 
   # job 3 - build images for staging and production
   dev-build-images:
