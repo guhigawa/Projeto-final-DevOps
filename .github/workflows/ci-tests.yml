@@ -368,10 +368,28 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
+          # DEBUG: Verificar token
+          echo "=== DEBUG ==="
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "SONAR_TOKEN is NOT SET"
+            exit 1
+          fi
+          echo "SONAR_TOKEN is set (length: ${#SONAR_TOKEN})"
+          
+          # Testar token na API
+          echo "Testing token against SonarQube..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/api/system/info -u "$SONAR_TOKEN:")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Token is valid"
+          else
+            echo "Token invalid (HTTP $HTTP_CODE)"
+            exit 1
+          fi
           # Run sonar-scanner
           docker run --rm \
             --network host \
             -v $(pwd):/usr/src \
+            -e SONAR_TOKEN=$SONAR_TOKEN \
             sonarsource/sonar-scanner-cli:latest \
             -Dsonar.projectKey=projeto-final-devops \
             -Dsonar.sources=user-service,product-service \
