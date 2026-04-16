@@ -166,7 +166,9 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
     needs: [dev-unit-tests, dev-integration-tests]
-    if: success() && github.ref == 'refs/heads/main'
+    if: |
+      github.ref == 'refs/heads/main' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     steps:
       - uses: actions/checkout@v4
       - name: Login to Docker Hub
@@ -368,6 +370,7 @@ jobs:
         run: |
           # Run sonar-scanner
           docker run --rm \
+            --network host \
             -v $(pwd):/usr/src \
             sonarsource/sonar-scanner-cli:latest \
             -Dsonar.projectKey=projeto-final-devops \
