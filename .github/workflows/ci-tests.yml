@@ -338,31 +338,6 @@ jobs:
           exit-code: '1'
           severity: 'CRITICAL'
           trivy-version: v0.69.3
-      
-      - name: Start SonarQube with docker-compose
-        run: |
-          docker-compose -f docker-compose.sonarqube.yml up -d
-          echo "Waiting for SonarQube to be ready"
-          for i in {1..30}; do
-            
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/api/system/status || echo "000")
-            if [ "$STATUS" = "200" ]; then
-              
-              HEALTH=$(curl -s http://localhost:9000/api/system/status | jq -r '.status' 2>/dev/null || echo "UNKNOWN")
-              if [ "$HEALTH" = "UP" ]; then
-                echo "SonarQube is ready (Status: $HEALTH)"
-                break
-              fi
-            fi
-            echo "Waiting for SonarQube ($i/30) - HTTP $STATUS"
-            sleep 5
-          done
-    
-          # Verificação final
-          if ! curl -s -f http://localhost:9000/api/system/status > /dev/null; then
-            echo "SonarQube failed to start - skipping scan"
-            exit 0
-          fi
 
       - name: SonarQube Scan
         env:
