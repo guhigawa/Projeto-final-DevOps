@@ -391,7 +391,7 @@ jobs:
             -v $(pwd):/usr/src \
             -e SONAR_TOKEN=$SONAR_TOKEN \
             sonarsource/sonar-scanner-cli:latest \
-            -Dsonar.projectKey=projeto-final-devops \
+            -Dsonar.projectKey=Projeto-final-DevOps \
             -Dsonar.sources=user-service,product-service \
             -Dsonar.exclusions=**/tests/**,**/products_tests/**,**/venv/**,**/__pycache__/** \
             -Dsonar.host.url=http://localhost:9000 \
