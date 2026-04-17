@@ -218,15 +218,18 @@ jobs:
           echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
       
       - name: Start SonarQube with docker-compose
+        env:
+          SONAR_ADMIN_PASSWORD: ${{ secrets.SONAR_ADMIN_PASSWORD }}
         run: |
           docker-compose -f docker-compose.sonarqube.yml up -d
-          # Wait for SonarQube to be ready
           for i in {1..60}; do
-            if curl -s -f http://localhost:9000 > /dev/null 2>&1; then
-              echo "SonarQube is ready"
+            STATUS=$(curl -s http://localhost:9000/api/system/status \
+              | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null)
+            if [ "$STATUS" = "UP" ]; then
+              echo "SonarQube está UP"
               break
             fi
-            echo "Waiting for SonarQube(${i}/60)"
+            echo "Aguardando SonarQube... ($i/60)"
             sleep 5
           done
 
@@ -338,58 +341,57 @@ jobs:
           exit-code: '1'
           severity: 'CRITICAL'
           trivy-version: v0.69.3
+      
+      - name: Setup SonarQube token
+        env:
+          SONAR_ADMIN_PASSWORD: ${{ secrets.SONAR_ADMIN_PASSWORD }}
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "http://localhost:9000/api/users/change_password" \
+            -u "admin:admin" \
+            -d "login=admin&previousPassword=admin&password=$SONAR_ADMIN_PASSWORD")
+          
+          if [ "$HTTP_CODE" != "204" ]; then
+            echo "Aviso: troca de senha retornou HTTP $HTTP_CODE (pode já ter sido trocada)"
+          else
+            echo "Senha do admin atualizada com sucesso"
+          fi
+
+          # Gera o Global Analysis Token usando a senha do secret
+          RESPONSE=$(curl -s -X POST "http://localhost:9000/api/user_tokens/generate" \
+            -u "admin:$SONAR_ADMIN_PASSWORD" \
+            -d "name=github-actions-token&type=GLOBAL_ANALYSIS_TOKEN")
+          
+          echo "Token gerado: $(echo $RESPONSE | python3 -c "import sys,json; d=json.load(sys.stdin); print('OK' if 'token' in d else 'ERRO: ' + str(d))")"
+
+          GENERATED_TOKEN=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+          
+          if [ -z "$GENERATED_TOKEN" ]; then
+            echo "Falha ao gerar token"
+            exit 1
+          fi
+
+          # Disponibiliza o token para os próximos steps sem expor no log
+          echo "::add-mask::$GENERATED_TOKEN"
+          echo "SONAR_ANALYSIS_TOKEN=$GENERATED_TOKEN" >> $GITHUB_ENV
+          echo "Token de análise gerado e mascarado com sucesso"
 
       - name: SonarQube Scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          # DEBUG: Verificar token
-          echo "=== DEBUG ==="
-          if [ -z "$SONAR_TOKEN" ]; then
-            echo "SONAR_TOKEN is NOT SET"
-            exit 1
-          fi
-          echo "SONAR_TOKEN is set (length: ${#SONAR_TOKEN})"
-          
-          # Testar token na API
-          echo "Testing token against SonarQube..."
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/api/authentication/validate -u "$SONAR_TOKEN:")
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "Token is valid"
-          else
-            echo "Token invalid (HTTP $HTTP_CODE)"
-            exit 1
-          fi
-                  
-          # Testa exatamente o endpoint que o scanner usa, com o mesmo formato de auth
-          HTTP_V2=$(curl -s -o /tmp/v2_response.json -w "%{http_code}" \
-            http://localhost:9000/api/v2/analysis/version \
-            -H "Authorization: Bearer $SONAR_TOKEN")
-          
-          echo "API v2 response: $HTTP_V2"
-          cat /tmp/v2_response.json
-          
-          if [ "$HTTP_V2" != "200" ]; then
-            echo "ERRO: Token não tem permissão para API v2."
-            echo "Solução: Gere um 'Global Analysis Token' no SonarQube e atualize o secret."
-            exit 1
-          fi
-          # Run sonar-scanner
           docker run --rm \
             --network host \
             -v $(pwd):/usr/src \
-            -e SONAR_TOKEN=$SONAR_TOKEN \
+            -e SONAR_TOKEN=${{ env.SONAR_ANALYSIS_TOKEN }} \
             sonarsource/sonar-scanner-cli:latest \
             -Dsonar.projectKey=Projeto-final-DevOps \
             -Dsonar.sources=user-service,product-service \
             -Dsonar.exclusions=**/tests/**,**/products_tests/**,**/venv/**,**/__pycache__/** \
-            -Dsonar.host.url=http://localhost:9000 \
-        #-Dsonar.token=$SONAR_TOKEN
-      
+            -Dsonar.host.url=http://localhost:9000
+
       - name: SonarQube URL
         run: |
-          echo "SonarQube Dashboard: http://localhost:9000" >> $GITHUB_STEP_SUMMARY
-          echo "Login: admin / admin" >> $GITHUB_STEP_SUMMARY
+          echo "## SonarQube Dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "URL: http://localhost:9000" >> $GITHUB_STEP_SUMMARY
       
       - name: Record deployment
         if: success()
