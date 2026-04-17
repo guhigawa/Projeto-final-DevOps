@@ -222,15 +222,37 @@ jobs:
           SONAR_ADMIN_PASSWORD: ${{ secrets.SONAR_ADMIN_PASSWORD }}
         run: |
           docker-compose -f docker-compose.sonarqube.yml up -d
-          for i in {1..60}; do
-            STATUS=$(curl -s http://localhost:9000/api/system/status \
-              | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null)
+
+          echo "Aguardando SonarQube inicializar..."
+          MAX_RETRIES=90        
+          RETRY_INTERVAL=10
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            STATUS=$(curl -s --max-time 5 http://localhost:9000/api/system/status \
+              | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "UNAVAILABLE")
+            
+            echo "Tentativa $i/$MAX_RETRIES - Status: $STATUS"
+            
             if [ "$STATUS" = "UP" ]; then
-              echo "SonarQube está UP"
-              break
+              echo "SonarQube está UP e pronto!"
+              exit 0
             fi
-            echo "Aguardando SonarQube... ($i/60)"
-            sleep 5
+
+            # Mostra logs do container a cada 20 tentativas para debug
+            if [ $((i % 20)) -eq 0 ]; then
+              echo "=== Logs do SonarQube ==="
+              docker logs sonarqube --tail=20 2>&1 || true
+              echo "========================="
+            fi
+
+            if [ "$i" -eq "$MAX_RETRIES" ]; then
+              echo "ERRO: SonarQube não ficou UP após $((MAX_RETRIES * RETRY_INTERVAL))s"
+              echo "=== Logs finais ==="
+              docker logs sonarqube --tail=50 2>&1 || true
+              exit 1
+            fi
+
+            sleep $RETRY_INTERVAL
           done
 
       - name: Login to Docker Hub
