@@ -360,6 +360,20 @@ jobs:
             echo "Token invalid (HTTP $HTTP_CODE)"
             exit 1
           fi
+                  
+          # Testa exatamente o endpoint que o scanner usa, com o mesmo formato de auth
+          HTTP_V2=$(curl -s -o /tmp/v2_response.json -w "%{http_code}" \
+            http://localhost:9000/api/v2/analysis/version \
+            -H "Authorization: Bearer $SONAR_TOKEN")
+          
+          echo "API v2 response: $HTTP_V2"
+          cat /tmp/v2_response.json
+          
+          if [ "$HTTP_V2" != "200" ]; then
+            echo "ERRO: Token não tem permissão para API v2."
+            echo "Solução: Gere um 'Global Analysis Token' no SonarQube e atualize o secret."
+            exit 1
+          fi
           # Run sonar-scanner
           docker run --rm \
             --network host \
