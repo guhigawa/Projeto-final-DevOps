@@ -221,9 +221,10 @@ jobs:
         env:
           SONAR_ADMIN_PASSWORD: ${{ secrets.SONAR_ADMIN_PASSWORD }}
         run: |
+          docker pull sonarqube:community
           docker-compose -f docker-compose.sonarqube.yml up -d
 
-          echo "Aguardando SonarQube inicializar..."
+          echo "Aguardando SonarQube inicializar"
           MAX_RETRIES=90        
           RETRY_INTERVAL=10
 
@@ -236,6 +237,12 @@ jobs:
             if [ "$STATUS" = "UP" ]; then
               echo "SonarQube está UP e pronto!"
               exit 0
+            fi
+
+            if [ "$STATUS" = "DB_MIGRATION_NEEDED" ]; then
+              echo "Banco precisa de migração, triggering migration..."
+              curl -s -X POST http://localhost:9000/api/system/migrate_db \
+                -u "admin:admin" || true
             fi
 
             # Mostra logs do container a cada 20 tentativas para debug

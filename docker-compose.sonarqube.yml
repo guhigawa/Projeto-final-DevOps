@@ -7,8 +7,6 @@ services:
       - "9000:9000"
     environment:
       - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
-      - SONAR_SECURITY_REALM=native
-      - SONAR_WEB_SYSTEMPASSCODE=${SONAR_ADMIN_PASSWORD}
     volumes:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
