@@ -166,7 +166,9 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
     needs: [dev-unit-tests, dev-integration-tests]
-    if: success() && github.ref == 'refs/heads/main'
+    if: |
+      github.ref == 'refs/heads/main' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     steps:
       - uses: actions/checkout@v4
       - name: Login to Docker Hub
@@ -216,16 +218,48 @@ jobs:
           echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
       
       - name: Start SonarQube with docker-compose
+        env:
+          SONAR_ADMIN_PASSWORD: ${{ secrets.SONAR_ADMIN_PASSWORD }}
         run: |
+          docker pull sonarqube:community
           docker-compose -f docker-compose.sonarqube.yml up -d
-          # Wait for SonarQube to be ready
-          for i in {1..60}; do
-            if curl -s -f http://localhost:9000 > /dev/null 2>&1; then
-              echo "SonarQube is ready"
-              break
+
+          echo "Aguardando SonarQube inicializar"
+          MAX_RETRIES=90        
+          RETRY_INTERVAL=10
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            STATUS=$(curl -s --max-time 5 http://localhost:9000/api/system/status \
+              | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "UNAVAILABLE")
+            
+            echo "Tentativa $i/$MAX_RETRIES - Status: $STATUS"
+            
+            if [ "$STATUS" = "UP" ]; then
+              echo "SonarQube está UP e pronto!"
+              exit 0
             fi
-            echo "Waiting for SonarQube(${i}/60)"
-            sleep 5
+
+            if [ "$STATUS" = "DB_MIGRATION_NEEDED" ]; then
+              echo "Banco precisa de migração, triggering migration..."
+              curl -s -X POST http://localhost:9000/api/system/migrate_db \
+                -u "admin:admin" || true
+            fi
+
+            # Mostra logs do container a cada 20 tentativas para debug
+            if [ $((i % 20)) -eq 0 ]; then
+              echo "=== Logs do SonarQube ==="
+              docker logs sonarqube --tail=20 2>&1 || true
+              echo "========================="
+            fi
+
+            if [ "$i" -eq "$MAX_RETRIES" ]; then
+              echo "ERRO: SonarQube não ficou UP após $((MAX_RETRIES * RETRY_INTERVAL))s"
+              echo "=== Logs finais ==="
+              docker logs sonarqube --tail=50 2>&1 || true
+              exit 1
+            fi
+
+            sleep $RETRY_INTERVAL
           done
 
       - name: Login to Docker Hub
@@ -337,49 +371,60 @@ jobs:
           severity: 'CRITICAL'
           trivy-version: v0.69.3
       
-      - name: Start SonarQube with docker-compose
+      - name: Cleanup Trivy Cache
+        if: always()
+        run: sudo rm -rf .cache/trivy
+        
+      - name: Setup SonarQube token
+        env:
+          SONAR_ADMIN_PASSWORD: ${{ secrets.SONAR_ADMIN_PASSWORD }}
         run: |
-          docker-compose -f docker-compose.sonarqube.yml up -d
-          echo "Waiting for SonarQube to be ready"
-          for i in {1..30}; do
-            
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/api/system/status || echo "000")
-            if [ "$STATUS" = "200" ]; then
-              
-              HEALTH=$(curl -s http://localhost:9000/api/system/status | jq -r '.status' 2>/dev/null || echo "UNKNOWN")
-              if [ "$HEALTH" = "UP" ]; then
-                echo "SonarQube is ready (Status: $HEALTH)"
-                break
-              fi
-            fi
-            echo "Waiting for SonarQube ($i/30) - HTTP $STATUS"
-            sleep 5
-          done
-    
-          # Verificação final
-          if ! curl -s -f http://localhost:9000/api/system/status > /dev/null; then
-            echo "SonarQube failed to start - skipping scan"
-            exit 0
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "http://localhost:9000/api/users/change_password" \
+            -u "admin:admin" \
+            -d "login=admin&previousPassword=admin&password=$SONAR_ADMIN_PASSWORD")
+          
+          if [ "$HTTP_CODE" != "204" ]; then
+            echo "Aviso: troca de senha retornou HTTP $HTTP_CODE (pode já ter sido trocada)"
+          else
+            echo "Senha do admin atualizada com sucesso"
           fi
 
+          # Gera o Global Analysis Token usando a senha do secret
+          RESPONSE=$(curl -s -X POST "http://localhost:9000/api/user_tokens/generate" \
+            -u "admin:$SONAR_ADMIN_PASSWORD" \
+            -d "name=github-actions-token&type=GLOBAL_ANALYSIS_TOKEN")
+          
+          echo "Token gerado: $(echo $RESPONSE | python3 -c "import sys,json; d=json.load(sys.stdin); print('OK' if 'token' in d else 'ERRO: ' + str(d))")"
+
+          GENERATED_TOKEN=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+          
+          if [ -z "$GENERATED_TOKEN" ]; then
+            echo "Falha ao gerar token"
+            exit 1
+          fi
+
+          # Disponibiliza o token para os próximos steps sem expor no log
+          echo "::add-mask::$GENERATED_TOKEN"
+          echo "SONAR_ANALYSIS_TOKEN=$GENERATED_TOKEN" >> $GITHUB_ENV
+          echo "Token de análise gerado e mascarado com sucesso"
+
       - name: SonarQube Scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          # Run sonar-scanner
           docker run --rm \
+            --network host \
             -v $(pwd):/usr/src \
+            -e SONAR_TOKEN=${{ env.SONAR_ANALYSIS_TOKEN }} \
             sonarsource/sonar-scanner-cli:latest \
-            -Dsonar.projectKey=projeto-final-devops \
+            -Dsonar.projectKey=Projeto-final-DevOps \
             -Dsonar.sources=user-service,product-service \
             -Dsonar.exclusions=**/tests/**,**/products_tests/**,**/venv/**,**/__pycache__/** \
-            -Dsonar.host.url=http://localhost:9000 \
-            -Dsonar.login=$SONAR_TOKEN
-      
+            -Dsonar.host.url=http://localhost:9000
+
       - name: SonarQube URL
         run: |
-          echo "SonarQube Dashboard: http://localhost:9000" >> $GITHUB_STEP_SUMMARY
-          echo "Login: admin / admin" >> $GITHUB_STEP_SUMMARY
+          echo "## SonarQube Dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "URL: http://localhost:9000" >> $GITHUB_STEP_SUMMARY
       
       - name: Record deployment
         if: success()
