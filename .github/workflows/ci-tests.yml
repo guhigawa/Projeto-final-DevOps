@@ -371,6 +371,10 @@ jobs:
           severity: 'CRITICAL'
           trivy-version: v0.69.3
       
+      - name: Cleanup Trivy Cache
+        if: always()
+        run: sudo rm -rf .cache/trivy
+        
       - name: Setup SonarQube token
         env:
           SONAR_ADMIN_PASSWORD: ${{ secrets.SONAR_ADMIN_PASSWORD }}
