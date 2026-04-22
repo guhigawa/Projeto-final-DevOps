@@ -419,7 +419,8 @@ jobs:
             -Dsonar.projectKey=Projeto-final-DevOps \
             -Dsonar.sources=user-service,product-service \
             -Dsonar.exclusions=**/tests/**,**/products_tests/**,**/venv/**,**/__pycache__/** \
-            -Dsonar.host.url=http://localhost:9000 
+            -Dsonar.host.url=http://localhost:9000 \
+            -Dsonar.working.directory=/tmp/.scannerwork
 
       - name: Export SonarQube report
         if: success()
