@@ -414,12 +414,34 @@ jobs:
           docker run --rm \
             --network host \
             -v $(pwd):/usr/src \
-            -e SONAR_TOKEN=${{ env.SONAR_ANALYSIS_TOKEN }} \
+            -e SONAR_TOKEN=$SONAR_ANALYSIS_TOKEN \
             sonarsource/sonar-scanner-cli:latest \
             -Dsonar.projectKey=Projeto-final-DevOps \
             -Dsonar.sources=user-service,product-service \
             -Dsonar.exclusions=**/tests/**,**/products_tests/**,**/venv/**,**/__pycache__/** \
-            -Dsonar.host.url=http://localhost:9000
+            -Dsonar.host.url=http://localhost:9000 \
+            -Dsonar.working.directory=/tmp/.scannerwork
+
+      - name: Export SonarQube report
+        if: success()
+        run: |
+          # Busca o relatório gerado pelo scanner
+          curl -s "http://localhost:9000/api/issues/search?projectKeys=Projeto-final-DevOps&resolved=false" \
+            -u "admin:${{ secrets.SONAR_ADMIN_PASSWORD }}" \
+            | python3 -m json.tool > sonar-report.json
+
+          curl -s "http://localhost:9000/api/measures/component?component=Projeto-final-DevOps&metricKeys=bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density" \
+            -u "admin:${{ secrets.SONAR_ADMIN_PASSWORD }}" \
+            | python3 -m json.tool > sonar-metrics.json
+
+      - name: Upload SonarQube report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-report
+          path: |
+            sonar-report.json
+            sonar-metrics.json
 
       - name: SonarQube URL
         run: |
@@ -441,7 +463,9 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker-compose -f docker-compose.staging.yml down -v
+        run: | 
+          docker-compose -f docker-compose.staging.yml down -v 
+          docker-compose -f docker-compose.sonarqube.yml down -v
   
   deploy-production:
     runs-on: self-hosted
@@ -476,3 +500,27 @@ jobs:
           microk8s kubectl get pods -n projeto-final
           curl -s -f http://user.local.prod/health || exit 1
           curl -s -f http://product.local.prod/health || exit 1
+
+      - name: Debug production failure
+        if: failure()  # só roda se algum step anterior falhou
+        run: |
+          echo "=== Pods Status ==="
+          microk8s kubectl get pods -n projeto-final -o wide
+          
+          echo "=== User Service Logs ==="
+          microk8s kubectl logs -n projeto-final deployment/user-service --tail=50 2>&1 || true
+          
+          echo "=== Product Service Logs ==="
+          microk8s kubectl logs -n projeto-final deployment/product-service --tail=50 2>&1 || true
+          
+          echo "=== User Service Description ==="
+          microk8s kubectl describe pod -n projeto-final -l app=user-service 2>&1 || true
+          
+          echo "=== Product Service Description ==="
+          microk8s kubectl describe pod -n projeto-final -l app=product-service 2>&1 || true
+          
+          echo "=== Ingress ==="
+          microk8s kubectl describe ingress -n projeto-final 2>&1 || true
+          
+          echo "=== Events ==="
+          microk8s kubectl get events -n projeto-final --sort-by='.lastTimestamp' 2>&1 || true
