@@ -493,10 +493,24 @@ jobs:
           docker push localhost:32000/product-service:1.0.0
 
       - name: Deploy to Kubernetes
-        run: ./scripts/prod/deploy-prod.sh
+        run: |
+          # Limpa deployments anteriores para evitar pods órfãos
+          microk8s kubectl delete namespace projeto-final --ignore-not-found=true
+          microk8s kubectl wait --for=delete namespace/projeto-final --timeout=60s 2>/dev/null || true
+          ./scripts/prod/deploy-prod.sh
 
       - name: Verify production
         run: |
+          echo "Aguardando pods ficarem Ready"
+          microk8s kubectl wait --for=condition=ready pod \
+            -l app=user-service \
+            -n projeto-final \
+            --timeout=180s
+          
+          microk8s kubectl wait --for=condition=ready pod \
+            -l app=product-service \
+            -n projeto-final \
+            --timeout=180s
           microk8s kubectl get pods -n projeto-final
           curl -s -f http://user.local.prod/health || exit 1
           curl -s -f http://product.local.prod/health || exit 1
