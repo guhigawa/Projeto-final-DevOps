@@ -515,6 +515,50 @@ jobs:
           curl -s -f http://user.local.prod/health || exit 1
           curl -s -f http://product.local.prod/health || exit 1
 
+          microk8s kubectl get pods -n projeto-final
+
+          echo "Verificando user-service usando ingress"
+          for i in $(seq 1 20); do
+            RESPONSE=$(curl -s -o /tmp/user_health.json -w "%{http_code}" \
+              http://user.local.prod/health 2>/dev/null || echo "000")
+            
+            echo "Tentativa $i/20 - HTTP: $RESPONSE"
+
+            if [ "$RESPONSE" = "200" ]; then
+              echo "user-service OK"
+              cat /tmp/user_health.json
+              break
+            fi
+
+            if [ "$i" -eq 20 ]; then
+              echo "ERRO: user-service não respondeu via Ingress"
+              microk8s kubectl describe ingress -n projeto-final
+              exit 1
+            fi
+            sleep 5
+          done
+
+          echo "Verificando product-service via Ingress"
+          for i in $(seq 1 20); do
+            RESPONSE=$(curl -s -o /tmp/product_health.json -w "%{http_code}" \
+              http://product.local.prod/health 2>/dev/null || echo "000")
+            
+            echo "Tentativa $i/20 - HTTP: $RESPONSE"
+            
+            if [ "$RESPONSE" = "200" ]; then
+              echo "product-service OK"
+              cat /tmp/product_health.json
+              break
+            fi
+
+            if [ "$i" -eq 20 ]; then
+              echo "ERRO: product-service não respondeu via Ingress"
+              microk8s kubectl describe ingress -n projeto-final
+              exit 1
+            fi
+            sleep 5
+          done
+
       - name: Debug production failure
         if: failure()  # só roda se algum step anterior falhou
         run: |
