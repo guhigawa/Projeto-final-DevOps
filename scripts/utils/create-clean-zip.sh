@@ -30,5 +30,6 @@ zip -r "${ARCHIVE_NAME}" Projeto_final \
     -x "*.sqlite" \
     -x "*.tmp" \
     -x "**/migrations/*.pyc" \
-    -x "**/migrations/__pycache__/*"
+    -x "**/migrations/__pycache__/*" \
+    -x "Projeto_final/generate_hashed_password.py" 
 
