@@ -36,4 +36,4 @@ sonar-report.json
 **/products_evidence/
 **/evidence/
 requirements.txt.backup
-
+documentation/tests_outputs/*.txt
