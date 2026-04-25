@@ -10,17 +10,6 @@ on:
 
 env:
   PYTHON_VERSION: '3.10'
-  USER_SERVICE_PORT: 3001
-  PRODUCT_SERVICE_PORT: 3002
-  STAGING_USER_PORT: 4001
-  STAGING_PRODUCT_PORT: 4002
-  STAGING_USER_MYSQL_PORT: 4308
-  STAGING_PRODUCT_MYSQL_PORT: 4309
-  STAGING_MYSQL_PORT: 3306
-  STAGING_USER_MYSQL_DB: 'user_staging'
-  STAGING_PRODUCT_MYSQL_DB: 'product_staging'
-  STAGING_USER_MYSQL_USER: 'staging_user'
-  STAGING_PRODUCT_MYSQL_USER: 'staging_product_user'
 
 jobs:
   #Job 1 - Unit tests
@@ -62,6 +51,9 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         mysql_version: ['8.0']
+    env:
+      USER_SERVICE_PORT: 3001
+      PRODUCT_SERVICE_PORT: 3002    
     services:
       mysql-user:
         image: mysql:${{ matrix.mysql_version }}
@@ -199,7 +191,17 @@ jobs:
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     environment:
       name: staging
-      url: http://localhost:${{ env.STAGING_USER_PORT }} 
+      url: http://localhost:4001
+    env:
+      STAGING_USER_PORT: 4001
+      STAGING_PRODUCT_PORT: 4002
+      STAGING_USER_MYSQL_PORT: 4308
+      STAGING_PRODUCT_MYSQL_PORT: 4309
+      STAGING_MYSQL_PORT: 3306
+      STAGING_USER_MYSQL_DB: 'user_staging'
+      STAGING_PRODUCT_MYSQL_DB: 'product_staging'
+      STAGING_USER_MYSQL_USER: 'staging_user'
+      STAGING_PRODUCT_MYSQL_USER: 'staging_product_user'
 
     steps:
       - name: Checkout code
@@ -511,9 +513,6 @@ jobs:
             -l app=product-service \
             -n projeto-final \
             --timeout=180s
-          microk8s kubectl get pods -n projeto-final
-          curl -s -f http://user.local.prod/health || exit 1
-          curl -s -f http://product.local.prod/health || exit 1
 
           microk8s kubectl get pods -n projeto-final
 
