@@ -19,8 +19,6 @@ zip -r "${ARCHIVE_NAME}" Projeto_final \
     -x "Projeto_final/user-service/tests/evidence/*" \
     -x "Projeto_final/product-service/products_tests/products_evidence/*" \
     -x "Projeto_final/documentation/tests_outputs/*" \
-    -x "*.env" \
-    -x "*.env.staging" \
     -x "generate_hashed_password.py" \
     -x "requirements.txt.backup" \
     -x ".vscode/*" \

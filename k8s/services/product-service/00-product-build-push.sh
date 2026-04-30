@@ -7,7 +7,7 @@ echo "script dir = $SCRIPT_DIR"
 PROJECT_ROOT="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")"
 echo "Project root = $PROJECT_ROOT"
 
-cd "$PROJECT_ROOT/user-service"
+cd "$PROJECT_ROOT/product-service"
 
 docker build -t product-service:1.0.0 \
     --build-arg ENVIRONMENT=production \
