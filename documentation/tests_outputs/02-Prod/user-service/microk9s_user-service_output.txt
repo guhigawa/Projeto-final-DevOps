@@ -180,3 +180,40 @@ statefulset.apps/mysql-user      1/1     24h
 
 NAME                                                   REFERENCE                 TARGETS                                     MINPODS   MAXPODS   REPLICAS   AGE
 horizontalpodautoscaler.autoscaling/user-service-hpa   Deployment/user-service   cpu: <unknown>/70%, memory: <unknown>/80%   2         5         0          9s
+
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://user.local.prod/health
+{"status":"healthy"}
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://product.local.prod/health
+{"status":"healthy"}
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://user.local.prod/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "loja@inventario.com", "password": "Admin123!"}'
+{"email":"loja@inventario.com","message":"User registered successfully","user_id":1}
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ TOKEN=$(curl -s -X POST http://user.local.prod/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "loja@inventario.com", "password": "Admin123!"}' \
+  | jq -r .token)
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X POST http://product.local.prod/products \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Produto Final", "price": 99.99, "quantity": 100}'
+{"description":"","id":1,"message":"Product created successfully","price":99.99,"product_name":"produto final","quantity":100}
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -X GET http://product.local.prod/products \
+  -H "Authorization: Bearer $TOKEN" | jq .
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   153  100   153    0     0  13961      0 --:--:-- --:--:-- --:--:-- 15300
+{
+  "products": [
+    {
+      "created_at": "Thu, 30 Apr 2026 11:32:35 GMT",
+      "created_by": 1,
+      "description": "",
+      "id": 1,
+      "name": "produto final",
+      "price": 99.99,
+      "quantity": 100
+    }
+  ]
+}
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 

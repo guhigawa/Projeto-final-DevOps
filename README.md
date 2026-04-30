@@ -137,52 +137,297 @@ O projeto utiliza um Makefile para automatizar tarefas comuns:
 | `make sonar-scan` | Executa análise SonarQube |
 | `make clean` | Limpa arquivos de cache (`__pycache__`, `.pytest_cache`) |
 | `make clean-containers` | Para containers DEV + STAGING |
+| `make clean-images-prod` | Remove imagens da build de PRD |
+| `clean-prod-keep-data` | Remove pods e serviços mas mantém PVC |
 | `make clean-prod` | Remove recursos do Kubernetes |
 | `make clean-all` | Limpa TUDO (cache + containers + K8s) |
 | `make zip` | Cria ZIP para entrega |
 
-## 5. Configuração dos Ambientes
+## 5. Configuração e Acesso aos Ambientes
 
-| Ambiente | Ferramenta | Acesso | Comando |
-|----------|------------|--------|---------|
-| **DEV** | Docker Compose + Local | `http://localhost:3001` (user), `http://localhost:3002` (product) | `make dev` |
-| **STG** | Docker Compose + GitHub Actions | `http://localhost:4001` (user), `http://localhost:4002` (product) | `make staging` |
-| **PRD** | Kubernetes (MicroK8s) + Self-hosted runner | `http://user.local.prod`, `http://product.local.prod` | Automático via CI |
+### 5.1 Pré-requisitos
 
-### 5.1 Ambiente de Desenvolvimento (DEV)
+Antes de começar, certifique-se de ter instalado:
+- Docker e Docker Compose
+- Python 3.10+
+- Make
+- Git
+- (Opcional) MicroK8s para ambiente de produção
 
-O ambiente de desenvolvimento é executado **localmente na máquina do desenvolvedor**, utilizando Docker Compose. Este ambiente permite:
-
-- Desenvolvimento rápido com hot-reload
-- Testes locais antes do commit
-- Isolamento completo dos outros ambientes
+### 5.2 Configuração Inicial
 
 ```bash
-# deploy dev
-make dev
+# 1. Clonar o repositório
+git clone https://github.com/guhigawa/Projeto-final-DevOps.git
+cd Projeto-final-DevOps
 
-# verificação de serviços
-curl http://localhost:3001/health
-curl http://localhost:3002/health
-```
-## 5.2 Variáveis de Ambiente
+# 2. Criar ambiente virtual e instalar dependências
+make setup
 
-### Desenvolvimento (`.env`)
-```bash
-SECRET_KEY=sua_chave_secreta_jwt
-MYSQL_HOST=localhost
-MYSQL_USER=user
-MYSQL_PASSWORD=password
-MYSQL_DATABASE=auth_db
-MYSQL_PORT=3306
+# 3. Ativar o ambiente virtual
+source .venv/bin/activate
 ```
-### Staging(.env.staging)
-STAGING_SECRET_KEY=chave_staging
-STAGING_USER_MYSQL_PASSWORD=senha_user
-STAGING_PRODUCT_MYSQL_PASSWORD=senha_product
-STAGING_DB_ROOT_PASSWORD=senha_root
+### 5.3 Variáveis de Ambiente
+
+#### 5.3.1 Ambiente DEV
+
+Crie um arquivo .env na raiz do projeto com o seguinte conteúdo (ajuste os valores conforme necessário):
+```
+# Ambiente
+ENV=development
+
+# JWT Authentication (defina uma chave secreta forte)
+SECRET_KEY=your_secret_key_here
+
+# Portas
+USER_MYSQL_PORT=3306
+USER_PORT=3001
+PRODUCT_MYSQL_PORT=3306
+PRODUCT_PORT=3002
+
+# User Service Database
+USER_MYSQL_HOST=mysql-user
+USER_MYSQL_USER=your_db_user
+USER_MYSQL_PASSWORD=your_db_password
+USER_MYSQL_DB=your_db_name
+
+# Product Service Database  
+PRODUCT_MYSQL_HOST=mysql-product
+PRODUCT_MYSQL_USER=your_product_db_user
+PRODUCT_MYSQL_PASSWORD=your_product_db_password
+PRODUCT_MYSQL_DB=your_product_db_name
+
+# Service URLs
+USER_SERVICE_URL=http://user-service:3001
+PRODUCT_SERVICE_URL=http://product-service:3002
+```
+#### 5.3.2 Ambiente STG
+
+Crie um arquivo .env.staging na raiz do projeto:
+```
+# Ambiente
+ENV=staging
+
+# Portas
 STAGING_USER_PORT=4001
 STAGING_PRODUCT_PORT=4002
+STAGING_USER_MYSQL_PORT=4308
+STAGING_PRODUCT_MYSQL_PORT=4309
+STAGING_MYSQL_PORT=3306
+
+# Base de dados User
+STAGING_USER_MYSQL_USER=your_staging_user
+STAGING_USER_MYSQL_PASSWORD=your_staging_password
+STAGING_USER_MYSQL_DB=user_staging
+
+# Base de dados Product
+STAGING_PRODUCT_MYSQL_USER=your_staging_product_user
+STAGING_PRODUCT_MYSQL_PASSWORD=your_staging_product_password
+STAGING_PRODUCT_MYSQL_DB=product_staging
+
+# Segurança (defina uma chave secreta forte)
+STAGING_SECRET_KEY=your_staging_secret_key
+
+# URLs dos serviços
+USER_SERVICE_URL=http://user-service:4001
+PRODUCT_SERVICE_URL=http://product-service:4002
+```
+Nota: Os valores acima são exemplo. Para produção, utilize credenciais seguras. Os arquivos .env e .env.staging com valores reais estão incluídos no ZIP de entrega.
+
+### 5.4 Ambiente de Desenvolvimento (DEV)
+
+Comando para iniciar:
+```
+make dev
+```
+Acesso aos serviços:
+
+| Serviço | URL | Endpoint de teste |
+|---------|-----|-------------------|
+| User Service | http://localhost:3001 | curl http://localhost:3001/health |
+| Product Service | http://localhost:3002 | curl http://localhost:3002/health |
+
+Exemplo de uso da API:
+```
+# 1. Registar um novo user
+curl -X POST http://localhost:3001/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "vendedor@exemplo.com", "password": "StrongPass123!"}'
+
+# 2. Fazer login (obter token JWT)
+TOKEN=$(curl -X POST http://localhost:3001/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "vendedor@exemplo.com", "password": "StrongPass123!"}' \
+  | jq -r .token)
+
+# 3. Criar um produto (usando o token obtido)
+curl -X POST http://localhost:3002/products \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Produto Exemplo", "price": 29.99, "quantity": 10, "description": "Descrição do produto"}'
+
+# 4. Listar produtos do vendedor
+curl -X GET http://localhost:3002/products \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
+```
+
+Parar o ambiente
+```
+make clean
+make clean-containers
+```
+
+### 5.5 Ambiente de Staging (STG)
+
+Comando para iniciar:
+
+```
+make staging
+```
+
+Acesso aos serviços:
+
+| Serviço | URL | Endpoint de teste |
+|---------|-----|-------------------|
+| User Service | http://localhost:4001 | curl http://localhost:4001/health |
+| Product Service | http://localhost:4002 | curl http://localhost:4002/health |
+
+Testes no ambiente staging:
+
+```
+# Executar testes funcionais
+make test-functional
+
+# Executar testes de segurança
+make test-security
+```
+
+Parar o ambiente
+
+```
+make clean
+make clean-containers
+```
+
+### 5.6 Ambiente de Produção (PRD)
+
+Pré-requisitos para produção:
+```
+# Verificar se o MicroK8s está instalado e ativo
+microk8s status --wait-ready
+
+# Habilitar addons necessários (executar uma única vez)
+microk8s enable registry dns ingress metrics-server
+```
+
+Comando para deploy:
+```
+make prod
+```
+
+Acesso aos serviços em produção:
+
+Para aceder aos serviços, adicione as seguintes entradas ao ficheiro /etc/hosts:
+```
+echo "127.0.0.1 user.local.prod product.local.prod" | sudo tee -a /etc/hosts
+```
+
+Endpoints disponíveis:
+| Serviço | URL | Endpoint de teste |
+|---------|-----|-------------------|
+| User Service | http://user.local.prod | curl http://user.local.prod/health|
+| Product Service | http://product.local.prod | curl http://product.local.prod/health |
+
+Verificar o estado dos pods
+```
+microk8s kubectl get pods -n projeto-final
+microk8s kubectl get svc -n projeto-final
+microk8s kubectl get hpa -n projeto-final
+```
+
+Limpeza do ambiente de produção:
+```
+make clean-prod
+```
+
+## 5.7 Resumo dos Comandos por Ambiente
+
+| Ambiente | Iniciar | Testar | Parar|
+|----------|------------|--------|---------|
+| **DEV** | make dev | make test-unit | make clean-containers |
+| **STG** | make staging | make test-functional | make clean-containers |
+| **PRD** | make prod | curl http://user.local.prod/health | make clean-prod |
+
+### 5.8 Exemplo Completo de Utilização da API
+
+```
+# === PASSO 1: Iniciar ambiente DEV ===
+make dev
+
+# === PASSO 2: Registar vendedor ===
+curl -X POST http://localhost:3001/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "loja@inventario.com", "password": "Admin123!"}'
+
+# === PASSO 3: Login ===
+TOKEN=$(curl -s -X POST http://localhost:3001/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "loja@inventario.com", "password": "Admin123!"}' \
+  | jq -r .token)
+
+echo "Token: $TOKEN"
+
+# === PASSO 4: Adicionar produtos ===
+curl -X POST http://localhost:3002/products \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Produto 1", "price": 19.99, "quantity": 50}'
+
+curl -X POST http://localhost:3002/products \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Produto 2", "price": 39.99, "quantity": 30}'
+
+# === PASSO 5: Listar produtos ===
+curl -X GET http://localhost:3002/products \
+  -H "Authorization: Bearer $TOKEN" | jq .
+
+# === PASSO 6: Limpar ambiente ===
+make clean
+make clean-containers
+```
+
+### 5.9 Limpeza de Ambientes
+
+O projeto oferece diferentes níveis de limpeza:
+
+| Comando | O que faz | Quando usar |
+|---------|-----------|-------------|
+| `make clean` | Remove ficheiros temporários (__pycache__, .pytest_cache, .coverage) | Após testes |
+| `make clean-containers` | Remove containers DEV e STAGING + pastas de testes | Quando terminar de usar DEV/STG |
+| `make clean-images-prod` | Remove imagens do build de produção (localhost:32000/*) | Para libertar espaço no registry |
+| `make clean-prod-keep-data` | Remove pods e serviços do K8s, mas mantém os volumes (PVC) | Quando quer recriar apenas os serviços |
+| `make clean-prod` | Remove todos os recursos do Kubernetes (namespace completo) | Para destruir completamente a produção |
+| `make clean-all` | Executa todos os comandos de limpeza acima | Para uma limpeza completa do projeto |
+
+**Explicação dos comandos de produção:**
+- `clean-prod-keep-data`: Útil quando os dados (MySQL) precisam ser preservados
+- `clean-images-prod`: Limpa as imagens do registry local do MicroK8s
+- `clean-prod`: Remove tudo, incluindo os volumes de dados
+
+**Exemplo de uso:**
+```bash
+# Limpeza rápida (apenas caches)
+make clean
+
+# Limpeza de produção mantendo dados
+make clean-prod-keep-data
+
+# Limpeza completa de produção
+make clean-prod
+
+# Limpeza total do projeto
+make clean-all
 
 ## 6. Pipeline CI/CD
 

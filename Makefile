@@ -3,39 +3,52 @@
         test-security-bandit test-security-safety test-security-pipaudit test-security \
         test-security-trivy test-security-trivy-hub test-all \
         sonar-start sonar-stop sonar-status sonar-scan \
-        dev staging prod clean clean-containers clean-prod clean-all zip
+        dev staging prod clean clean-images-prod clean-containers clean-prod clean-prod-keep-data clean-all zip
 
 # Show list of commands available
 
 help:
 	@echo "Available commands"
+	@echo ""
 	@echo "Development Environment:"
-	@echo "make setup - Configure the virtual environment and install dependencies"
-	@echo "make dev - deploy local environment with docker-compose.yml"
-	@echo "make clean         - Remove cache files only"
-	@echo "make clean-containers - Stop DEV + STAGING containers"
-	@echo "make clean-prod    - Delete ALL production resources (K8s)"
-	@echo "make clean-all     - Complete cleanup (cache + containers + prod)"
+	@echo "  make setup                - Configure the virtual environment and install dependencies"
+	@echo "  make dev                  - Deploy local environment with docker-compose.yml"
+	@echo ""
 	@echo "Tests:"
-	@echo "make test - run all tests (unit and integration)"
-	@echo "make test-unit - Execute unit tests and validators test"
-	@echo "make test-integration - execute integration tests"
-	@echo "  make test-all       - Run ALL tests (unit + integration + functional)"
-	@echo "SECURITY (Code):"
+	@echo "  make test-unit            - Execute unit tests and validators tests"
+	@echo "  make test-integration     - Execute integration tests"
+	@echo "  make test-functional      - Execute functional tests"
+	@echo "  make test-all             - Run ALL tests (unit + integration + functional + security)"
+	@echo ""
+	@echo "Security (Code):"
 	@echo "  make test-security-bandit   - Bandit static analysis"
 	@echo "  make test-security-safety   - Safety vulnerability scan"
 	@echo "  make test-security-pipaudit - pip-audit check"
 	@echo "  make test-security          - Run ALL code security tests"
-	@echo "SECURITY (Containers):"
-	@echo "  make test-security-trivy     - Scan local Docker images"
-	@echo "SONARQUBE:"
-	@echo "  make sonar-start     - Start SonarQube container"
-	@echo "  make sonar-stop      - Stop SonarQube container"
-	@echo "  make sonar-status    - Check SonarQube status"
-	@echo "  make sonar-scan      - Run code analysis (set SONAR_TOKEN)"
-	@echo " Environments:"
-	@echo "make staging       - deploy staging environment(docker-compose)"
-	@echo "make prod          - deploy production environment (Kubernetes)"
+	@echo ""
+	@echo "Security (Containers):"
+	@echo "  make test-security-trivy  - Scan local Docker images with Trivy"
+	@echo ""
+	@echo "SonarQube:"
+	@echo "  make sonar-start          - Start SonarQube container"
+	@echo "  make sonar-stop           - Stop SonarQube container"
+	@echo "  make sonar-status         - Check SonarQube status"
+	@echo "  make sonar-scan           - Run code analysis (set SONAR_TOKEN)"
+	@echo ""
+	@echo "Environments:"
+	@echo "  make staging              - Deploy staging environment (docker-compose)"
+	@echo "  make prod                 - Deploy production environment (Kubernetes)"
+	@echo ""
+	@echo "Cleanup:"
+	@echo "  make clean                - Remove Python cache files only"
+	@echo "  make clean-images-prod    - Remove local production Docker images (forces full rebuild)"
+	@echo "  make clean-containers     - Stop DEV + STAGING containers and remove test dirs"
+	@echo "  make clean-prod           - Delete ALL production resources INCLUDING DATA (K8s)"
+	@echo "  make clean-prod-keep-data - Delete production resources but PRESERVE database data"
+	@echo "  make clean-all            - Complete cleanup (cache + images + containers + prod)"
+	@echo ""
+	@echo "Utils:"
+	@echo "  make zip                  - Create a clean ZIP of the project"
 #initial configuration
 
 setup:
@@ -134,8 +147,8 @@ prod:
 	@echo "1. Build: ./scripts/prod/build-prod.sh"
 	@echo "2. Deploy K8s: ./scripts/prod/deploy-prod.sh"
 	@echo ""
-	@echo "Execute manually the commands above or the following:"
-	@echo "./scripts/prod/build-prod.sh && ./scripts/prod/deploy-prod.sh"
+	@echo "Deploying production environment"
+	@./scripts/prod/build-prod.sh && ./scripts/prod/deploy-prod.sh
 
 #Clean temporary files
 clean:
@@ -156,6 +169,31 @@ clean-containers:
 	@docker-compose -f docker-compose.yml down 2>/dev/null || true
 	@docker-compose -f docker-compose.staging.yml --env-file .env.staging down -v 2>/dev/null || true
 	@echo "Containers stopped"
+
+
+#Clean images in production
+clean-images-prod:
+    @echo "Removing local production Docker images (will force full rebuild)"
+    @docker rmi user-service:1.0.0 localhost:32000/user-service:1.0.0 2>/dev/null || true
+    @docker rmi product-service:1.0.0 localhost:32000/product-service:1.0.0 2>/dev/null || true
+    @echo "Images removed"
+
+#clean production but keep data
+clean-prod-keep-data:
+	@echo "WARNING: This will delete production pods and services but PRESERVE database data"
+	@read -p "Type 'DELETE PROD' to confirm: " confirm; \
+	if [ "$$confirm" = "DELETE PROD" ]; then \
+		echo "Deleting production deployments, services and ingress (keeping PVCs)..."; \
+		microk8s kubectl delete deployments --all -n projeto-final 2>/dev/null || true; \
+		microk8s kubectl delete services --all -n projeto-final 2>/dev/null || true; \
+		microk8s kubectl delete statefulsets --all -n projeto-final 2>/dev/null || true; \
+		microk8s kubectl delete ingress --all -n projeto-final 2>/dev/null || true; \
+		microk8s kubectl delete configmap --all -n projeto-final 2>/dev/null || true; \
+		microk8s kubectl delete secret --all -n projeto-final 2>/dev/null || true; \
+		echo "Production cleaned (database data preserved in PVCs)"; \
+	else \
+		echo "Cancelled"; \
+	fi
 
 # clean production
 clean-prod:
