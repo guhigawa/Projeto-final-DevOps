@@ -173,10 +173,10 @@ clean-containers:
 
 #Clean images in production
 clean-images-prod:
-    @echo "Removing local production Docker images (will force full rebuild)"
-    @docker rmi user-service:1.0.0 localhost:32000/user-service:1.0.0 2>/dev/null || true
-    @docker rmi product-service:1.0.0 localhost:32000/product-service:1.0.0 2>/dev/null || true
-    @echo "Images removed"
+	@echo "Removing local production Docker images (will force full rebuild)"
+	@docker rmi user-service:1.0.0 localhost:32000/user-service:1.0.0 2>/dev/null || true
+	@docker rmi product-service:1.0.0 localhost:32000/product-service:1.0.0 2>/dev/null || true
+	@echo "Images removed"
 
 #clean production but keep data
 clean-prod-keep-data:
