@@ -232,7 +232,7 @@ STAGING_SECRET_KEY=your_staging_secret_key
 USER_SERVICE_URL=http://user-service:4001
 PRODUCT_SERVICE_URL=http://product-service:4002
 ```
-Nota: Os valores acima são exemplo. Para produção, utilize credenciais seguras. Os arquivos .env e .env.staging com valores reais estão incluídos no ZIP de entrega.
+**Nota**: Os valores acima são exemplo. Para produção, utilize credenciais seguras. Os arquivos .env e .env.staging com valores reais estão incluídos no ZIP de entrega.
 
 ### 5.4 Ambiente de Desenvolvimento (DEV)
 
@@ -246,30 +246,6 @@ Acesso aos serviços:
 |---------|-----|-------------------|
 | User Service | http://localhost:3001 | curl http://localhost:3001/health |
 | Product Service | http://localhost:3002 | curl http://localhost:3002/health |
-
-Exemplo de uso da API:
-```
-# 1. Registar um novo user
-curl -X POST http://localhost:3001/register \
-  -H "Content-Type: application/json" \
-  -d '{"email": "vendedor@exemplo.com", "password": "StrongPass123!"}'
-
-# 2. Fazer login (obter token JWT)
-TOKEN=$(curl -X POST http://localhost:3001/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "vendedor@exemplo.com", "password": "StrongPass123!"}' \
-  | jq -r .token)
-
-# 3. Criar um produto (usando o token obtido)
-curl -X POST http://localhost:3002/products \
-  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Produto Exemplo", "price": 29.99, "quantity": 10, "description": "Descrição do produto"}'
-
-# 4. Listar produtos do vendedor
-curl -X GET http://localhost:3002/products \
-  -H "Authorization: Bearer SEU_TOKEN_AQUI"
-```
 
 Parar o ambiente
 ```
@@ -350,7 +326,7 @@ Limpeza do ambiente de produção:
 make clean-prod
 ```
 
-## 5.7 Resumo dos Comandos por Ambiente
+### 5.7 Resumo dos Comandos por Ambiente
 
 | Ambiente | Iniciar | Testar | Parar|
 |----------|------------|--------|---------|
@@ -358,46 +334,7 @@ make clean-prod
 | **STG** | make staging | make test-functional | make clean-containers |
 | **PRD** | make prod | curl http://user.local.prod/health | make clean-prod |
 
-### 5.8 Exemplo Completo de Utilização da API
-
-```
-# === PASSO 1: Iniciar ambiente DEV ===
-make dev
-
-# === PASSO 2: Registar vendedor ===
-curl -X POST http://localhost:3001/register \
-  -H "Content-Type: application/json" \
-  -d '{"email": "loja@inventario.com", "password": "Admin123!"}'
-
-# === PASSO 3: Login ===
-TOKEN=$(curl -s -X POST http://localhost:3001/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "loja@inventario.com", "password": "Admin123!"}' \
-  | jq -r .token)
-
-echo "Token: $TOKEN"
-
-# === PASSO 4: Adicionar produtos ===
-curl -X POST http://localhost:3002/products \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Produto 1", "price": 19.99, "quantity": 50}'
-
-curl -X POST http://localhost:3002/products \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Produto 2", "price": 39.99, "quantity": 30}'
-
-# === PASSO 5: Listar produtos ===
-curl -X GET http://localhost:3002/products \
-  -H "Authorization: Bearer $TOKEN" | jq .
-
-# === PASSO 6: Limpar ambiente ===
-make clean
-make clean-containers
-```
-
-### 5.9 Limpeza de Ambientes
+### 5.8 Limpeza de Ambientes
 
 O projeto oferece diferentes níveis de limpeza:
 
@@ -428,6 +365,322 @@ make clean-prod
 
 # Limpeza total do projeto
 make clean-all
+```
+
+### 6 API Reference
+
+### Endpoints Disponíveis
+
+| Método | Rota | Auth | Serviço | Descrição |
+|--------|------|:----:|---------|-----------|
+| `POST` | `/register` | ❌ | User | Registar novo vendedor |
+| `POST` | `/login` | ❌ | User | Autenticar e obter token JWT |
+| `GET` | `/profile` | ✅ | User | Ver perfil do vendedor |
+| `PUT` | `/profile` | ✅ | User | Atualizar email ou password |
+| `POST` | `/logout` | ✅ | User | Invalidar token JWT |
+| `GET` | `/health` | ❌ | User | Health check do serviço |
+| `GET` | `/health/detailed` | ❌ | User | Health check detalhado com estado da BD |
+| `GET` | `/metrics` | ❌ | User | Métricas do serviço |
+| `POST` | `/products` | ✅ | Product | Criar produto |
+| `GET` | `/products` | ✅ | Product | Listar produtos do vendedor |
+| `PUT` | `/products` | ✅ | Product | Atualizar produto |
+| `DELETE` | `/products` | ✅ | Product | Remover produto |
+| `GET` | `/health` | ❌ | Product | Health check do serviço |
+| `GET` | `/health/detailed` | ❌ | Product | Health check detalhado com estado da BD |
+| `GET` | `/metrics` | ❌ | Product | Métricas do serviço |
+
+> ✅ Requer token JWT no header `Authorization: Bearer <token>`  
+> ❌ Acesso público, sem autenticação
+
+---
+
+### Exemplos de Uso
+
+Os exemplos abaixo utilizam o ambiente DEV (`localhost`). Para outros ambientes, substitua a URL base:
+
+| Ambiente | User Service | Product Service |
+|----------|-------------|-----------------|
+| DEV | `http://localhost:3001` | `http://localhost:3002` |
+| STG | `http://localhost:4001` | `http://localhost:4002` |
+| PRD | `http://user.local.prod` | `http://product.local.prod` |
+
+---
+
+#### Fluxo 1: Gestão de Conta
+
+**1.1 — Registar vendedor**
+```bash
+curl -X POST http://localhost:3001/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "vendedor@inventario.com", "password": "StrongPass123!"}'
+```
+Resposta esperada (`201 Created`):
+```json
+{
+  "message": "User registered successfully",
+  "user_id": 1,
+  "email": "vendedor@inventario.com"
+}
+```
+
+---
+
+**1.2 — Login e obtenção do token JWT**
+```bash
+TOKEN=$(curl -s -X POST http://localhost:3001/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "vendedor@inventario.com", "password": "StrongPass123!"}' \
+  | jq -r .token)
+
+echo "Token: $TOKEN"
+```
+Resposta esperada (`200 OK`):
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user_id": 1,
+  "email": "vendedor@inventario.com"
+}
+```
+
+> O token tem validade de **1 hora**. Após expirar, é necessário fazer login novamente.
+
+---
+
+**1.3 — Ver perfil**
+```bash
+curl -X GET http://localhost:3001/profile \
+  -H "Authorization: Bearer $TOKEN"
+```
+Resposta esperada (`200 OK`):
+```json
+{
+  "user_id": 1,
+  "email": "vendedor@inventario.com"
+}
+```
+
+---
+
+**1.4 — Atualizar perfil**
+
+Atualizar email:
+```bash
+curl -X PUT http://localhost:3001/profile \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "novo@inventario.com"}'
+```
+
+Atualizar password:
+```bash
+curl -X PUT http://localhost:3001/profile \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"password": "NewStrongPass123!"}'
+```
+
+Resposta esperada (`200 OK`):
+```json
+{
+  "message": "Profile updated successfully"
+}
+```
+
+---
+
+**1.5 — Logout (invalidar token)**
+```bash
+curl -X POST http://localhost:3001/logout \
+  -H "Authorization: Bearer $TOKEN"
+```
+Resposta esperada (`200 OK`):
+```json
+{
+  "message": "Logout successful",
+  "user_id": 1
+}
+```
+
+> Após o logout, o token é adicionado a uma blacklist e não pode ser reutilizado.
+
+---
+
+#### Fluxo 2: Gestão de Produtos
+
+> **Pré-requisito:** ter um token JWT válido obtido no Fluxo 1.
+
+**2.1 — Criar produto**
+```bash
+curl -X POST http://localhost:3002/products \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Produto Exemplo",
+    "price": 29.99,
+    "quantity": 50,
+    "description": "Descrição detalhada do produto"
+  }'
+```
+Resposta esperada (`201 Created`):
+```json
+{
+  "message": "Product created successfully",
+  "id": 1,
+  "product_name": "produto exemplo",
+  "price": 29.99,
+  "quantity": 50,
+  "description": "Descrição detalhada do produto"
+}
+```
+
+Validações aplicadas:
+
+| Campo | Regra |
+|-------|-------|
+| `name` | Obrigatório, máximo 254 caracteres |
+| `price` | Obrigatório, entre 0.00 e 9999.99 |
+| `quantity` | Opcional, entre 0 e 9999 |
+| `description` | Opcional, máximo 2000 caracteres |
+
+---
+
+**2.2 — Listar produtos do vendedor**
+```bash
+curl -X GET http://localhost:3002/products \
+  -H "Authorization: Bearer $TOKEN" | jq .
+```
+Resposta esperada (`200 OK`):
+```json
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "produto exemplo",
+      "price": 29.99,
+      "quantity": 50,
+      "description": "Descrição detalhada do produto",
+      "created_at": "Thu, 30 Apr 2026 11:32:35 GMT",
+      "created_by": 1
+    }
+  ]
+}
+```
+
+> Cada vendedor vê **apenas os seus próprios produtos**. O isolamento de dados é garantido pelo token JWT.
+
+---
+
+**2.3 — Atualizar produto**
+```bash
+curl -X PUT http://localhost:3002/products \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": 1,
+    "name": "Produto Atualizado",
+    "price": 39.99,
+    "quantity": 30
+  }'
+```
+Resposta esperada (`200 OK`):
+```json
+{
+  "message": "Product updated successfully"
+}
+```
+
+> É possível atualizar apenas os campos desejados. Os restantes mantêm os valores anteriores.
+
+---
+
+**2.4 — Remover produto**
+```bash
+curl -X DELETE http://localhost:3002/products \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"id": 1}'
+```
+Resposta esperada (`200 OK`):
+```json
+{
+  "message": "Product deleted successfully"
+}
+```
+
+---
+
+#### Fluxo 3: Segurança e Comportamentos Esperados
+
+**3.1 — Acesso sem token**
+```bash
+curl -X GET http://localhost:3002/products
+```
+Resposta esperada (`401 Unauthorized`):
+```json
+{
+  "error": "Token is missing!"
+}
+```
+
+---
+
+**3.2 — Token inválido**
+```bash
+curl -X GET http://localhost:3002/products \
+  -H "Authorization: Bearer token_invalido"
+```
+Resposta esperada (`401 Unauthorized`):
+```json
+{
+  "error": "Invalid token!"
+}
+```
+
+---
+
+**3.3 — Tentativa de acesso a produto de outro vendedor**
+```bash
+# Vendedor 2 tenta atualizar produto do Vendedor 1
+curl -X PUT http://localhost:3002/products \
+  -H "Authorization: Bearer $TOKEN_VENDEDOR_2" \
+  -H "Content-Type: application/json" \
+  -d '{"id": 1, "name": "Tentativa de acesso"}'
+```
+Resposta esperada (`404 Not Found`):
+```json
+{
+  "error": "Product not found"
+}
+```
+
+> O sistema retorna `404` em vez de `403` para não revelar a existência do recurso a utilizadores não autorizados.
+
+---
+
+**3.4 — Health checks**
+```bash
+# Health check simples
+curl http://localhost:3001/health
+# {"status": "healthy"}
+
+# Health check detalhado (inclui estado da base de dados)
+curl http://localhost:3001/health/detailed | jq .
+```
+Resposta esperada (`200 OK`):
+```json
+{
+  "status": "healthy",
+  "service": "user-service",
+  "timestamp": "2026-04-30T11:32:35+00:00",
+  "checks": {
+    "database_connection": true,
+    "database_query": true,
+    "service_responsive": true
+  }
+}
+```
+
 
 ## 6. Pipeline CI/CD
 
