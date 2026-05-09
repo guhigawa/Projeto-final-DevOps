@@ -22,13 +22,6 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: jaeger
-        resources:  
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
         image: jaegertracing/all-in-one:1.52 
         env:
         - name: COLLECTOR_OTLP_ENABLED # Enable OpenTelemetry Protocol (OTLP) support

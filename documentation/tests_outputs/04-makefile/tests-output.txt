@@ -472,3 +472,242 @@ error: error reading [k8s/services/]: recognized file extensions are [.json .yam
 ingress.networking.k8s.io/app-ingress created
 No resources found in projeto-final namespace.
 Deployment completed successfully!
+
+MAKE PROD DEPOIS DE CRIAR https
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make prod
+Deploy production environment
+1. Build: ./scripts/prod/build-prod.sh
+2. Deploy K8s: ./scripts/prod/deploy-prod.sh
+
+Deploying production environment
+script dir = /home/ubuntu/Downloads/Projeto_final/scripts/prod
+Project root = /home/ubuntu/Downloads/Projeto_final
+building user-service
+Building and pushing User service image
+script dir = /home/ubuntu/Downloads/Projeto_final/k8s/services/user-service
+Project root = /home/ubuntu/Downloads/Projeto_final
+[+] Building 1.3s (13/13) FINISHED                                                                                                                                                docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                        0.1s
+ => => transferring dockerfile: 1.09kB                                                                                                                                                      0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                         1.1s
+ => [auth] library/python:pull token for registry-1.docker.io                                                                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                                                                           0.0s
+ => => transferring context: 2B                                                                                                                                                             0.0s
+ => [1/7] FROM docker.io/library/python:3.11-slim@sha256:6d85378d88a19cd4d76079817532d62232be95757cb45945a99fec8e8084b9c2                                                                   0.0s
+ => [internal] load build context                                                                                                                                                           0.0s
+ => => transferring context: 1.05kB                                                                                                                                                         0.0s
+ => CACHED [2/7] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*     && apt-get cle  0.0s
+ => CACHED [3/7] WORKDIR /user-service                                                                                                                                                      0.0s
+ => CACHED [4/7] COPY requirements.txt ./requirements.txt                                                                                                                                   0.0s
+ => CACHED [5/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir setuptools==79.0.1 wheel==0.46.3 &&     pip install --no-cache-dir -r requirements.txt &&   0.0s
+ => CACHED [6/7] COPY . .                                                                                                                                                                   0.0s
+ => CACHED [7/7] RUN addgroup --system app && adduser --system --group app &&     chown -R app:app /user-service                                                                            0.0s
+ => exporting to image                                                                                                                                                                      0.0s
+ => => exporting layers                                                                                                                                                                     0.0s
+ => => writing image sha256:607e6f2713a1e174302a689dcffbc2da3f259cb49dd70d5c519b382f23136edd                                                                                                0.0s
+ => => naming to docker.io/library/user-service:1.0.0                                                                                                                                       0.0s
+Infer repository core for addon registry
+Addon core/registry is already enabled
+The push refers to repository [localhost:32000/user-service]
+323d4cf7eae6: Layer already exists 
+db7ce8bcc2c6: Layer already exists 
+84fa6c1973b0: Layer already exists 
+3fe26132d76f: Layer already exists 
+951d7c59146c: Layer already exists 
+e4d94f948aec: Layer already exists 
+2360b28b4660: Layer already exists 
+248c30140986: Layer already exists 
+fa1aec823035: Layer already exists 
+6d7c150df58d: Layer already exists 
+1.0.0: digest: sha256:94e31217347436d653aab887dc47795be1ecd055eee6cbb34bfe8f5bff3a269a size: 2416
+User service image pushed
+building product-service
+Building and pushing Product service image
+script dir = /home/ubuntu/Downloads/Projeto_final/k8s/services/product-service
+Project root = /home/ubuntu/Downloads/Projeto_final
+[+] Building 0.6s (12/12) FINISHED                                                                                                                                                docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                        0.0s
+ => => transferring dockerfile: 1.10kB                                                                                                                                                      0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                         0.5s
+ => [internal] load .dockerignore                                                                                                                                                           0.0s
+ => => transferring context: 2B                                                                                                                                                             0.0s
+ => [1/7] FROM docker.io/library/python:3.11-slim@sha256:6d85378d88a19cd4d76079817532d62232be95757cb45945a99fec8e8084b9c2                                                                   0.0s
+ => [internal] load build context                                                                                                                                                           0.0s
+ => => transferring context: 8.57kB                                                                                                                                                         0.0s
+ => CACHED [2/7] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*     && apt-get cle  0.0s
+ => CACHED [3/7] WORKDIR /product-service                                                                                                                                                   0.0s
+ => CACHED [4/7] COPY requirements.txt ./requirements.txt                                                                                                                                   0.0s
+ => CACHED [5/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir setuptools==79.0.1 wheel==0.46.3 &&     pip install --no-cache-dir -r requirements.txt &&   0.0s
+ => CACHED [6/7] COPY . .                                                                                                                                                                   0.0s
+ => CACHED [7/7] RUN addgroup --system app && adduser --system --group app &&     chown -R app:app /product-service                                                                         0.0s
+ => exporting to image                                                                                                                                                                      0.0s
+ => => exporting layers                                                                                                                                                                     0.0s
+ => => writing image sha256:3c67fb81b264972d3e066bd8d8e71a0d7efa3aeee99e7f61b04c5c710924accc                                                                                                0.0s
+ => => naming to docker.io/library/product-service:1.0.0                                                                                                                                    0.0s
+Infer repository core for addon registry
+Addon core/registry is already enabled
+The push refers to repository [localhost:32000/product-service]
+28c60dfa7d39: Layer already exists 
+e9fb12b7fc5b: Layer already exists 
+a567c81048c3: Layer already exists 
+76e0c50d00c7: Layer already exists 
+b5489fdf5e7e: Layer already exists 
+9f44161d8ab4: Layer already exists 
+2360b28b4660: Layer already exists 
+248c30140986: Layer already exists 
+fa1aec823035: Layer already exists 
+6d7c150df58d: Layer already exists 
+1.0.0: digest: sha256:cadb3c934ddc71aa77408474e6b64f8d4247bd9fed55e012343da546da156a3a size: 2416
+Product service pushed
+build completed
+Applying Kubernetes manifests
+namespace/projeto-final created
+configmap/pd-app-config created
+secret/app-secrets created
+Deploying user database...
+configmap/mysql-user-init-scripts created
+persistentvolumeclaim/mysql-user-pvc created
+statefulset.apps/mysql-user created
+service/mysql-user created
+Deploying product database...
+configmap/mysql-product-init-scripts created
+persistentvolumeclaim/mysql-product-pvc created
+statefulset.apps/mysql-product created
+service/mysql-product created
+Deploying user service...
+deployment.apps/user-service created
+service/user-service created
+horizontalpodautoscaler.autoscaling/user-service-hpa created
+Deploying product service...
+deployment.apps/product-service created
+service/product-service created
+horizontalpodautoscaler.autoscaling/product-service-hpa created
+Configuring TLS
+Deploying ingress...
+ingress.networking.k8s.io/app-ingress created
+Waiting for pods to be ready
+ Waiting for pods to be ready(0 seconds)
+ Waiting for pods to be ready(5 seconds)
+ Waiting for pods to be ready(10 seconds)
+ Waiting for pods to be ready(15 seconds)
+ Waiting for pods to be ready(20 seconds)
+ Waiting for pods to be ready(25 seconds)
+All pods are ready after 30 seconds!
+
+=========================================
+Final status:
+=========================================
+NAME                               READY   STATUS    RESTARTS   AGE
+mysql-product-0                    1/1     Running   0          37s
+mysql-user-0                       1/1     Running   0          38s
+product-service-6d77f89c85-9wp8t   1/1     Running   0          35s
+product-service-6d77f89c85-q6m9j   1/1     Running   0          35s
+user-service-79689dd688-bhhss      1/1     Running   0          36s
+user-service-79689dd688-rm5cx      1/1     Running   0          36s
+
+NAME              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+mysql-product     ClusterIP   None             <none>        3306/TCP   37s
+mysql-user        ClusterIP   None             <none>        3306/TCP   38s
+product-service   ClusterIP   10.152.183.101   <none>        5002/TCP   35s
+user-service      ClusterIP   10.152.183.56    <none>        5001/TCP   36s
+
+NAME                  REFERENCE                    TARGETS                               MINPODS   MAXPODS   REPLICAS   AGE
+product-service-hpa   Deployment/product-service   cpu: <unknown>/80%, memory: 18%/80%   2         5         2          35s
+user-service-hpa      Deployment/user-service      cpu: <unknown>/70%, memory: 18%/80%   2         5         2          36s
+
+Deployment completed successfully!
+
+=========================================
+Configuring services accessibility
+=========================================
+Entries already exist in /etc/hosts
+
+ Available Endpoints:
+   User Service:    https://user.local.prod/health
+   Product Service: https://product.local.prod/health
+
+ Test the endpoints:
+   curl https://user.local.prod/health
+   curl https://product.local.prod/health
+=========================================
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl get secret inventory-tls -n projeto-final
+NAME            TYPE                DATA   AGE
+inventory-tls   kubernetes.io/tls   2      91s
+
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl describe secret inventory-tls -n projeto-final
+Name:         inventory-tls
+Namespace:    projeto-final
+Labels:       <none>
+Annotations:  <none>
+
+Type:  kubernetes.io/tls
+
+Data
+====
+tls.crt:  1237 bytes
+tls.key:  1704 bytes
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl describe ingress app-ingress -n projeto-final
+Name:             app-ingress
+Labels:           <none>
+Namespace:        projeto-final
+Address:          127.0.0.1
+Ingress Class:    nginx
+Default backend:  <default>
+TLS:
+  inventory-tls terminates user.local.prod,product.local.prod
+Rules:
+  Host                Path  Backends
+  ----                ----  --------
+  user.local.prod     
+                      /   user-service:5001 (10.1.4.188:5001,10.1.4.187:5001)
+  product.local.prod  
+                      /   product-service:5002 (10.1.4.193:5002,10.1.4.192:5002)
+Annotations:          nginx.ingress.kubernetes.io/force-ssl-redirect: true
+                      nginx.ingress.kubernetes.io/ssl-redirect: true
+Events:
+  Type    Reason  Age                  From                      Message
+  ----    ------  ----                 ----                      -------
+  Normal  Sync    107s (x2 over 111s)  nginx-ingress-controller  Scheduled for sync
+
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -k https://user.local.prod/health
+{"status":"healthy"}
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -k https://product.local.prod/health
+{"status":"healthy"}
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -v http://user.local.prod/health 2>&1 | grep -E "< HTTP|Location"
+< HTTP/1.1 308 Permanent Redirect
+< Location: https://user.local.prod/health
+
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -k -X POST https://user.local.prod/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "teste@inventario.com", "password": "StrongPass123!"}'
+{"email":"teste@inventario.com","message":"User registered successfully","user_id":1}
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ TOKEN=$(curl -sk -X POST https://user.local.prod/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "teste@inventario.com", "password": "StrongPass123!"}' \
+  | jq -r .token)
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -k -X POST https://product.local.prod/products \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Produto Teste HTTPS", "price": 19.99, "quantity": 10}'
+{"description":"","id":1,"message":"Product created successfully","price":19.99,"product_name":"produto teste https","quantity":10}
+
+MAKE CLEAN-IMAGES-PROD
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make clean-images-prod
+Removing local production Docker images (will force full rebuild)
+Untagged: user-service:1.0.0
+Untagged: localhost:32000/user-service:1.0.0
+Untagged: localhost:32000/user-service@sha256:94e31217347436d653aab887dc47795be1ecd055eee6cbb34bfe8f5bff3a269a
+Deleted: sha256:607e6f2713a1e174302a689dcffbc2da3f259cb49dd70d5c519b382f23136edd
+Untagged: product-service:1.0.0
+Untagged: localhost:32000/product-service:1.0.0
+Untagged: localhost:32000/product-service@sha256:cadb3c934ddc71aa77408474e6b64f8d4247bd9fed55e012343da546da156a3a
+Deleted: sha256:3c67fb81b264972d3e066bd8d8e71a0d7efa3aeee99e7f61b04c5c710924accc
+Removing images from MicroK8s registry...
+Registry images removed
+
+MAKE CLEAN-CONTAINERS
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make clean-containers
+Removing test directories from services
+Test directories removed
+Stopping DEV and STAGING containers
+Containers stopped

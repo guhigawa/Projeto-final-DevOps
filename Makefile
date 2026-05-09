@@ -164,10 +164,9 @@ clean-containers:
 	@rm -rf user-service/tests
 	@rm -rf product-service/tests
 	@echo "Test directories removed"
-
 	@echo "Stopping DEV and STAGING containers"
-	@docker-compose -f docker-compose.yml down 2>/dev/null || true
-	@docker-compose -f docker-compose.staging.yml --env-file .env.staging down -v 2>/dev/null || true
+	@docker-compose -f docker-compose.yml down --volumes --remove-orphans 2>/dev/null || true
+	@docker-compose -f docker-compose.staging.yml --env-file .env.staging down -v --remove-orphans 2>/dev/null || true
 	@echo "Containers stopped"
 
 
@@ -176,7 +175,16 @@ clean-images-prod:
 	@echo "Removing local production Docker images (will force full rebuild)"
 	@docker rmi user-service:1.0.0 localhost:32000/user-service:1.0.0 2>/dev/null || true
 	@docker rmi product-service:1.0.0 localhost:32000/product-service:1.0.0 2>/dev/null || true
-	@echo "Images removed"
+	@echo "Removing images from MicroK8s registry..."
+	@curl -s -X DELETE http://localhost:32000/v2/user-service/manifests/$$(curl -s -I \
+		-H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+		http://localhost:32000/v2/user-service/manifests/1.0.0 \
+		| grep -i docker-content-digest | awk '{print $$2}' | tr -d '\r') 2>/dev/null || true
+	@curl -s -X DELETE http://localhost:32000/v2/product-service/manifests/$$(curl -s -I \
+		-H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+		http://localhost:32000/v2/product-service/manifests/1.0.0 \
+		| grep -i docker-content-digest | awk '{print $$2}' | tr -d '\r') 2>/dev/null || true
+	@echo "Registry images removed"
 
 #clean production but keep data
 clean-prod-keep-data:
@@ -202,6 +210,7 @@ clean-prod:
 	if [ "$$confirm" = "DELETE PROD" ]; then \
 		echo "Deleting production pods"; \
 		microk8s kubectl delete namespace projeto-final 2>/dev/null || true; \
+		rm -f /tmp/tls.crt /tmp/tls.key 2>/dev/null || true; \
 		echo "Production cleaned"; \
 	else \
 		echo "Cancelled"; \
