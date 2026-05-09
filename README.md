@@ -311,8 +311,8 @@ echo "127.0.0.1 user.local.prod product.local.prod" | sudo tee -a /etc/hosts
 Endpoints disponíveis:
 | Serviço | URL | Endpoint de teste |
 |---------|-----|-------------------|
-| User Service | http://user.local.prod | curl http://user.local.prod/health|
-| Product Service | http://product.local.prod | curl http://product.local.prod/health |
+| User Service | https://user.local.prod | curl https://user.local.prod/health|
+| Product Service | https://product.local.prod | curl https://product.local.prod/health |
 
 Verificar o estado dos pods
 ```
@@ -332,7 +332,7 @@ make clean-prod
 |----------|------------|--------|---------|
 | **DEV** | make dev | make test-unit | make clean-containers |
 | **STG** | make staging | make test-functional | make clean-containers |
-| **PRD** | make prod | curl http://user.local.prod/health | make clean-prod |
+| **PRD** | make prod | curl https://user.local.prod/health | make clean-prod |
 
 ### 5.8 Limpeza de Ambientes
 
@@ -402,7 +402,7 @@ Os exemplos abaixo utilizam o ambiente DEV (`localhost`). Para outros ambientes,
 |----------|-------------|-----------------|
 | DEV | `http://localhost:3001` | `http://localhost:3002` |
 | STG | `http://localhost:4001` | `http://localhost:4002` |
-| PRD | `http://user.local.prod` | `http://product.local.prod` |
+| PRD | `https://user.local.prod` | `https://product.local.prod` |
 
 ---
 
@@ -838,10 +838,13 @@ product-service-hpa   Deployment/product-service   cpu: 2%/80%, memory: 19%/80% 
 user-service-hpa      Deployment/user-service      cpu: 2%/70%, memory: 17%/80%   2         5         2          21d
 
 ### 9.3 Ingress - Acesso aos Serviços
-(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://user.local.prod/health
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -k https://user.local.prod/health
 {"status":"healthy"}
-(venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl http://product.local.prod/health
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -k https://product.local.prod/health
 {"status":"healthy"}
+ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -v http://user.local.prod/health 2>&1 | grep -E "< HTTP|Location"
+< HTTP/1.1 308 Permanent Redirect
+< Location: https://user.local.prod/health
 
 ## 10. Problemas Enfrentados e Soluções
 ### 10.1 Docker Compose - Ordem de Inicialização

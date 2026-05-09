@@ -7,7 +7,6 @@ PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 cd "$PROJECT_ROOT"
 
 echo "Applying Kubernetes manifests"
-
 microk8s kubectl apply -f k8s/00-namespace-production.yml
 microk8s kubectl apply -f k8s/01-config-maps-production.yml
 microk8s kubectl apply -f k8s/02-secrets.template.yml
@@ -37,6 +36,28 @@ echo "Deploying product service..."
 microk8s kubectl apply -f k8s/services/product-service/01-product-deployment.yml
 microk8s kubectl apply -f k8s/services/product-service/02-product-service.yml
 microk8s kubectl apply -f k8s/services/product-service/03-product-hpa.yml
+
+#TLS - generate self-signed certificates
+echo "Configuring TLS"
+TLS_SECRET=$(microk8s kubectl get secret inventory-tls -n projeto-final 2>/dev/null || if [ -z "$TLS_SECRET"]; then
+    echo "Generating self-signed TLS certificate"
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /tmp/tls.key \
+        -out /tmp/tls.crt \
+        -subj "/CN=local.prod/O=Inventory" \
+        -addext "subjectAltName=DNS:user.local.prod,DNS:product.local.prod" \
+        2>/dev/null
+        
+    microk8s kubectl create secret tls inventory-tls \
+        --cert=/tmp/tls.crt \
+        --key=/tmp/tls.key \
+        -n projeto-final
+
+    rm -f /tmp/tls.crt /tmp/tls.key
+    echo "TLS secret created"
+else
+  echo "TLS secret already exists, skipping"
+fi)
 
 # Networking
 echo "Deploying ingress..."
@@ -92,8 +113,8 @@ echo "Deployment completed successfully!"
 
 echo ""
 echo "========================================="
-    echo "Configuring services accessibility"
-    echo "========================================="
+echo "Configuring services accessibility"
+echo "========================================="
     
     # Verificar se as entradas já existem no /etc/hosts
     if grep -q "user.local.prod" /etc/hosts 2>/dev/null; then
@@ -106,12 +127,12 @@ echo "========================================="
     
     echo ""
     echo " Available Endpoints:"
-    echo "   User Service:    http://user.local.prod/health"
-    echo "   Product Service: http://product.local.prod/health"
+    echo "   User Service:    https://user.local.prod/health"
+    echo "   Product Service: https://product.local.prod/health"
     echo ""
     echo " Test the endpoints:"
-    echo "   curl http://user.local.prod/health"
-    echo "   curl http://product.local.prod/health"
+    echo "   curl https://user.local.prod/health"
+    echo "   curl https://product.local.prod/health"
     echo "========================================="
 else
     echo ""
