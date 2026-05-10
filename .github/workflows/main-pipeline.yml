@@ -516,10 +516,10 @@ jobs:
 
           microk8s kubectl get pods -n projeto-final
 
-          echo "Verificando user-service usando ingress"
+          echo "Verificando user-service usando ingress https"
           for i in $(seq 1 20); do
             RESPONSE=$(curl -s -o /tmp/user_health.json -w "%{http_code}" \
-              http://user.local.prod/health 2>/dev/null || echo "000")
+              https://user.local.prod/health 2>/dev/null || echo "000")
             
             echo "Tentativa $i/20 - HTTP: $RESPONSE"
 
@@ -537,10 +537,10 @@ jobs:
             sleep 5
           done
 
-          echo "Verificando product-service via Ingress"
+          echo "Verificando product-service via Ingress https"
           for i in $(seq 1 20); do
             RESPONSE=$(curl -s -o /tmp/product_health.json -w "%{http_code}" \
-              http://product.local.prod/health 2>/dev/null || echo "000")
+              https://product.local.prod/health 2>/dev/null || echo "000")
             
             echo "Tentativa $i/20 - HTTP: $RESPONSE"
             
@@ -557,7 +557,16 @@ jobs:
             fi
             sleep 5
           done
-
+          
+          echo "Verificando redirect HTTP → HTTPS"
+          REDIRECT=$(curl -s -o /dev/null -w "%{http_code}" \
+            http://user.local.prod/health 2>/dev/null || echo "000")
+          if [ "$REDIRECT" = "308" ]; then
+            echo "Redirect HTTP → HTTPS funcionando correctamente (308)"
+          else
+            echo "Aviso: redirect HTTP retornou $REDIRECT em vez de 308"
+          fi
+          
       - name: Debug production failure
         if: failure()  # só roda se algum step anterior falhou
         run: |
