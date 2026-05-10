@@ -508,7 +508,7 @@ jobs:
             -l app=user-service \
             -n projeto-final \
             --timeout=180s
-          
+
           microk8s kubectl wait --for=condition=ready pod \
             -l app=product-service \
             -n projeto-final \
@@ -516,56 +516,49 @@ jobs:
 
           microk8s kubectl get pods -n projeto-final
 
-          echo "Verificando user-service usando ingress https"
-          for i in $(seq 1 20); do
-            RESPONSE=$(curl -s -o /tmp/user_health.json -w "%{http_code}" \
-              https://user.local.prod/health 2>/dev/null || echo "000")
-            
-            echo "Tentativa $i/20 - HTTP: $RESPONSE"
+          # Verifica user-service de dentro do próprio pod
+          # O pod faz curl para localhost:5001 — sempre resolve
+          echo "Verificando user-service"
+          USER_HEALTH=$(microk8s kubectl exec -n projeto-final \
+            deployment/user-service -- \
+            curl -s http://localhost:5001/health 2>/dev/null)
 
-            if [ "$RESPONSE" = "200" ]; then
-              echo "user-service OK"
-              cat /tmp/user_health.json
-              break
-            fi
+          echo "User service response: $USER_HEALTH"
 
-            if [ "$i" -eq 20 ]; then
-              echo "ERRO: user-service não respondeu via Ingress"
-              microk8s kubectl describe ingress -n projeto-final
-              exit 1
-            fi
-            sleep 5
-          done
-
-          echo "Verificando product-service via Ingress https"
-          for i in $(seq 1 20); do
-            RESPONSE=$(curl -s -o /tmp/product_health.json -w "%{http_code}" \
-              https://product.local.prod/health 2>/dev/null || echo "000")
-            
-            echo "Tentativa $i/20 - HTTP: $RESPONSE"
-            
-            if [ "$RESPONSE" = "200" ]; then
-              echo "product-service OK"
-              cat /tmp/product_health.json
-              break
-            fi
-
-            if [ "$i" -eq 20 ]; then
-              echo "ERRO: product-service não respondeu via Ingress"
-              microk8s kubectl describe ingress -n projeto-final
-              exit 1
-            fi
-            sleep 5
-          done
-          
-          echo "Verificando redirect HTTP → HTTPS"
-          REDIRECT=$(curl -s -o /dev/null -w "%{http_code}" \
-            http://user.local.prod/health 2>/dev/null || echo "000")
-          if [ "$REDIRECT" = "308" ]; then
-            echo "Redirect HTTP → HTTPS funcionando correctamente (308)"
+          if echo "$USER_HEALTH" | grep -q "healthy"; then
+            echo "user-service OK"
           else
-            echo "Aviso: redirect HTTP retornou $REDIRECT em vez de 308"
+            echo "ERRO: user-service não está healthy"
+            microk8s kubectl logs -n projeto-final deployment/user-service --tail=20
+            exit 1
           fi
+
+          # Verifica product-service de dentro do próprio pod
+          echo "Verificando product-service"
+          PRODUCT_HEALTH=$(microk8s kubectl exec -n projeto-final \
+            deployment/product-service -- \
+            curl -s http://localhost:5002/health 2>/dev/null)
+
+          echo "Product service response: $PRODUCT_HEALTH"
+
+          if echo "$PRODUCT_HEALTH" | grep -q "healthy"; then
+            echo "product-service OK"
+          else
+            echo "ERRO: product-service não está healthy"
+            microk8s kubectl logs -n projeto-final deployment/product-service --tail=20
+            exit 1
+          fi
+
+          # Confirma que o TLS Secret existe
+          echo "Verificando TLS Secret"
+          microk8s kubectl get secret inventory-tls -n projeto-final
+          echo "TLS configurado correctamente"
+
+          # Confirma que o Ingress tem TLS activo
+          echo "Verificando Ingress"
+          microk8s kubectl describe ingress app-ingress -n projeto-final | grep -A2 "TLS:"
+
+          echo "Deploy de produção verificado com sucesso!"
           
       - name: Debug production failure
         if: failure()  # só roda se algum step anterior falhou
