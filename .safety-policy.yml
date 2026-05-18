@@ -1,0 +1,15 @@
+# Safety policy file for the Inventory project
+version: "3.0"
+
+security:
+  # Fail on any severity vulnerability
+  ignore-cvss-severity-below: 0
+  
+  # Fail if requirements are not pinned
+  ignore-unpinned-requirements: false
+  
+  # Stop pipeline if vulnerabilities found
+  continue-on-vulnerability-error: false
+
+  # Vulnerabilities ignored with documented justification
+  ignore-vulnerabilities:
