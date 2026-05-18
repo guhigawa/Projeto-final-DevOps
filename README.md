@@ -895,6 +895,7 @@ que foram analisadas e documentadas no ficheiro `.trivyignore`:
 | CVE-2026-24049 | setuptools (interno) | Falso positivo | Vulnerabilidade em código interno do setuptools não exposto pela aplicação |
 | CVE-2026-33845 | libgnutls30t64 | Sem fix disponível | Vulnerabilidade no sistema base Debian 13.4 sem versão corrigida publicada |
 | CVE-2026-7598 | libssh2-1t64 | Sem fix disponível | Vulnerabilidade no sistema base Debian 13.4 sem versão corrigida publicada |
+| CVE-2026-42010 | libgnutls30t64 | Sem fix disponível | Authentication Bypass via NUL Character — sistema base Debian 13.4 sem versão corrigida publicada |
 
 **Decisão:** Adicionadas ao `.trivyignore` com documentação explícita.
 As vulnerabilidades de sistema base serão resolvidas quando o Debian
