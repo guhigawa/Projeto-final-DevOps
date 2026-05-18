@@ -12,12 +12,14 @@ services:
     volumes:
       - mysql_user_data:/var/lib/mysql
       - ./scripts/structure/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    ports:
+      - ${USER_MYSQL_PORT}:3306
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${USER_MYSQL_USER}", "-p${USER_MYSQL_PASSWORD}"]
-      timeout: 10s
+      timeout: 5s
       retries: 10
       interval: 10s
-      start_period: 30s
+      start_period: 60s
     restart: unless-stopped
   
   mysql-product:
@@ -30,12 +32,14 @@ services:
     volumes:
       - mysql_product_data:/var/lib/mysql
       - ./scripts/structure/product_init.sql:/docker-entrypoint-initdb.d/01-product_init.sql
+    ports:
+      - ${PRODUCT_MYSQL_PORT}:3306
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost","-u${PRODUCT_MYSQL_USER}", "-p${PRODUCT_MYSQL_PASSWORD}"]
-      timeout: 10s
+      timeout: 5s
       retries: 10
       interval: 10s
-      start_period: 30s
+      start_period: 60s
     restart: unless-stopped
 
   user-service:
@@ -52,7 +56,7 @@ services:
       - MYSQL_USER=${USER_MYSQL_USER}
       - MYSQL_PASSWORD=${USER_MYSQL_PASSWORD}
       - MYSQL_DATABASE=${USER_MYSQL_DB}
-      - MYSQL_PORT=${USER_MYSQL_PORT}
+      - MYSQL_PORT=3306
       - FLASK_ENV=development
       - FLASK_RUN_PORT=${USER_PORT}
       - USER_PORT=${USER_PORT}
@@ -64,7 +68,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 90s
     restart: unless-stopped
   
   product-service:
@@ -81,7 +85,7 @@ services:
       - MYSQL_USER=${PRODUCT_MYSQL_USER}
       - MYSQL_PASSWORD=${PRODUCT_MYSQL_PASSWORD}
       - MYSQL_DATABASE=${PRODUCT_MYSQL_DB}
-      - MYSQL_PORT=${PRODUCT_MYSQL_PORT}
+      - MYSQL_PORT=3306
       - USER_SERVICE_URL=http://user-service:${USER_PORT}
       - FLASK_ENV=development
       - FLASK_RUN_PORT=${PRODUCT_PORT}
@@ -93,7 +97,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s  
+      start_period: 90s  
     restart: unless-stopped
   
 

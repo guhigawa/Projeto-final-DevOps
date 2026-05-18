@@ -60,15 +60,17 @@ def load_env_files():
     env_test_path = current_dir.parent / '.env.test'
     if env_test_path.exists():
         env_vars= dotenv_values(str(env_test_path))
-        for key, values in env_vars.items():
-            os.environ[key] = values
+        for key, value in env_vars.items():
+            if key not in os.environ:
+                os.environ[key] = value
         return
     
     root_env_path = current_dir.parent / '.env'
     if root_env_path.exists():
         env_vars = dotenv_values(str(root_env_path))
-        for key, values in env_vars.items():
-            os.environ[key] = values
+        for key, value in env_vars.items():
+            if key not in os.environ:
+                os.environ[key] = value
         return
 
 load_env_files()
@@ -651,7 +653,7 @@ def metrics():
 
 def verify_db_setup():
     with tracer.start_as_current_span("verify_db_setup") as span:
-        max_retries = 15
+        max_retries = 30
         retry_delay = 5  #seconds
         span.set_attribute("db_setup.max_retries", max_retries)
 

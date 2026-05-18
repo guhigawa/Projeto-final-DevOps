@@ -1,3 +1,5 @@
+GRANT ALL PRIVILEGES ON products.* TO 'product_user'@'%';
+FLUSH PRIVILEGES;
 
 USE products;
 
