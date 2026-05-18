@@ -11,6 +11,8 @@ services:
       - mysql_user_staging_data:/var/lib/mysql
       - ./scripts/structure/init-staging.sql:/docker-entrypoint-initdb.d/01-init-staging.sql
       - ./scripts/staging/mockdata/user-service-staging-mockdata.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    ports:
+      - ${STAGING_USER_MYSQL_PORT}:3306 
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${STAGING_USER_MYSQL_USER}", "-p${STAGING_USER_MYSQL_PASSWORD}"]
       timeout: 10s
@@ -30,6 +32,8 @@ services:
       - mysql_product_staging_data:/var/lib/mysql
       - ./scripts/structure/product-staging_init.sql:/docker-entrypoint-initdb.d/01-product-staging_init.sql
       - ./scripts/staging/mockdata/product-service-staging-mockdata.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    ports:
+      - ${STAGING_PRODUCT_MYSQL_PORT}:3306
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${STAGING_PRODUCT_MYSQL_USER}", "-p${STAGING_PRODUCT_MYSQL_PASSWORD}"]
       timeout: 10s

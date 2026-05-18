@@ -1,3 +1,5 @@
+GRANT ALL PRIVILEGES ON auth.* TO 'auth_user'@'%';
+FLUSH PRIVILEGES;
 
 USE auth;
 

@@ -39,7 +39,9 @@ microk8s kubectl apply -f k8s/services/product-service/03-product-hpa.yml
 
 #TLS - generate self-signed certificates
 echo "Configuring TLS"
-TLS_SECRET=$(microk8s kubectl get secret inventory-tls -n projeto-final 2>/dev/null || if [ -z "$TLS_SECRET"]; then
+if microk8s kubectl get secret inventory-tls -n projeto-final > /dev/null 2>&1; then
+  echo "TLS secret already exists, skipping"
+else
     echo "Generating self-signed TLS certificate"
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout /tmp/tls.key \
@@ -55,9 +57,7 @@ TLS_SECRET=$(microk8s kubectl get secret inventory-tls -n projeto-final 2>/dev/n
 
     rm -f /tmp/tls.crt /tmp/tls.key
     echo "TLS secret created"
-else
-  echo "TLS secret already exists, skipping"
-fi)
+fi
 
 # Networking
 echo "Deploying ingress..."
@@ -65,7 +65,6 @@ microk8s kubectl apply -f k8s/networking/01-ingress.yml
 
 # Wait for pods
 echo "Waiting for pods to be ready"
-
 
 wait_for_pods() {
     local namespace="projeto-final"
@@ -126,7 +125,7 @@ echo "========================================="
     fi
     
     echo ""
-    echo " Available Endpoints:"
+    echo " Available Endpoints (HTTPS):"
     echo "   User Service:    https://user.local.prod/health"
     echo "   Product Service: https://product.local.prod/health"
     echo ""

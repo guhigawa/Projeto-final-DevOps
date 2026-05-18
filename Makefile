@@ -175,16 +175,25 @@ clean-images-prod:
 	@echo "Removing local production Docker images (will force full rebuild)"
 	@docker rmi user-service:1.0.0 localhost:32000/user-service:1.0.0 2>/dev/null || true
 	@docker rmi product-service:1.0.0 localhost:32000/product-service:1.0.0 2>/dev/null || true
-	@echo "Removing images from MicroK8s registry..."
-	@curl -s -X DELETE http://localhost:32000/v2/user-service/manifests/$$(curl -s -I \
-		-H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
-		http://localhost:32000/v2/user-service/manifests/1.0.0 \
-		| grep -i docker-content-digest | awk '{print $$2}' | tr -d '\r') 2>/dev/null || true
-	@curl -s -X DELETE http://localhost:32000/v2/product-service/manifests/$$(curl -s -I \
-		-H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
-		http://localhost:32000/v2/product-service/manifests/1.0.0 \
-		| grep -i docker-content-digest | awk '{print $$2}' | tr -d '\r') 2>/dev/null || true
-	@echo "Registry images removed"
+	@docker rmi projeto_final-user-service:latest projeto_final-product-service:latest 2>/dev/null || true
+	@echo "Cleaning MicroK8s registry storage..."
+	@microk8s kubectl scale deployment registry \
+		-n container-registry --replicas=0 2>/dev/null || true
+	@sleep 5
+	@REGISTRY_PATH=$$(sudo find /var/snap/microk8s/common/default-storage \
+		-name "repositories" 2>/dev/null | head -1); \
+	if [ -n "$$REGISTRY_PATH" ]; then \
+		sudo rm -rf "$$REGISTRY_PATH/user-service" 2>/dev/null || true; \
+		sudo rm -rf "$$REGISTRY_PATH/product-service" 2>/dev/null || true; \
+		echo "Registry storage cleared at: $$REGISTRY_PATH"; \
+	else \
+		echo "Registry storage path not found"; \
+	fi
+	@microk8s kubectl scale deployment registry \
+		-n container-registry --replicas=1 2>/dev/null || true
+	@sleep 10
+	@echo "Registry status after cleanup:"
+	@curl -s http://localhost:32000/v2/_catalog
 
 #clean production but keep data
 clean-prod-keep-data:
@@ -209,7 +218,7 @@ clean-prod:
 	@read -p "Type 'DELETE PROD' to confirm: " confirm; \
 	if [ "$$confirm" = "DELETE PROD" ]; then \
 		echo "Deleting production pods"; \
-		microk8s kubectl delete namespace projeto-final 2>/dev/null || true; \
+		microk8s kubectl delete namespace projeto-final --grace-period=0 --force --wait=false 2>/dev/null || true \
 		rm -f /tmp/tls.crt /tmp/tls.key 2>/dev/null || true; \
 		echo "Production cleaned"; \
 	else \
@@ -218,7 +227,8 @@ clean-prod:
 
 
 # Clean everything
-clean-all: clean clean-containers clean-prod
+clean-all: clean clean-containers clean-images-prod clean-prod
+	@docker system prune -af --volumes 2>/dev/null || true
 	@echo "Full cleanup completed"
 
 #zip

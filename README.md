@@ -27,7 +27,7 @@ A **Inventory** é uma startup que oferece uma plataforma simplificada para pequ
 2. **Usuário faz login** e recebe um token de acesso
 3. **Usuário adiciona seus produtos** ao catálogo (nome, preço, quantidade)
 4. **Usuário pode editar** produtos existentes ou removê-los do estoque
-5. **Usuário ode atualizar** seus dados pessoais no perfil
+5. **Usuário pode atualizar** seus dados pessoais no perfil
 6. **Todas as operações** são rastreadas via Jaeger, permitindo à startup identificar possíveis gargalos
 
 ### Arquitetura Técnica
@@ -42,6 +42,7 @@ Os serviços interagem da seguinte forma:
 - Isso garante que cada vendedor só acesse seus próprios produtos (isolamento de dados)
 
 ![alt text](documentation/20251009-HLD-ProjetoFinal-DevOps.drawio.png)
+
 *Figura 1: Diagrama de Arquitetura do Projeto*
 
 ### Componentes Principais:
@@ -180,13 +181,13 @@ ENV=development
 SECRET_KEY=your_secret_key_here
 
 # Portas
-USER_MYSQL_PORT=3306
+USER_MYSQL_PORT=3308
 USER_PORT=3001
-PRODUCT_MYSQL_PORT=3306
+PRODUCT_MYSQL_PORT=3309
 PRODUCT_PORT=3002
 
 # User Service Database
-USER_MYSQL_HOST=mysql-user
+USER_MYSQL_HOST=localhost
 USER_MYSQL_USER=your_db_user
 USER_MYSQL_PASSWORD=your_db_password
 USER_MYSQL_DB=your_db_name
@@ -293,7 +294,7 @@ Pré-requisitos para produção:
 microk8s status --wait-ready
 
 # Habilitar addons necessários (executar uma única vez)
-microk8s enable registry dns ingress metrics-server
+# Os addons necessários são verificados e activados automaticamente pelo script de deploy. Não é necessário habilitá-los manualmente.
 ```
 
 Comando para deploy:
@@ -311,8 +312,12 @@ echo "127.0.0.1 user.local.prod product.local.prod" | sudo tee -a /etc/hosts
 Endpoints disponíveis:
 | Serviço | URL | Endpoint de teste |
 |---------|-----|-------------------|
-| User Service | https://user.local.prod | curl https://user.local.prod/health|
-| Product Service | https://product.local.prod | curl https://product.local.prod/health |
+| User Service | https://user.local.prod | curl -k https://user.local.prod/health|
+| Product Service | https://product.local.prod | curl -k https://product.local.prod/health |
+> **Nota:** O ambiente de produção usa HTTPS com certificado self-signed gerado  
+> automaticamente no deploy. Use `-k` no curl para aceitar o certificado,  
+> ou adicione-o ao sistema de confiança.
+
 
 Verificar o estado dos pods
 ```
@@ -550,6 +555,11 @@ Validações aplicadas:
 curl -X GET http://localhost:3002/products \
   -H "Authorization: Bearer $TOKEN" | jq .
 ```
+
+> **Importante:** Este endpoint pertence ao **Product Service** (`localhost:3002`).  
+> Se fizer este pedido ao User Service (`localhost:3001/products`) receberá  
+> um erro `404` porque a rota `/products` não existe no User Service —  
+> cada microsserviço expõe apenas as suas próprias rotas.
 Resposta esperada (`200 OK`):
 ```json
 {
@@ -893,6 +903,26 @@ publicar uma versão corrigida das bibliotecas afectadas.
 | Problema | Solução | Lição Aprendida |
 |---|---|---|
 | Vulnerabilidades CRITICAL sem fix disponível bloqueavam o pipeline | Adicionadas ao `.trivyignore` com análise e documentação de cada CVE | Nem toda vulnerabilidade detectada é exploitável ou tem fix — a decisão de aceitar deve ser consciente, documentada e revista periodicamente |
+
+### 10.9 Docker Compose — Conflito de portas MySQL no DEV
+| Problema | Solução | Lição Aprendida |
+|---|---|---|
+| Dois containers MySQL a expor a mesma porta 3306 no host | Separação das portas externas: mysql-user em 3308, mysql-product em 3309 | Portas internas dos containers podem ser iguais desde que as portas externas do host sejam diferentes |
+
+### 10.10 Flask — load_env_files() sobrescrevia variáveis do Docker
+| Problema | Solução | Lição Aprendida |
+|---|---|---|
+| A função load_env_files() sobrescrevia MYSQL_HOST e MYSQL_PORT injectados pelo docker-compose com valores do .env | Adicionado if key not in os.environ antes de definir cada variável | Variáveis injectadas externamente devem ter sempre precedência sobre ficheiros de configuração locais |
+
+### 10.11 MicroK8s — Flannel esgotou IPs disponíveis
+| Problema | Solução | Lição Aprendida |
+|---|---|---|
+| Após 377 dias de uso, o Flannel esgotou todos os IPs do range 10.1.4.1-10.1.4.254 causando ContainerCreating permanente em todos os pods | Reinstalação completa do MicroK8s via snap remove --purge e snap install | Clusters de longa duração acumulam leases de IP corrompidos; monitorizar o estado do Flannel periodicamente |
+
+### 10.12 MicroK8s Registry — make clean-all não limpava imagens
+| Problema | Solução | Lição Aprendida |
+|---|---|---|
+| O registry do MicroK8s mantinha imagens após make clean-all | Limpeza directa do hostpath storage via find + rm das pastas de repositórios | O registry não suporta DELETE via API sem configuração adicional; a limpeza directa do volume é mais fiável |
 
 ## 11. Lições Aprendidas e Pontos-Chave
 ### 11.1 Arquitetura de Testes
