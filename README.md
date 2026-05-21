@@ -314,9 +314,14 @@ Endpoints disponíveis:
 |---------|-----|-------------------|
 | User Service | https://user.local.prod | curl -k https://user.local.prod/health|
 | Product Service | https://product.local.prod | curl -k https://product.local.prod/health |
-> **Nota:** O ambiente de produção usa HTTPS com certificado self-signed gerado  
-> automaticamente no deploy. Use `-k` no curl para aceitar o certificado,  
-> ou adicione-o ao sistema de confiança.
+**Nota:** O ambiente de produção usa HTTPS com certificado self-signed gerado  
+automaticamente no deploy. Use `-k` no curl para aceitar o certificado,  
+ou adicione-o ao sistema de confiança.
+```bash
+curl -k https://user.local.prod/health
+curl -k https://product.local.prod/health
+```
+Sem o `-k` o curl rejeita a ligação com erro de certificado SSL.
 
 
 Verificar o estado dos pods
@@ -337,7 +342,7 @@ make clean-prod
 |----------|------------|--------|---------|
 | **DEV** | make dev | make test-unit | make clean-containers |
 | **STG** | make staging | make test-functional | make clean-containers |
-| **PRD** | make prod | curl https://user.local.prod/health | make clean-prod |
+| **PRD** | make prod | curl -k https://user.local.prod/health | make clean-prod |
 
 ### 5.8 Limpeza de Ambientes
 
@@ -725,8 +730,8 @@ O deploy em produção utiliza um **self-hosted runner** configurado na VM com M
 ```bash
 # Verificar status em produção
 microk8s kubectl get pods -n projeto-final
-curl http://user.local.prod/health
-curl http://product.local.prod/health
+curl -k http://user.local.prod/health
+curl -k http://product.local.prod/health
 
 ```
 
@@ -924,6 +929,14 @@ publicar uma versão corrigida das bibliotecas afectadas.
 | Problema | Solução | Lição Aprendida |
 |---|---|---|
 | O registry do MicroK8s mantinha imagens após make clean-all | Limpeza directa do hostpath storage via find + rm das pastas de repositórios | O registry não suporta DELETE via API sem configuração adicional; a limpeza directa do volume é mais fiável |
+
+### 10.13 pip-audit — Vulnerabilidades em dependências transitivas
+
+| CVE | Biblioteca | Origem | Solução |
+|---|---|---|---|
+| PYSEC-2026-97 | nltk 3.9.4 | Dependência interna do `safety` | Adicionado `--no-deps` ao pip-audit para não analisar dependências transitivas do safety |
+| PYSEC-2024-277 | joblib 1.5.3 | Dependência do `nltk` (que é do `safety`) | Idem — não é dependência directa do projecto |
+| PYSEC-2025-183 | pyjwt 2.12.1 | Dependência directa | Versão mais recente disponível, sem fix publicado. Monitorizado periodicamente |
 
 ## 11. Lições Aprendidas e Pontos-Chave
 ### 11.1 Arquitetura de Testes

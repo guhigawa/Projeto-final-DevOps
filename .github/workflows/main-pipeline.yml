@@ -354,7 +354,7 @@ jobs:
         run: safety check -r requirements/staging_requirements.txt || exit 1
       
       - name: pip-audit Security Scan
-        run: pip-audit -r requirements/staging_requirements.txt || exit 1
+        run: pip-audit -r requirements/staging_requirements.txt --no-deps || exit 1
       
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master

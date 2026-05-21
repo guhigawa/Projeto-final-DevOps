@@ -1,0 +1,46 @@
+.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl get pods -n projeto-final
+NAME                               READY   STATUS    RESTARTS   AGE
+mysql-product-0                    1/1     Running   0          4h29m
+mysql-user-0                       1/1     Running   0          4h29m
+product-service-6b4b55749d-sk4q2   1/1     Running   0          4h29m
+product-service-6b4b55749d-z5d48   1/1     Running   0          4h29m
+user-service-5d48f847ff-bqsjx      1/1     Running   0          4h29m
+user-service-5d48f847ff-qsrk6      1/1     Running   0          4h29m
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -k https://user.local.prod/health
+{"status":"healthy"}
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -k https://product.local.prod/health
+{"status":"healthy"}
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -v http://user.local.prod/health 2>&1 | grep -E "< HTTP|Location"
+< HTTP/1.1 308 Permanent Redirect
+< Location: https://user.local.prod/health
+
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -k -X POST https://user.local.prod/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "teste@inventario.com", "password": "StrongPass123!"}'
+{"email":"teste@inventario.com","message":"User registered successfully","user_id":2}
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ TOKEN=$(curl -sk -X POST https://user.local.prod/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "teste@inventario.com", "password": "StrongPass123!"}' \
+  | jq -r .token)
+  (.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -k -X POST https://product.local.prod/products \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Produto Teste HTTPS", "price": 19.99, "quantity": 10}'
+{"description":"","id":1,"message":"Product created successfully","price":19.99,"product_name":"produto teste https","quantity":10}
+
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ curl -sk -X GET https://product.local.prod/products \
+  -H "Authorization: Bearer $TOKEN" | jq .
+{
+  "products": [
+    {
+      "created_at": "Tue, 19 May 2026 01:54:37 GMT",
+      "created_by": 2,
+      "description": "",
+      "id": 1,
+      "name": "produto teste https",
+      "price": 19.99,
+      "quantity": 10
+    }
+  ]
+}
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 
