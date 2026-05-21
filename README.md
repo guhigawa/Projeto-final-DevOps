@@ -930,6 +930,14 @@ publicar uma versão corrigida das bibliotecas afectadas.
 |---|---|---|
 | O registry do MicroK8s mantinha imagens após make clean-all | Limpeza directa do hostpath storage via find + rm das pastas de repositórios | O registry não suporta DELETE via API sem configuração adicional; a limpeza directa do volume é mais fiável |
 
+### 10.13 pip-audit — Vulnerabilidades em dependências transitivas
+
+| CVE | Biblioteca | Origem | Solução |
+|---|---|---|---|
+| PYSEC-2026-97 | nltk 3.9.4 | Dependência interna do `safety` | Adicionado `--no-deps` ao pip-audit para não analisar dependências transitivas do safety |
+| PYSEC-2024-277 | joblib 1.5.3 | Dependência do `nltk` (que é do `safety`) | Idem — não é dependência directa do projecto |
+| PYSEC-2025-183 | pyjwt 2.12.1 | Dependência directa | Versão mais recente disponível, sem fix publicado. Monitorizado periodicamente |
+
 ## 11. Lições Aprendidas e Pontos-Chave
 ### 11.1 Arquitetura de Testes
 text
