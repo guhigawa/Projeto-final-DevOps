@@ -12,7 +12,3 @@ security:
   continue-on-vulnerability-error: false
 
   # Vulnerabilities ignored with documented justification
-  ignore-vulnerabilities:
-    PYSEC-2025-183:
-      reason: "PyJWT 2.12.1 is the latest version available, no fix published yet. Monitored periodically."
-      expires: "2026-12-31"
