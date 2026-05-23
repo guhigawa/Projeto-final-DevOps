@@ -104,10 +104,9 @@ Projeto_final
 ├── Makefile
 ├── monitoring
 ├── product-service
-├── .pytest_cache
 ├── README.md
 ├── requirements
-├── requirements.txt.backup
+├── .safety-policy.yml
 ├── scripts
 ├── .sonar
 ├── sonar-project.properties
@@ -193,7 +192,7 @@ USER_MYSQL_PASSWORD=your_db_password
 USER_MYSQL_DB=your_db_name
 
 # Product Service Database  
-PRODUCT_MYSQL_HOST=mysql-product
+PRODUCT_MYSQL_HOST=localhost
 PRODUCT_MYSQL_USER=your_product_db_user
 PRODUCT_MYSQL_PASSWORD=your_product_db_password
 PRODUCT_MYSQL_DB=your_product_db_name
@@ -288,14 +287,19 @@ make clean-containers
 
 ### 5.6 Ambiente de Produção (PRD)
 
-Pré-requisitos para produção:
-```
-# Verificar se o MicroK8s está instalado e ativo
-microk8s status --wait-ready
+````markdown
+### Pré-requisitos para produção
 
-# Habilitar addons necessários (executar uma única vez)
-# Os addons necessários são verificados e activados automaticamente pelo script de deploy. Não é necessário habilitá-los manualmente.
+Verifica se o MicroK8s está instalado e a correr:
+
+```bash
+microk8s status --wait-ready
 ```
+
+> Os addons necessários (registry, dns, ingress, metrics-server) são  
+> verificados e activados automaticamente pelo script de deploy.  
+> Não é necessário habilitá-los manualmente.
+````
 
 Comando para deploy:
 ```
@@ -362,18 +366,17 @@ O projeto oferece diferentes níveis de limpeza:
 - `clean-images-prod`: Limpa as imagens do registry local do MicroK8s
 - `clean-prod`: Remove tudo, incluindo os volumes de dados
 
-**Exemplo de uso:**
+#### Fluxo normal de trabalho
+
 ```bash
-# Limpeza rápida (apenas caches)
-make clean
+# Terminou de trabalhar no DEV/STG
+make clean-containers
 
-# Limpeza de produção mantendo dados
-make clean-prod-keep-data
+# Quer recomeçar do zero (apaga volumes e dados das bases de dados)
+make clean-containers
+docker volume prune -f
 
-# Limpeza completa de produção
-make clean-prod
-
-# Limpeza total do projeto
+# Limpeza completa antes de entregar
 make clean-all
 ```
 
@@ -730,8 +733,8 @@ O deploy em produção utiliza um **self-hosted runner** configurado na VM com M
 ```bash
 # Verificar status em produção
 microk8s kubectl get pods -n projeto-final
-curl -k http://user.local.prod/health
-curl -k http://product.local.prod/health
+curl -k https://user.local.prod/health
+curl -k https://product.local.prod/health
 
 ```
 
@@ -773,20 +776,28 @@ make test-vulnerability
 *Figura 3: Sonarqube overview*
 
 ## 8. Monitoramento com Jaeger
-O Projeto utilzar Jaeger para rastrear a requisição de serviços
+
+O projecto utiliza Jaeger para rastrear requisições entre serviços.
+
+### Configuração nos Deployments
+
+```yaml
 env:
-- name: JAEGER_AGENT_HOST
-  value: "jaeger.monitoring.svc.cluster.local"
-- name: JAEGER_AGENT_PORT
-  value: "6831"
-- name: OTEL_SERVICE_NAME
-  value: "user-service"  # ou "product-service"
+  - name: JAEGER_AGENT_HOST
+    value: "jaeger.monitoring.svc.cluster.local"
+  - name: JAEGER_AGENT_PORT
+    value: "6831"
+  - name: OTEL_SERVICE_NAME
+    value: "user-service"
+```
 
-# IP do servidor
-NODE_IP=$(microk8s kubectl get node -o jsonpath='{.items[0].status.addresses[0].address}')
+### Acesso à UI do Jaeger
 
-# URL do Jaeger UI
+```bash
+NODE_IP=$(microk8s kubectl get node \
+  -o jsonpath='{.items[0].status.addresses[0].address}')
 echo "Jaeger UI: http://$NODE_IP:30001"
+```
 
 Funcionalidades Implementadas
 Tracing automático com OpenTelemetry
@@ -797,7 +808,7 @@ Correlação entre serviços
 
 Identificação de gargalos e erros
 
-# Evidencias de funcionamento
+### Evidencias de funcionamento
 ![alt text](documentation/Jaeger_primeiro_teste.png)
 ![alt text](documentation/register_tracer.png)
 ![alt text](documentation/login_trace.png)
@@ -890,7 +901,9 @@ Serviços não enviavam traces para o Jaeger | Correção do protocolo UDP no Se
 Problema | Solução	|  Lição Aprendida
 Nomes de variáveis diferentes entre statefulset, configmap e código	| Padronização de nomenclatura e documentação | Consistência é crítica; usar mesma variável em todos os lugares
 
-### 10.8
+````markdown
+### 10.8 Trivy — Vulnerabilidades CRITICAL no sistema base
+````
 O Trivy detectou vulnerabilidades CRITICAL na imagem base `python:3.11-slim`
 que foram analisadas e documentadas no ficheiro `.trivyignore`:
 
@@ -906,9 +919,6 @@ que foram analisadas e documentadas no ficheiro `.trivyignore`:
 As vulnerabilidades de sistema base serão resolvidas quando o Debian
 publicar uma versão corrigida das bibliotecas afectadas.
 
-| Problema | Solução | Lição Aprendida |
-|---|---|---|
-| Vulnerabilidades CRITICAL sem fix disponível bloqueavam o pipeline | Adicionadas ao `.trivyignore` com análise e documentação de cada CVE | Nem toda vulnerabilidade detectada é exploitável ou tem fix — a decisão de aceitar deve ser consciente, documentada e revista periodicamente |
 
 ### 10.9 Docker Compose — Conflito de portas MySQL no DEV
 | Problema | Solução | Lição Aprendida |
@@ -937,6 +947,42 @@ publicar uma versão corrigida das bibliotecas afectadas.
 | PYSEC-2026-97 | nltk 3.9.4 | Dependência interna do `safety` | Adicionado `--no-deps` ao pip-audit para não analisar dependências transitivas do safety |
 | PYSEC-2024-277 | joblib 1.5.3 | Dependência do `nltk` (que é do `safety`) | Idem — não é dependência directa do projecto |
 | PYSEC-2025-183 | pyjwt 2.12.1 | Dependência directa | Versão mais recente disponível, sem fix publicado. Monitorizado periodicamente |
+
+### 10.14 Trivy — Vulnerabilidades HIGH no sistema base Debian
+
+O Trivy detectou 42 vulnerabilidades HIGH na imagem base `python:3.11-slim` 
+(Debian 13.5). Todas estão no sistema base e nenhuma tem `Fixed Version` 
+disponível.
+
+#### Análise por grupo
+
+| Grupo | Biblioteca | CVEs | Decisão |
+|---|---|---|---|
+| Kernel headers | `linux-libc-dev` | 22 CVEs | Aceite — são headers para compilação, não o kernel em execução. Não afectam o container em runtime |
+| HTTP client | `curl` / `libcurl4t64` | 2 CVEs | **Resolvido** — `curl` removido do Dockerfile. Healthcheck migrado para Python puro |
+| Kerberos | `libkrb5*` / `krb5-locales` | 1 CVE | Aceite — dependência do sistema base sem fix disponível |
+| Terminal | `ncurses` | 1 CVE | Aceite — dependência do sistema base sem fix disponível |
+
+#### Decisão de configuração do pipeline
+
+O pipeline está configurado para falhar apenas em vulnerabilidades **CRITICAL**:
+
+```yaml
+severity: 'CRITICAL'
+exit-code: '1'
+```
+
+As vulnerabilidades HIGH do sistema base são monitorizadas e documentadas 
+mas não bloqueiam o pipeline — são dependências do Debian sem fix publicado 
+e não são exploitáveis no contexto de um container Flask sem acesso externo 
+directo às bibliotecas afectadas.
+
+Todas as CVEs aceites estão listadas no ficheiro `.trivyignore` com 
+justificação explícita.
+
+| Problema | Solução | Lição Aprendida |
+|---|---|---|
+| 42 HIGH no sistema base Debian sem fix disponível | `curl` removido do Dockerfile — healthcheck migrado para Python. Restantes documentadas no `.trivyignore` | Vulnerabilidades do sistema base são inevitáveis — a decisão de aceitar deve ser consciente, documentada e a superfície de ataque minimizada removendo dependências desnecessárias |
 
 ## 11. Lições Aprendidas e Pontos-Chave
 ### 11.1 Arquitetura de Testes
