@@ -28,5 +28,6 @@ zip -r "${ARCHIVE_NAME}" Projeto_final \
     -x "*.tmp" \
     -x "**/migrations/*.pyc" \
     -x "**/migrations/__pycache__/*" \
-    -x "Projeto_final/generate_hashed_password.py" 
+    -x "Projeto_final/generate_hashed_password.py" \
+    -x "Projeto_final/k8s/02-secrets-producao.yml"  
 
