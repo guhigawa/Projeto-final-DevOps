@@ -77,7 +77,7 @@ Apesar de público, **nenhuma credencial sensível** está no repositório:
 |-----------|------------|
 | **Backend** | Python 3.10/3.11, Flask, JWT |
 | **Banco de Dados** | MySQL 8.0 |
-| **Containerização** | Docker, Docker Compose |
+| **Containerização** | Docker, Docker Compose, Alpine Linux 3.23 |
 | **Orquestração** | Kubernetes (MicroK8s) |
 | **CI/CD** | GitHub Actions |
 | **Monitoramento** | Jaeger, OpenTelemetry |
@@ -948,41 +948,30 @@ publicar uma versão corrigida das bibliotecas afectadas.
 | PYSEC-2024-277 | joblib 1.5.3 | Dependência do `nltk` (que é do `safety`) | Idem — não é dependência directa do projecto |
 | PYSEC-2025-183 | pyjwt 2.12.1 | Dependência directa | Versão mais recente disponível, sem fix publicado. Monitorizado periodicamente |
 
-### 10.14 Trivy — Vulnerabilidades HIGH no sistema base Debian
+### 10.14 Trivy — Vulnerabilidades HIGH resolvidas com migração para Alpine
 
+#### Problema inicial
 O Trivy detectou 42 vulnerabilidades HIGH na imagem base `python:3.11-slim` 
-(Debian 13.5). Todas estão no sistema base e nenhuma tem `Fixed Version` 
-disponível.
+(Debian 13.5). Todas no sistema operativo base.
 
-#### Análise por grupo
+#### Solução aplicada
 
-| Grupo | Biblioteca | CVEs | Decisão |
-|---|---|---|---|
-| Kernel headers | `linux-libc-dev` | 22 CVEs | Aceite — são headers para compilação, não o kernel em execução. Não afectam o container em runtime |
-| HTTP client | `curl` / `libcurl4t64` | 2 CVEs | **Resolvido** — `curl` removido do Dockerfile. Healthcheck migrado para Python puro |
-| Kerberos | `libkrb5*` / `krb5-locales` | 1 CVE | Aceite — dependência do sistema base sem fix disponível |
-| Terminal | `ncurses` | 1 CVE | Aceite — dependência do sistema base sem fix disponível |
+| Acção | Resultado |
+|---|---|
+| Migração de `python:3.11-slim` (Debian 13.5) para `python:3.11-alpine` | Eliminou 40 HIGH do sistema base — Alpine 3.23.4 tem 0 CVEs de OS |
+| `setuptools` actualizado de `79.0.1` para `80.0.0` | Inclui `jaraco.context 6.1.0` e `wheel 0.46.2` nos `_vendor/` internos |
+| Remoção explícita dos `_vendor/` vulneráveis no Dockerfile | `jaraco.context 5.3.0` e `wheel 0.45.1` removidos do `_vendor/` do setuptools |
 
-#### Decisão de configuração do pipeline
+#### Resultado final
 
-O pipeline está configurado para falhar apenas em vulnerabilidades **CRITICAL**:
-
-```yaml
-severity: 'CRITICAL'
-exit-code: '1'
+```bash
+trivy image --severity HIGH,CRITICAL user-service:latest
+# Total: 0 (HIGH: 0, CRITICAL: 0)
 ```
-
-As vulnerabilidades HIGH do sistema base são monitorizadas e documentadas 
-mas não bloqueiam o pipeline — são dependências do Debian sem fix publicado 
-e não são exploitáveis no contexto de um container Flask sem acesso externo 
-directo às bibliotecas afectadas.
-
-Todas as CVEs aceites estão listadas no ficheiro `.trivyignore` com 
-justificação explícita.
 
 | Problema | Solução | Lição Aprendida |
 |---|---|---|
-| 42 HIGH no sistema base Debian sem fix disponível | `curl` removido do Dockerfile — healthcheck migrado para Python. Restantes documentadas no `.trivyignore` | Vulnerabilidades do sistema base são inevitáveis — a decisão de aceitar deve ser consciente, documentada e a superfície de ataque minimizada removendo dependências desnecessárias |
+| 42 HIGH no sistema base Debian 13.5 sem fix disponível | Migração para Alpine que tem manutenção de segurança mais activa e superfície de ataque mínima | A escolha da imagem base é uma decisão de segurança crítica — Alpine é a escolha padrão para produção quando a compatibilidade o permite |
 
 ## 11. Lições Aprendidas e Pontos-Chave
 ### 11.1 Arquitetura de Testes

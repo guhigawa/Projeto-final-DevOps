@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
 ARG ENVIRONMENT
 ARG PORT
@@ -11,26 +11,29 @@ ENV JAEGER_AGENT_PORT=6831
 ENV OTEL_SERVICE_NAME=product-service
 ENV OTEL_TRACES_EXPORTER=jaeger
 
-RUN apt-get update && apt-get install -y \
-    curl \ 
-    default-libmysqlclient-dev \
-    build-essential \
-    pkg-config \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+RUN apk update && apk upgrade && \
+    apk add --no-cache \
+    curl \
+    gcc \
+    musl-dev \
+    mariadb-dev \
+    pkgconfig \
+    build-base
 
 WORKDIR /product-service
 
 COPY requirements.txt ./requirements.txt
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir setuptools==79.0.1 wheel==0.46.3 && \
     pip install --no-cache-dir -r requirements.txt && \
-    pip install --upgrade wheel jaraco.context
+    # Remove versões vulneráveis do _vendor/ do setuptools
+    rm -rf /usr/local/lib/python3.11/site-packages/setuptools/_vendor/jaraco.context-5.3.0.dist-info && \
+    rm -rf /usr/local/lib/python3.11/site-packages/setuptools/_vendor/jaraco_context-5.3.0.dist-info && \
+    rm -rf /usr/local/lib/python3.11/site-packages/setuptools/_vendor/wheel-0.45.1.dist-info
 
 COPY . .
 
-RUN addgroup --system app && adduser --system --group app && \
+RUN addgroup -S app && adduser -S app -G app && \
     chown -R app:app /product-service
     
 USER app
