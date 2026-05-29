@@ -633,407 +633,108 @@ aquasecurity/trivy info found version: 0.69.3 for v0.69.3/Linux/64bit
 aquasecurity/trivy info installed /usr/local/bin/trivy
 (.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ trivy --version
 Version: 0.69.3
-(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ trivy image --severity CRITICAL,HIGH guhigawa/user-service:test
-2026-04-07T20:11:30+01:00       INFO    [vulndb] Need to update DB
-2026-04-07T20:11:30+01:00       INFO    [vulndb] Downloading vulnerability DB...
-2026-04-07T20:11:30+01:00       INFO    [vulndb] Downloading artifact...        repo="mirror.gcr.io/aquasec/trivy-db:2"
-89.55 MiB / 89.55 MiB [--------------------------------------------------------------------------------------------------------------------------] 100.00% 1.81 MiB p/s 50s
-2026-04-07T20:12:24+01:00       INFO    [vulndb] Artifact successfully downloaded       repo="mirror.gcr.io/aquasec/trivy-db:2"
-2026-04-07T20:12:24+01:00       INFO    [vuln] Vulnerability scanning is enabled
-2026-04-07T20:12:24+01:00       INFO    [secret] Secret scanning is enabled
-2026-04-07T20:12:24+01:00       INFO    [secret] If your scanning is slow, please try '--scanners vuln' to disable secret scanning
-2026-04-07T20:12:24+01:00       INFO    [secret] Please see https://trivy.dev/docs/v0.69/guide/scanner/secret#recommendation for faster secret detection
-2026-04-07T20:13:05+01:00       INFO    [python] Licenses acquired from one or more METADATA files may be subject to additional terms. Use `--debug` flag to see all affected packages.
-2026-04-07T20:13:06+01:00       INFO    Detected OS     family="debian" version="13.4"
-2026-04-07T20:13:06+01:00       INFO    [debian] Detecting vulnerabilities...   os_version="13" pkg_num=188
-2026-04-07T20:13:07+01:00       INFO    Number of language-specific files       num=1
-2026-04-07T20:13:07+01:00       INFO    [python-pkg] Detecting vulnerabilities...
-2026-04-07T20:13:07+01:00       WARN    Using severities from other vendors for some vulnerabilities. Read https://trivy.dev/docs/v0.69/guide/scanner/vulnerability#severity-selection for details.
-2026-04-07T20:13:09+01:00       INFO    Table result includes only package filenames. Use '--format json' option to get the full path to the package file.
 
-Report Summary
+TRIVY TEST OUTPUT AFTER CHANGING IMAGE TO ALPINE
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 
 
-┌──────────────────────────────────────────────────────────────────────────────────┬────────────┬─────────────────┬─────────┐
-│                                      Target                                      │    Type    │ Vulnerabilities │ Secrets │
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker run --rm user-service:alpine-fix \
+  find /usr/local/lib -name "METADATA" -path "*jaraco*context*" \
+  -exec grep "^Version:" {} \; -print
+Version: 5.3.0
+/usr/local/lib/python3.11/site-packages/setuptools/_vendor/jaraco.context-5.3.0.dist-info/METADATA
+Version: 6.1.0
+/usr/local/lib/python3.11/site-packages/jaraco_context-6.1.0.dist-info/METADATA
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker run --rm user-service:alpine-fix \
+  find /usr/local/lib -name "METADATA" -path "*wheel*" \
+  -exec grep "^Version:" {} \; -print
+Version: 0.45.1
+/usr/local/lib/python3.11/site-packages/setuptools/_vendor/wheel-0.45.1.dist-info/METADATA
+Version: 0.46.3
+/usr/local/lib/python3.11/site-packages/wheel-0.46.3.dist-info/METADATA
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$
+
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ trivy image --severity HIGH,CRITICAL user-service:alpine-fix 2>/dev/null | tail -15
 ├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ guhigawa/user-service:test (debian 13.4)                                         │   debian   │       48        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/PyJWT-2.10.1.dist-info/METADATA           │ python-pkg │        1        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/blinker-1.9.0.dist-info/METADATA          │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/certifi-2026.2.25.dist-info/METADATA      │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/cffi-2.0.0.dist-info/METADATA             │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/charset_normalizer-3.4.7.dist-info/METAD- │ python-pkg │        0        │    -    │
-│ ATA                                                                              │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/click-8.3.2.dist-info/METADATA            │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/cryptography-46.0.5.dist-info/METADATA    │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/deprecated-1.3.1.dist-info/METADATA       │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/flask-3.1.3.dist-info/METADATA            │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/googleapis_common_protos-1.59.1.dist-inf- │ python-pkg │        0        │    -    │
-│ o/METADATA                                                                       │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/grpcio-1.80.0.dist-info/METADATA          │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/idna-3.11.dist-info/METADATA              │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/importlib_metadata-7.0.0.dist-info/METAD- │ python-pkg │        0        │    -    │
-│ ATA                                                                              │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/itsdangerous-2.2.0.dist-info/METADATA     │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/jinja2-3.1.6.dist-info/METADATA           │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/markupsafe-3.0.3.dist-info/METADATA       │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_api-1.24.0.dist-info/METAD- │ python-pkg │        0        │    -    │
-│ ATA                                                                              │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_distro-0.45b0.dist-info/ME- │ python-pkg │        0        │    -    │
-│ TADATA                                                                           │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_exporter_jaeger-1.21.0.dis- │ python-pkg │        0        │    -    │
-│ t-info/METADATA                                                                  │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_exporter_jaeger_proto_grpc- │ python-pkg │        0        │    -    │
-│ -1.21.0.dist-info/METADATA                                                       │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_exporter_jaeger_thrift-1.2- │ python-pkg │        0        │    -    │
-│ 1.0.dist-info/METADATA                                                           │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation-0.45b0.dis- │ python-pkg │        0        │    -    │
-│ t-info/METADATA                                                                  │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_dbapi-0.45- │ python-pkg │        0        │    -    │
-│ b0.dist-info/METADATA                                                            │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_flask-0.45- │ python-pkg │        0        │    -    │
-│ b0.dist-info/METADATA                                                            │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_logging-0.- │ python-pkg │        0        │    -    │
-│ 45b0.dist-info/METADATA                                                          │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_pymysql-0.- │ python-pkg │        0        │    -    │
-│ 45b0.dist-info/METADATA                                                          │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_requests-0- │ python-pkg │        0        │    -    │
-│ .45b0.dist-info/METADATA                                                         │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_instrumentation_wsgi-0.45b- │ python-pkg │        0        │    -    │
-│ 0.dist-info/METADATA                                                             │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_sdk-1.24.0.dist-info/METAD- │ python-pkg │        0        │    -    │
-│ ATA                                                                              │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_semantic_conventions-0.45b- │ python-pkg │        0        │    -    │
-│ 0.dist-info/METADATA                                                             │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/opentelemetry_util_http-0.45b0.dist-info- │ python-pkg │        0        │    -    │
-│ /METADATA                                                                        │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/packaging-26.0.dist-info/METADATA         │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/pip-24.0.dist-info/METADATA               │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/protobuf-4.25.9.dist-info/METADATA        │ python-pkg │        1        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/pycparser-3.0.dist-info/METADATA          │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/pymysql-1.1.2.dist-info/METADATA          │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/python_dotenv-1.1.1.dist-info/METADATA    │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/requests-2.32.5.dist-info/METADATA        │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools-79.0.1.dist-info/METADATA      │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/autocommand-2.2.2.dis- │ python-pkg │        0        │    -    │
-│ t-info/METADATA                                                                  │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/backports.tarfile-1.2- │ python-pkg │        0        │    -    │
-│ .0.dist-info/METADATA                                                            │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/importlib_metadata-8.- │ python-pkg │        0        │    -    │
-│ 0.0.dist-info/METADATA                                                           │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/inflect-7.3.1.dist-in- │ python-pkg │        0        │    -    │
-│ fo/METADATA                                                                      │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/jaraco.collections-5.- │ python-pkg │        0        │    -    │
-│ 1.0.dist-info/METADATA                                                           │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/jaraco.context-5.3.0.- │ python-pkg │        1        │    -    │
-│ dist-info/METADATA                                                               │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/jaraco.functools-4.0.- │ python-pkg │        0        │    -    │
-│ 1.dist-info/METADATA                                                             │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/jaraco.text-3.12.1.di- │ python-pkg │        0        │    -    │
-│ st-info/METADATA                                                                 │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/more_itertools-10.3.0- │ python-pkg │        0        │    -    │
-│ .dist-info/METADATA                                                              │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/packaging-24.2.dist-i- │ python-pkg │        0        │    -    │
-│ nfo/METADATA                                                                     │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/platformdirs-4.2.2.di- │ python-pkg │        0        │    -    │
-│ st-info/METADATA                                                                 │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/tomli-2.0.1.dist-info- │ python-pkg │        0        │    -    │
-│ /METADATA                                                                        │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/typeguard-4.3.0.dist-- │ python-pkg │        0        │    -    │
-│ info/METADATA                                                                    │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/typing_extensions-4.1- │ python-pkg │        0        │    -    │
-│ 2.2.dist-info/METADATA                                                           │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/wheel-0.45.1.dist-inf- │ python-pkg │        1        │    -    │
-│ o/METADATA                                                                       │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/setuptools/_vendor/zipp-3.19.2.dist-info- │ python-pkg │        0        │    -    │
-│ /METADATA                                                                        │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/thrift-0.22.0.dist-info/METADATA          │ python-pkg │        0        │    -    │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/typing_extensions-4.15.0.dist-info/METAD- │ python-pkg │        0        │    -    │
-│ ATA                                                                              │            │                 │         │
-├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/urllib3-2.6.3.dist-info/METADATA          │ python-pkg │        0        │    -    │
+│ usr/local/lib/python3.11/site-packages/urllib3-2.7.0.dist-info/METADATA          │ python-pkg │        0        │    -    │
 ├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
 │ usr/local/lib/python3.11/site-packages/werkzeug-3.1.6.dist-info/METADATA         │ python-pkg │        0        │    -    │
 ├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/wheel-0.45.1.dist-info/METADATA           │ python-pkg │        1        │    -    │
+│ usr/local/lib/python3.11/site-packages/wheel-0.46.3.dist-info/METADATA           │ python-pkg │        0        │    -    │
 ├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
 │ usr/local/lib/python3.11/site-packages/wrapt-1.17.3.dist-info/METADATA           │ python-pkg │        0        │    -    │
 ├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
-│ usr/local/lib/python3.11/site-packages/zipp-3.23.0.dist-info/METADATA            │ python-pkg │        0        │    -    │
+│ usr/local/lib/python3.11/site-packages/zipp-4.1.0.dist-info/METADATA             │ python-pkg │        0        │    -    │
 └──────────────────────────────────────────────────────────────────────────────────┴────────────┴─────────────────┴─────────┘
 Legend:
 - '-': Not scanned
 - '0': Clean (no security findings detected)
 
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker run --rm user-service:alpine-fix \
+  find /usr/local/lib -name "METADATA" -path "*jaraco*context*" \
+  -exec grep "^Version:" {} \; -print
+Version: 6.1.0
+/usr/local/lib/python3.11/site-packages/jaraco_context-6.1.0.dist-info/METADATA
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker run --rm user-service:alpine-fix \
+  find /usr/local/lib -name "METADATA" -path "*wheel*" \
+  -exec grep "^Version:" {} \; -print
+Version: 0.46.3
+/usr/local/lib/python3.11/site-packages/wheel-0.46.3.dist-info/METADATA
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker run --rm user-service:alpine-fix pip show setuptools | grep Version
+Version: 80.0.0
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 
 
-guhigawa/user-service:test (debian 13.4)
+PRODUCT-BUILD
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker build --no-cache -t product-service:alpine-fix ./product-service
+[+] Building 72.6s (12/12) FINISHED                                                                                                                                              docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                       0.0s
+ => => transferring dockerfile: 1.36kB                                                                                                                                                     0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-alpine                                                                                                                      0.5s
+ => [internal] load .dockerignore                                                                                                                                                          0.0s
+ => => transferring context: 2B                                                                                                                                                            0.0s
+ => CACHED [1/7] FROM docker.io/library/python:3.11-alpine@sha256:8b5bfdb1fd2d78aa94e21c4d61be52487693f54be7f1021647751ff365795703                                                         0.0s
+ => [internal] load build context                                                                                                                                                          0.0s
+ => => transferring context: 9.35kB                                                                                                                                                        0.0s
+ => [2/7] RUN apk update && apk upgrade &&     apk add --no-cache     curl     gcc     musl-dev     mariadb-dev     pkgconfig     build-base                                              25.4s
+ => [3/7] WORKDIR /product-service                                                                                                                                                         0.0s 
+ => [4/7] COPY requirements.txt ./requirements.txt                                                                                                                                         0.0s 
+ => [5/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir -r requirements.txt &&     rm -rf /usr/local/lib/python3.11/site-packages/setuptools/_vendor/ja  43.8s 
+ => [6/7] COPY . .                                                                                                                                                                         0.1s 
+ => [7/7] RUN addgroup -S app && adduser -S app -G app &&     chown -R app:app /product-service                                                                                            0.3s 
+ => exporting to image                                                                                                                                                                     2.3s 
+ => => exporting layers                                                                                                                                                                    2.3s
+ => => writing image sha256:e81b7fcb3494061a932e635140c2e0052d05df7448251819f7bc00ba6e1b4754                                                                                               0.0s
+ => => naming to docker.io/library/product-service:alpine-fix   
+ 
+ (.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ trivy image --severity HIGH,CRITICAL product-service:alpine-fix 2>/dev/null | tail -20
+│ usr/local/lib/python3.11/site-packages/typing_extensions-4.15.0.dist-info/METAD- │ python-pkg │        0        │    -    │
+│ ATA                                                                              │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/typing_inspection-0.4.2.dist-info/METADA- │ python-pkg │        0        │    -    │
+│ TA                                                                               │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/urllib3-2.7.0.dist-info/METADATA          │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/werkzeug-3.1.6.dist-info/METADATA         │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/wheel-0.46.3.dist-info/METADATA           │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/wrapt-1.17.3.dist-info/METADATA           │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.11/site-packages/zipp-4.1.0.dist-info/METADATA             │ python-pkg │        0        │    -    │
+└──────────────────────────────────────────────────────────────────────────────────┴────────────┴─────────────────┴─────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
 
-Total: 48 (HIGH: 48, CRITICAL: 0)
-
-┌────────────────┬────────────────┬──────────┬──────────┬───────────────────┬───────────────┬──────────────────────────────────────────────────────────────┐
-│    Library     │ Vulnerability  │ Severity │  Status  │ Installed Version │ Fixed Version │                            Title                             │
-├────────────────┼────────────────┼──────────┼──────────┼───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
-│ libncursesw6   │ CVE-2025-69720 │ HIGH     │ affected │ 6.5+20250216-2    │               │ ncurses: ncurses: Buffer overflow vulnerability may lead to  │
-│                │                │          │          │                   │               │ arbitrary code execution.                                    │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-69720                   │
-├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
-│ libnghttp2-14  │ CVE-2026-27135 │          │          │ 1.64.0-1.1        │               │ nghttp2: nghttp2: Denial of Service via malformed HTTP/2     │
-│                │                │          │          │                   │               │ frames after session termination...                          │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-27135                   │
-├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
-│ libsystemd0    │ CVE-2026-29111 │          │          │ 257.9-1~deb13u1   │               │ systemd: systemd: Arbitrary code execution or Denial of      │
-│                │                │          │          │                   │               │ Service via spurious IPC...                                  │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-29111                   │
-├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
-│ libtinfo6      │ CVE-2025-69720 │          │          │ 6.5+20250216-2    │               │ ncurses: ncurses: Buffer overflow vulnerability may lead to  │
-│                │                │          │          │                   │               │ arbitrary code execution.                                    │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-69720                   │
-├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
-│ libudev1       │ CVE-2026-29111 │          │          │ 257.9-1~deb13u1   │               │ systemd: systemd: Arbitrary code execution or Denial of      │
-│                │                │          │          │                   │               │ Service via spurious IPC...                                  │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-29111                   │
-├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
-│ linux-libc-dev │ CVE-2013-7445  │          │          │ 6.12.74-2         │               │ kernel: memory exhaustion via crafted Graphics Execution     │
-│                │                │          │          │                   │               │ Manager (GEM) objects                                        │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2013-7445                    │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2019-19449 │          │          │                   │               │ kernel: mounting a crafted f2fs filesystem image can lead to │
-│                │                │          │          │                   │               │ slab-out-of-bounds read...                                   │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2019-19449                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2019-19814 │          │          │                   │               │ kernel: out-of-bounds write in __remove_dirty_segment in     │
-│                │                │          │          │                   │               │ fs/f2fs/segment.c                                            │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2019-19814                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2021-3847  │          │          │                   │               │ kernel: low-privileged user privileges escalation            │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2021-3847                    │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2021-3864  │          │          │                   │               │ kernel: descendant's dumpable setting with certain SUID      │
-│                │                │          │          │                   │               │ binaries                                                     │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2021-3864                    │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2024-21803 │          │          │                   │               │ kernel: bluetooth: use-after-free vulnerability in           │
-│                │                │          │          │                   │               │ af_bluetooth.c                                               │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2024-21803                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2024-58015 │          │          │                   │               │ kernel: wifi: ath12k: Fix for out-of bound access error      │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2024-58015                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2024-58093 │          │          │                   │               │ kernel: Linux kernel: PCI/ASPM use-after-free during         │
-│                │                │          │          │                   │               │ hot-unplug                                                   │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2024-58093                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-22104 │          │          │                   │               │ kernel: ibmvnic: Use kernel helpers for hex dumps            │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-22104                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-38137 │          │          │                   │               │ kernel: PCI/pwrctrl: Cancel outstanding rescan work when     │
-│                │                │          │          │                   │               │ unregistering                                                │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38137                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-38187 │          │          │                   │               │ kernel: drm/nouveau: fix a use-after-free in                 │
-│                │                │          │          │                   │               │ r535_gsp_rpc_push()                                          │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38187                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-38204 │          │          │                   │               │ kernel: jfs: fix array-index-out-of-bounds read in           │
-│                │                │          │          │                   │               │ add_missing_indices                                          │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38204                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-38206 │          │          │                   │               │ kernel: Kernel: Double free vulnerability in exFAT           │
-│                │                │          │          │                   │               │ filesystem can lead to denial...                             │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38206                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-38421 │          │          │                   │               │ kernel: platform/x86/amd: pmf: Use device managed            │
-│                │                │          │          │                   │               │ allocations                                                  │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38421                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-38584 │          │          │                   │               │ kernel: padata: Fix pd UAF once and for all                  │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38584                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-38627 │          │          │                   │               │ kernel: f2fs: compress: fix UAF of f2fs_inode_info in        │
-│                │                │          │          │                   │               │ f2fs_free_dic                                                │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38627                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-38636 │          │          │                   │               │ kernel: rv: Use strings in da monitors tracepoints           │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-38636                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-39859 │          │          │                   │               │ kernel: ptp: ocp: fix use-after-free bugs causing by         │
-│                │                │          │          │                   │               │ ptp_ocp_watchdog                                             │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-39859                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-39862 │          │          │                   │               │ kernel: wifi: mt76: mt7915: fix list corruption after        │
-│                │                │          │          │                   │               │ hardware restart                                             │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-39862                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-39958 │          │          │                   │               │ kernel: iommu/s390: Make attach succeed when the device was  │
-│                │                │          │          │                   │               │ surprise removed                                             │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-39958                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-40064 │          │          │                   │               │ kernel: smc: Fix use-after-free in __pnet_find_base_ndev()   │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-40064                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-40135 │          │          │                   │               │ kernel: ipv6: use RCU in ip6_xmit()                          │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-40135                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-40158 │          │          │                   │               │ kernel: ipv6: use RCU in ip6_output()                        │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-40158                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-40168 │          │          │                   │               │ kernel: smc: Use __sk_dst_get() and dst_dev_rcu() in         │
-│                │                │          │          │                   │               │ smc_clc_prfx_match()                                         │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-40168                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-71152 │          │          │                   │               │ kernel: net: dsa: properly keep track of conduit reference   │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-71152                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2025-71221 │          │          │                   │               │ kernel: dmaengine: mmp_pdma: Fix race condition in           │
-│                │                │          │          │                   │               │ mmp_pdma_residue()                                           │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-71221                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23102 │          │          │                   │               │ kernel: Linux kernel: Denial of Service due to incorrect SVE │
-│                │                │          │          │                   │               │ context restoration...                                       │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23102                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23171 │          │          │                   │               │ kernel: Linux kernel: Use-after-free in bonding module can   │
-│                │                │          │          │                   │               │ cause system crash or...                                     │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23171                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23208 │          │          │                   │               │ kernel: ALSA: usb-audio: Prevent excessive number of frames  │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23208                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23226 │          │          │                   │               │ kernel: ksmbd: add chann_lock to protect ksmbd_chann_list    │
-│                │                │          │          │                   │               │ xarray                                                       │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23226                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23227 │          │          │                   │               │ kernel: drm/exynos: vidi: use ctx->lock to protect struct    │
-│                │                │          │          │                   │               │ vidi_context member variables related...                     │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23227                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23231 │          │          │                   │               │ kernel: kernel: Privilege escalation or denial of service    │
-│                │                │          │          │                   │               │ via use-after-free in nf_tables_addchain()...                │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23231                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23243 │          │          │                   │               │ kernel: Linux kernel: Denial of service and memory           │
-│                │                │          │          │                   │               │ corruption in RDMA umad...                                   │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23243                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23270 │          │          │                   │               │ kernel: Linux kernel: Use-after-free in traffic control      │
-│                │                │          │          │                   │               │ (act_ct) may lead to denial...                               │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23270                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23375 │          │          │                   │               │ kernel: mm: thp: deny THP for files on anonymous inodes      │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23375                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23392 │          │          │                   │               │ kernel: netfilter: nf_tables: release flowtable after rcu    │
-│                │                │          │          │                   │               │ grace period on error                                        │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23392                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23401 │          │          │                   │               │ kernel: KVM: x86/mmu: Drop/zap existing present SPTE even    │
-│                │                │          │          │                   │               │ when creating an MMIO...                                     │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23401                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23450 │          │          │                   │               │ kernel: net/smc: fix NULL dereference and UAF in             │
-│                │                │          │          │                   │               │ smc_tcp_syn_recv_sock()                                      │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23450                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-23455 │          │          │                   │               │ kernel: netfilter: nf_conntrack_h323: check for zero length  │
-│                │                │          │          │                   │               │ in DecodeQ931()                                              │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-23455                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-31402 │          │          │                   │               │ kernel: nfsd: fix heap overflow in NFSv4.0 LOCK replay cache │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-31402                   │
-│                ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
-│                │ CVE-2026-31408 │          │          │                   │               │ kernel: Bluetooth: SCO: Fix use-after-free in                │
-│                │                │          │          │                   │               │ sco_recv_frame() due to missing sock_hold                    │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-31408                   │
-├────────────────┼────────────────┤          │          ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
-│ ncurses-base   │ CVE-2025-69720 │          │          │ 6.5+20250216-2    │               │ ncurses: ncurses: Buffer overflow vulnerability may lead to  │
-│                │                │          │          │                   │               │ arbitrary code execution.                                    │
-│                │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2025-69720                   │
-├────────────────┤                │          │          │                   ├───────────────┤                                                              │
-│ ncurses-bin    │                │          │          │                   │               │                                                              │
-│                │                │          │          │                   │               │                                                              │
-│                │                │          │          │                   │               │                                                              │
-└────────────────┴────────────────┴──────────┴──────────┴───────────────────┴───────────────┴──────────────────────────────────────────────────────────────┘
-
-Python (python-pkg)
-
-Total: 5 (HIGH: 5, CRITICAL: 0)
-
-┌───────────────────────────┬────────────────┬──────────┬────────┬───────────────────┬────────────────┬──────────────────────────────────────────────────────────────┐
-│          Library          │ Vulnerability  │ Severity │ Status │ Installed Version │ Fixed Version  │                            Title                             │
-├───────────────────────────┼────────────────┼──────────┼────────┼───────────────────┼────────────────┼──────────────────────────────────────────────────────────────┤
-│ PyJWT (METADATA)          │ CVE-2026-32597 │ HIGH     │ fixed  │ 2.10.1            │ 2.12.0         │ pyjwt: PyJWT accepts unknown `crit` header extensions (RFC   │
-│                           │                │          │        │                   │                │ 7515 §4.1.11 MUST violation)...                              │
-│                           │                │          │        │                   │                │ https://avd.aquasec.com/nvd/cve-2026-32597                   │
-├───────────────────────────┼────────────────┤          │        ├───────────────────┼────────────────┼──────────────────────────────────────────────────────────────┤
-│ jaraco.context (METADATA) │ CVE-2026-23949 │          │        │ 5.3.0             │ 6.1.0          │ jaraco.context: jaraco.context: Path traversal via malicious │
-│                           │                │          │        │                   │                │ tar archives                                                 │
-│                           │                │          │        │                   │                │ https://avd.aquasec.com/nvd/cve-2026-23949                   │
-├───────────────────────────┼────────────────┤          │        ├───────────────────┼────────────────┼──────────────────────────────────────────────────────────────┤
-│ protobuf (METADATA)       │ CVE-2026-0994  │          │        │ 4.25.9            │ 6.33.5, 5.29.6 │ python: protobuf: Protobuf: Denial of Service due to         │
-│                           │                │          │        │                   │                │ recursion depth bypass                                       │
-│                           │                │          │        │                   │                │ https://avd.aquasec.com/nvd/cve-2026-0994                    │
-├───────────────────────────┼────────────────┤          │        ├───────────────────┼────────────────┼──────────────────────────────────────────────────────────────┤
-│ wheel (METADATA)          │ CVE-2026-24049 │          │        │ 0.45.1            │ 0.46.2         │ wheel: wheel: Privilege Escalation or Arbitrary Code         │
-│                           │                │          │        │                   │                │ Execution via malicious wheel file...                        │
-│                           │                │          │        │                   │                │ https://avd.aquasec.com/nvd/cve-2026-24049                   │
-│                           │                │          │        │                   │                │                                                              │
-│                           │                │          │        │                   │                │                                                              │
-│                           │                │          │        │                   │                │                                                              │
-│                           │                │          │        │                   │                │                                                              │
-└───────────────────────────┴────────────────┴──────────┴────────┴───────────────────┴────────────────┴──────────────────────────────────────────────────────────────┘
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker run --rm product-service:alpine-fix \
+  find /usr/local/lib -name "METADATA" -path "*jaraco*context*" \
+  -exec grep "^Version:" {} \; -print
+Version: 6.1.0
+/usr/local/lib/python3.11/site-packages/jaraco_context-6.1.0.dist-info/METADATA
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker run --rm product-service:alpine-fix \
+> find /usr/local/lib -name "METADATA" -path "*wheel*" \
+> -exec grep "^Version:" {} \; -print
+Version: 0.46.3
+/usr/local/lib/python3.11/site-packages/wheel-0.46.3.dist-info/METADATA
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker run --rm product-service:alpine-fix pip show setuptools | grep Version
+Version: 80.0.0
