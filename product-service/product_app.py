@@ -27,15 +27,16 @@ def setup_tracing():
     
     provider = TracerProvider(resource=resource)
 
-    jaeger_exporter = JaegerExporter(
-        agent_host_name=os.environ.get('JAEGER_AGENT_HOST', 'jaeger.monitoring.svc.cluster.local'),
-        agent_port=int(os.environ.get('JAEGER_AGENT_PORT', '6831')),
-    )
-    span_processor = BatchSpanProcessor(jaeger_exporter)
-    provider.add_span_processor(span_processor)
+    env = os.environ.get('FLASK_ENV', 'development')
+    if env != 'development':
+        jaeger_exporter = JaegerExporter(
+            agent_host_name=os.environ.get('JAEGER_AGENT_HOST', 'jaeger.monitoring.svc.cluster.local'),
+            agent_port=int(os.environ.get('JAEGER_AGENT_PORT', '6831')),
+        )
+        span_processor = BatchSpanProcessor(jaeger_exporter)
+        provider.add_span_processor(span_processor)
 
     trace.set_tracer_provider(provider)
-
     FlaskInstrumentor().instrument_app(app)
     RequestsInstrumentor().instrument()
     PyMySQLInstrumentor().instrument()
