@@ -61,6 +61,8 @@ services:
       - FLASK_ENV=staging
       - FLASK_RUN_PORT=${STAGING_USER_PORT}
       - USER_PORT=${STAGING_USER_PORT}
+      - OTEL_TRACES_EXPORTER=none
+      - OTEL_SDK_DISABLED=true
     depends_on:
       mysql-staging-user:
           condition: service_healthy
@@ -91,6 +93,8 @@ services:
       - FLASK_ENV=staging
       - FLASK_RUN_PORT=${STAGING_PRODUCT_PORT}
       - PRODUCT_PORT=${STAGING_PRODUCT_PORT}
+      - OTEL_TRACES_EXPORTER=none
+      - OTEL_SDK_DISABLED=true
     depends_on:
       mysql-staging-product:
           condition: service_healthy

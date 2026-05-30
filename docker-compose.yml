@@ -60,6 +60,8 @@ services:
       - FLASK_ENV=development
       - FLASK_RUN_PORT=${USER_PORT}
       - USER_PORT=${USER_PORT}
+      - OTEL_TRACES_EXPORTER=none
+      - OTEL_SDK_DISABLED=true
     depends_on:
       mysql-user:
           condition: service_healthy
@@ -90,6 +92,8 @@ services:
       - FLASK_ENV=development
       - FLASK_RUN_PORT=${PRODUCT_PORT}
       - PRODUCT_PORT=${PRODUCT_PORT}
+      - OTEL_TRACES_EXPORTER=none
+      - OTEL_SDK_DISABLED=true
     depends_on:
       - mysql-product
     healthcheck:

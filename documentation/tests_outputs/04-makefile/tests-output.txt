@@ -303,14 +303,11 @@ projeto_final-mysql-product-1     mysql:8.0                       "docker-entryp
 projeto_final-mysql-user-1        mysql:8.0                       "docker-entrypoint.s…"   mysql-user        10 hours ago   Up 3 minutes (healthy)   33060/tcp, 0.0.0.0:3308->3306/tcp
 projeto_final-product-service-1   projeto_final-product-service   "python3 product_app…"   product-service   10 hours ago   Up 3 minutes (healthy)   0.0.0.0:3002->3002/tcp
 projeto_final-user-service-1      projeto_final-user-service      "python3 app.py"         user-service      10 hours ago   Up 3 minutes (healthy)   0.0.0.0:3001->3001/tcp
-(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make clean-containers 
-Removing test directories from services
-Test directories removed
-Stopping DEV and STAGING containers
-Containers stopped
-(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose ps -a
-WARN[0000] /home/ubuntu/Downloads/Projeto_final/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
-NAME      IMAGE     COMMAND   SERVICE   CREATED   STATUS    PORTS
+
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose logs user-service 2>/dev/null | grep -i "jaeger\|gaierror" | wc -l
+0
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker-compose logs product-service 2>/dev/null | grep -i "jaeger\|gaierror" | wc -l
+0
 (.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ 
 
 MAKE STAGING
@@ -963,11 +960,16 @@ Removing images from MicroK8s registry...
 Registry images removed
 
 MAKE CLEAN-CONTAINERS
-ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make clean-containers
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make clean-containers
 Removing test directories from services
 Test directories removed
 Stopping DEV and STAGING containers
+Total reclaimed space: 0B
 Containers stopped
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ docker volume ls | grep projeto
+local     projeto_final_sonarqube_data
+local     projeto_final_sonarqube_extensions
+local     projeto_final_sonarqube_logs
 
 MAKE CLEAN-ALL
 

@@ -299,6 +299,25 @@ microk8s status --wait-ready
 > Os addons necessários (registry, dns, ingress, metrics-server) são  
 > verificados e activados automaticamente pelo script de deploy.  
 > Não é necessário habilitá-los manualmente.
+
+### Secrets de produção
+
+O ficheiro `k8s/02-secrets-producao.yml` com credenciais reais não está  
+versionado no repositório por razões de segurança. O repositório inclui  
+o ficheiro `k8s/02-secrets.template.yml` com credenciais de exemplo  
+funcionais para fins de avaliação:
+
+```yaml
+MYSQL_ROOT_PASSWORD: "ExamplePassword123!"
+USER_DB_PASSWORD: "ExampleUserDbPassword123!"
+PRODUCT_DB_PASSWORD: "ExampleProductDbPassword123!"
+SECRET_KEY: "ExampleSecretKey123!"
+```
+
+> **Nota:** Em ambiente real de produção, estas credenciais devem ser  
+> substituídas por valores seguros antes do deploy. O script de deploy  
+> utiliza automaticamente o ficheiro de secrets disponível.
+
 ````
 
 Comando para deploy:
@@ -769,7 +788,7 @@ make test-vulnerability
 - Bandit: Nenhuma vulnerabilidade HIGH
 - Safety: Nenhuma vulnerabilidade
 - pip-audit: Nenhuma vulnerabilidade
-- Trivy: Vulnerabilidades do sistema base 
+- Trivy: 0 HIGH, 0 CRITICAL — migração para Alpine resolvida
 - SonarQube: Análise disponível em http://localhost:9000
 
 ![alt text](documentation/sonarcloud_local.png)
@@ -915,10 +934,8 @@ que foram analisadas e documentadas no ficheiro `.trivyignore`:
 | CVE-2026-7598 | libssh2-1t64 | Sem fix disponível | Vulnerabilidade no sistema base Debian 13.4 sem versão corrigida publicada |
 | CVE-2026-42010 | libgnutls30t64 | Sem fix disponível | Authentication Bypass via NUL Character — sistema base Debian 13.4 sem versão corrigida publicada |
 
-**Decisão:** Adicionadas ao `.trivyignore` com documentação explícita.
-As vulnerabilidades de sistema base serão resolvidas quando o Debian
-publicar uma versão corrigida das bibliotecas afectadas.
-
+> **Actualização:** Estas vulnerabilidades foram eliminadas com a migração  
+> para `python:3.11-alpine` — ver secção 10.14.
 
 ### 10.9 Docker Compose — Conflito de portas MySQL no DEV
 | Problema | Solução | Lição Aprendida |

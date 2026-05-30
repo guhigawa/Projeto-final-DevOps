@@ -167,6 +167,7 @@ clean-containers:
 	@echo "Stopping DEV and STAGING containers"
 	@docker-compose -f docker-compose.yml down --volumes --remove-orphans 2>/dev/null || true
 	@docker-compose -f docker-compose.staging.yml --env-file .env.staging down -v --remove-orphans 2>/dev/null || true
+	@docker volume prune -f 2>/dev/null || true
 	@echo "Containers stopped"
 
 
