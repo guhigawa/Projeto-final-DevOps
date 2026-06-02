@@ -538,168 +538,41 @@ local     projeto_final_sonarqube_logs
 
 
 MAKE PROD DEPOIS DE CRIAR https
-(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl get all
-NAME                 TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
-service/kubernetes   ClusterIP   10.152.183.1   <none>        443/TCP   377d
-(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make prod
-Deploy production environment
-1. Build: ./scripts/prod/build-prod.sh
-2. Deploy K8s: ./scripts/prod/deploy-prod.sh
-
-Deploying production environment
-script dir = /home/ubuntu/Downloads/Projeto_final/scripts/prod
-Project root = /home/ubuntu/Downloads/Projeto_final
-building user-service
-Building and pushing User service image
-script dir = /home/ubuntu/Downloads/Projeto_final/k8s/services/user-service
-Project root = /home/ubuntu/Downloads/Projeto_final
-[+] Building 76.2s (13/13) FINISHED                                                                                                                                               docker:default
- => [internal] load build definition from Dockerfile                                                                                                                                        0.0s
- => => transferring dockerfile: 1.09kB                                                                                                                                                      0.0s
- => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                         1.3s
- => [auth] library/python:pull token for registry-1.docker.io                                                                                                                               0.0s
- => [internal] load .dockerignore                                                                                                                                                           0.0s
- => => transferring context: 2B                                                                                                                                                             0.0s
- => CACHED [1/7] FROM docker.io/library/python:3.11-slim@sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834                                                            0.0s
- => => resolve docker.io/library/python:3.11-slim@sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834                                                                   0.0s
- => [internal] load build context                                                                                                                                                           0.0s
- => => transferring context: 1.05kB                                                                                                                                                         0.0s
- => [2/7] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*     && apt-get clean      52.6s
- => [3/7] WORKDIR /user-service                                                                                                                                                             0.0s
- => [4/7] COPY requirements.txt ./requirements.txt                                                                                                                                          0.0s
- => [5/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir setuptools==79.0.1 wheel==0.46.3 &&     pip install --no-cache-dir -r requirements.txt &&     pi  19.8s
- => [6/7] COPY . .                                                                                                                                                                          0.0s
- => [7/7] RUN addgroup --system app && adduser --system --group app &&     chown -R app:app /user-service                                                                                   0.4s
- => exporting to image                                                                                                                                                                      2.0s
- => => exporting layers                                                                                                                                                                     2.0s
- => => writing image sha256:7a9122b9d19f277ca64e0c1e978e904986b59b624596d2f1bdb4d8a2afbfeea2                                                                                                0.0s
- => => naming to docker.io/library/user-service:1.0.0                                                                                                                                       0.0s
-Infer repository core for addon registry
-Addon core/registry is already enabled
-The push refers to repository [localhost:32000/user-service]
-Get "http://localhost:32000/v2/": dial tcp 127.0.0.1:32000: connect: connection refused
-User service image pushed
-building product-service
-Building and pushing Product service image
-script dir = /home/ubuntu/Downloads/Projeto_final/k8s/services/product-service
-Project root = /home/ubuntu/Downloads/Projeto_final
-[+] Building 67.8s (12/12) FINISHED                                                                                                                                               docker:default
- => [internal] load build definition from Dockerfile                                                                                                                                        0.0s
- => => transferring dockerfile: 1.10kB                                                                                                                                                      0.0s
- => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                         0.5s
- => [internal] load .dockerignore                                                                                                                                                           0.0s
- => => transferring context: 2B                                                                                                                                                             0.0s
- => CACHED [1/7] FROM docker.io/library/python:3.11-slim@sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834                                                            0.0s
- => => resolve docker.io/library/python:3.11-slim@sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834                                                                   0.0s
- => [internal] load build context                                                                                                                                                           0.0s
- => => transferring context: 8.57kB                                                                                                                                                         0.0s
- => [2/7] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*     && apt-get clean      45.5s
- => [3/7] WORKDIR /product-service                                                                                                                                                          0.1s
- => [4/7] COPY requirements.txt ./requirements.txt                                                                                                                                          0.0s
- => [5/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir setuptools==79.0.1 wheel==0.46.3 &&     pip install --no-cache-dir -r requirements.txt &&     pi  19.2s
- => [6/7] COPY . .                                                                                                                                                                          0.0s
- => [7/7] RUN addgroup --system app && adduser --system --group app &&     chown -R app:app /product-service                                                                                0.4s
- => exporting to image                                                                                                                                                                      2.0s
- => => exporting layers                                                                                                                                                                     2.0s
- => => writing image sha256:cc3a1050f43c5dc9ba6c08dadc73a842783c6384ab29284f3f024a3b93871040                                                                                                0.0s
- => => naming to docker.io/library/product-service:1.0.0                                                                                                                                    0.0s
-Infer repository core for addon registry
-Addon core/registry is already enabled
-The push refers to repository [localhost:32000/product-service]
-Get "http://localhost:32000/v2/": dial tcp 127.0.0.1:32000: connect: connection refused
-Product service pushed
-build completed
-Applying Kubernetes manifests
-namespace/projeto-final created
-configmap/pd-app-config created
-secret/app-secrets created
-Deploying user database...
-configmap/mysql-user-init-scripts created
-persistentvolumeclaim/mysql-user-pvc created
-statefulset.apps/mysql-user created
-service/mysql-user created
-Deploying product database...
-configmap/mysql-product-init-scripts created
-persistentvolumeclaim/mysql-product-pvc created
-statefulset.apps/mysql-product created
-service/mysql-product created
-Deploying user service...
-deployment.apps/user-service created
-service/user-service created
-horizontalpodautoscaler.autoscaling/user-service-hpa created
-Deploying product service...
-deployment.apps/product-service created
-service/product-service created
-horizontalpodautoscaler.autoscaling/product-service-hpa created
-Configuring TLS
-Deploying ingress...
-ingress.networking.k8s.io/app-ingress created
-Waiting for pods to be ready
- Waiting for pods to be ready(0 seconds)
- Waiting for pods to be ready(5 seconds)
- Waiting for pods to be ready(10 seconds)
- Waiting for pods to be ready(15 seconds)
- Waiting for pods to be ready(20 seconds)
- Waiting for pods to be ready(25 seconds)
- Waiting for pods to be ready(30 seconds)
- Waiting for pods to be ready(35 seconds)
- Waiting for pods to be ready(40 seconds)
- Waiting for pods to be ready(45 seconds)
- Waiting for pods to be ready(50 seconds)
- Waiting for pods to be ready(55 seconds)
- Waiting for pods to be ready(60 seconds)
- Waiting for pods to be ready(65 seconds)
- Waiting for pods to be ready(70 seconds)
- Waiting for pods to be ready(75 seconds)
- Waiting for pods to be ready(80 seconds)
- Waiting for pods to be ready(85 seconds)
- Waiting for pods to be ready(90 seconds)
- Waiting for pods to be ready(95 seconds)
- Waiting for pods to be ready(100 seconds)
- Waiting for pods to be ready(105 seconds)
- Waiting for pods to be ready(110 seconds)
- Waiting for pods to be ready(115 seconds)
- Waiting for pods to be ready(120 seconds)
- Waiting for pods to be ready(125 seconds)
- Waiting for pods to be ready(130 seconds)
- Waiting for pods to be ready(135 seconds)
- Waiting for pods to be ready(140 seconds)
- Waiting for pods to be ready(145 seconds)
- Waiting for pods to be ready(150 seconds)
- Waiting for pods to be ready(155 seconds)
- Waiting for pods to be ready(160 seconds)
- Waiting for pods to be ready(165 seconds)
- Waiting for pods to be ready(170 seconds)
- Waiting for pods to be ready(175 seconds)
- Waiting for pods to be ready(180 seconds)
- Waiting for pods to be ready(185 seconds)
- Waiting for pods to be ready(190 seconds)
- Waiting for pods to be ready(195 seconds)
- Waiting for pods to be ready(200 seconds)
- Waiting for pods to be ready(205 seconds)
- Waiting for pods to be ready(210 seconds)
- Waiting for pods to be ready(215 seconds)
- Waiting for pods to be ready(220 seconds)
- Waiting for pods to be ready(225 seconds)
- Waiting for pods to be ready(230 seconds)
- Waiting for pods to be ready(235 seconds)
- Waiting for pods to be ready(240 seconds)
- Waiting for pods to be ready(245 seconds)
- Waiting for pods to be ready(250 seconds)
- Waiting for pods to be ready(255 seconds)
- Waiting for pods to be ready(260 seconds)
- Waiting for pods to be ready(265 seconds)
- Waiting for pods to be ready(270 seconds)
- Waiting for pods to be ready(275 seconds)
- Waiting for pods to be ready(280 seconds)
- Waiting for pods to be ready(285 seconds)
- Waiting for pods to be ready(290 seconds)
- Waiting for pods to be ready(295 seconds)
- timeout reached while waiting for pods to be ready! 300 seconds 
-
-Some pods are not ready after waiting for 5 minutes. Please check the status of the pods and investigate any issues.
-Verify with: microk8s kubectl get pods -n projeto-final
-
+(.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ sudo microk8s reset
+Disabling all addons
+Disabling addon : core/cert-manager
+Disabling addon : core/cis-hardening
+Disabling addon : core/dashboard
+Disabling addon : core/dns
+Disabling addon : core/gpu
+Disabling addon : core/helm
+Disabling addon : core/helm3
+Disabling addon : core/host-access
+Disabling addon : core/hostpath-storage
+Disabling addon : core/ingress
+Disabling addon : core/kube-ovn
+Disabling addon : core/mayastor
+Disabling addon : core/metallb
+Disabling addon : core/metrics-server
+Disabling addon : core/minio
+Disabling addon : core/observability
+Disabling addon : core/prometheus
+Disabling addon : core/rbac
+Disabling addon : core/registry
+Disabling addon : core/rook-ceph
+Disabling addon : core/storage
+All addons are disabled.
+Deleting the CNI
+Cleaning resources in namespace default
+Cleaning resources in namespace kube-node-lease
+Cleaning resources in namespace kube-public
+Cleaning resources in namespace kube-system
+Removing CRDs
+Removing PriorityClasses
+Removing StorageClasses
+Restarting cluster
+Stopped.
+Setting up the CNI
 (.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ make prod
 Deploy production environment
 1. Build: ./scripts/prod/build-prod.sh
@@ -710,91 +583,171 @@ script dir = /home/ubuntu/Downloads/Projeto_final/scripts/prod
 Project root = /home/ubuntu/Downloads/Projeto_final
 Verifying pre-requisites
 Microk8s is running
-Addon registry: OK
-Addon dns: OK
-Addon ingress: OK
-Addon metrics-server: OK
-Verificando registry...
-Registry acessível: OK
-Pré-requisitos OK
+Activating addon: registry
+Infer repository core for addon registry
+Infer repository core for addon hostpath-storage
+Enabling default storage class.
+WARNING: Hostpath storage is not suitable for production environments.
+         A hostpath volume can grow beyond the size limit set in the volume claim manifest.
+
+deployment.apps/hostpath-provisioner created
+storageclass.storage.k8s.io/microk8s-hostpath created
+serviceaccount/microk8s-hostpath created
+clusterrole.rbac.authorization.k8s.io/microk8s-hostpath created
+clusterrolebinding.rbac.authorization.k8s.io/microk8s-hostpath created
+Storage will be available soon.
+The registry will be created with the size of 20Gi.
+Default storage class will be used.
+namespace/container-registry created
+persistentvolumeclaim/registry-claim created
+deployment.apps/registry created
+service/registry created
+configmap/local-registry-hosting configured
+Activating addon: dns
+Infer repository core for addon dns
+Enabling DNS
+Using host configuration from /run/systemd/resolve/resolv.conf
+Applying manifest
+serviceaccount/coredns created
+configmap/coredns created
+deployment.apps/coredns created
+service/kube-dns created
+clusterrole.rbac.authorization.k8s.io/coredns created
+clusterrolebinding.rbac.authorization.k8s.io/coredns created
+CoreDNS service deployed with IP address 10.152.183.10
+Restarting kubelet
+DNS is enabled
+Activating addon: ingress
+Infer repository core for addon ingress
+Enabling Ingress
+ingressclass.networking.k8s.io/public created
+ingressclass.networking.k8s.io/nginx created
+namespace/ingress created
+serviceaccount/nginx-ingress-microk8s-serviceaccount created
+clusterrole.rbac.authorization.k8s.io/nginx-ingress-microk8s-clusterrole created
+role.rbac.authorization.k8s.io/nginx-ingress-microk8s-role created
+clusterrolebinding.rbac.authorization.k8s.io/nginx-ingress-microk8s created
+rolebinding.rbac.authorization.k8s.io/nginx-ingress-microk8s created
+configmap/nginx-load-balancer-microk8s-conf created
+configmap/nginx-ingress-tcp-microk8s-conf created
+configmap/nginx-ingress-udp-microk8s-conf created
+daemonset.apps/nginx-ingress-microk8s-controller created
+Ingress is enabled
+Activating addon: metrics-server
+Infer repository core for addon metrics-server
+Enabling Metrics-Server
+serviceaccount/metrics-server created
+clusterrole.rbac.authorization.k8s.io/system:aggregated-metrics-reader created
+clusterrole.rbac.authorization.k8s.io/system:metrics-server created
+rolebinding.rbac.authorization.k8s.io/metrics-server-auth-reader created
+clusterrolebinding.rbac.authorization.k8s.io/metrics-server:system:auth-delegator created
+clusterrolebinding.rbac.authorization.k8s.io/system:metrics-server created
+service/metrics-server created
+deployment.apps/metrics-server created
+apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io created
+clusterrolebinding.rbac.authorization.k8s.io/microk8s-admin created
+Metrics-Server is enabled
+Addon hostpath-storage: OK
+Verifying registry...
+Waiting for registry(1/24)
+Waiting for registry(2/24)
+Waiting for registry(3/24)
+Waiting for registry(4/24)
+Waiting for registry(5/24)
+Waiting for registry(6/24)
+Waiting for registry(7/24)
+Waiting for registry(8/24)
+Waiting for registry(9/24)
+Waiting for registry(10/24)
+Registry accessible: OK
 building user-service
 Building and pushing User service image
 script dir = /home/ubuntu/Downloads/Projeto_final/k8s/services/user-service
 Project root = /home/ubuntu/Downloads/Projeto_final
-[+] Building 1.7s (13/13) FINISHED                                                                                                                                                docker:default
- => [internal] load build definition from Dockerfile                                                                                                                                        0.0s
- => => transferring dockerfile: 1.09kB                                                                                                                                                      0.0s
- => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                         1.4s
- => [auth] library/python:pull token for registry-1.docker.io                                                                                                                               0.0s
- => [internal] load .dockerignore                                                                                                                                                           0.0s
- => => transferring context: 2B                                                                                                                                                             0.0s
- => [1/7] FROM docker.io/library/python:3.11-slim@sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834                                                                   0.0s
- => => resolve docker.io/library/python:3.11-slim@sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834                                                                   0.0s
- => [internal] load build context                                                                                                                                                           0.0s
- => => transferring context: 1.05kB                                                                                                                                                         0.0s
- => CACHED [2/7] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*     && apt-get cle  0.0s
- => CACHED [3/7] WORKDIR /user-service                                                                                                                                                      0.0s
- => CACHED [4/7] COPY requirements.txt ./requirements.txt                                                                                                                                   0.0s
- => CACHED [5/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir setuptools==79.0.1 wheel==0.46.3 &&     pip install --no-cache-dir -r requirements.txt &&   0.0s
- => CACHED [6/7] COPY . .                                                                                                                                                                   0.0s
- => CACHED [7/7] RUN addgroup --system app && adduser --system --group app &&     chown -R app:app /user-service                                                                            0.0s
- => exporting to image                                                                                                                                                                      0.0s
- => => exporting layers                                                                                                                                                                     0.0s
- => => writing image sha256:7a9122b9d19f277ca64e0c1e978e904986b59b624596d2f1bdb4d8a2afbfeea2                                                                                                0.0s
- => => naming to docker.io/library/user-service:1.0.0                                                                                                                                       0.0s
+[+] Building 88.1s (13/13) FINISHED                                                                                                                                              docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                       0.0s
+ => => transferring dockerfile: 1.34kB                                                                                                                                                     0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-alpine                                                                                                                      4.0s
+ => [auth] library/python:pull token for registry-1.docker.io                                                                                                                              0.0s
+ => [internal] load .dockerignore                                                                                                                                                          0.0s
+ => => transferring context: 2B                                                                                                                                                            0.0s
+ => [1/7] FROM docker.io/library/python:3.11-alpine@sha256:8b5bfdb1fd2d78aa94e21c4d61be52487693f54be7f1021647751ff365795703                                                                6.7s
+ => => resolve docker.io/library/python:3.11-alpine@sha256:8b5bfdb1fd2d78aa94e21c4d61be52487693f54be7f1021647751ff365795703                                                                0.0s
+ => => sha256:8b5bfdb1fd2d78aa94e21c4d61be52487693f54be7f1021647751ff365795703 10.30kB / 10.30kB                                                                                           0.0s
+ => => sha256:db8703afcff4954c737f8c81b02dcfa0e3e93815a3029eb9e31d81a5ad9c4ece 1.74kB / 1.74kB                                                                                             0.0s
+ => => sha256:7c8620a05d355e188e9c92949198770fd43d150d051f8c3223f506f215a9f12d 5.28kB / 5.28kB                                                                                             0.0s
+ => => sha256:5c671a5c7ab3e0fe7526f4ff0a233b54727a1f407035f414a73138d2b0886733 455.65kB / 455.65kB                                                                                         1.1s
+ => => sha256:6a0ac1617861a677b045b7ff88545213ec31c0ff08763195a70a4a5adda577bb 3.86MB / 3.86MB                                                                                             1.7s
+ => => sha256:ea923c2ed79ed2d7163aacc54686501cb3339215671be89b50b62814aeffb95c 16.02MB / 16.02MB                                                                                           5.6s
+ => => sha256:fd8e41ac72776720a5ce79d8a0c66e75ae8d3d836cb15cc6ae0682b0b7999a11 248B / 248B                                                                                                 1.4s
+ => => extracting sha256:6a0ac1617861a677b045b7ff88545213ec31c0ff08763195a70a4a5adda577bb                                                                                                  0.2s
+ => => extracting sha256:5c671a5c7ab3e0fe7526f4ff0a233b54727a1f407035f414a73138d2b0886733                                                                                                  0.1s
+ => => extracting sha256:ea923c2ed79ed2d7163aacc54686501cb3339215671be89b50b62814aeffb95c                                                                                                  0.9s
+ => => extracting sha256:fd8e41ac72776720a5ce79d8a0c66e75ae8d3d836cb15cc6ae0682b0b7999a11                                                                                                  0.0s
+ => [internal] load build context                                                                                                                                                          0.2s
+ => => transferring context: 46.77kB                                                                                                                                                       0.2s
+ => [2/7] RUN apk update && apk upgrade &&     apk add --no-cache     curl     gcc     musl-dev     mariadb-dev     pkgconfig     build-base                                              42.1s
+ => [3/7] WORKDIR /user-service                                                                                                                                                            0.0s
+ => [4/7] COPY requirements.txt ./requirements.txt                                                                                                                                         0.0s
+ => [5/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir -r requirements.txt &&     rm -rf /usr/local/lib/python3.11/site-packages/setuptools/_vendor/ja  31.4s
+ => [6/7] COPY . .                                                                                                                                                                         0.0s
+ => [7/7] RUN addgroup -S app && adduser -S app -G app &&     chown -R app:app /user-service                                                                                               0.3s
+ => exporting to image                                                                                                                                                                     3.4s
+ => => exporting layers                                                                                                                                                                    3.4s
+ => => writing image sha256:02175ac02eed3a93c1ad3d9f97de884be1726bc7aae1c8b41f48f896c0bf6a2c                                                                                               0.0s
+ => => naming to docker.io/library/user-service:1.0.0                                                                                                                                      0.0s
 Infer repository core for addon registry
 Addon core/registry is already enabled
 The push refers to repository [localhost:32000/user-service]
-881f1b58e067: Layer already exists 
-4c278fd0cd19: Layer already exists 
-0a3c92684a5a: Layer already exists 
-a1eea384811f: Layer already exists 
-a4b05d2d7d5b: Layer already exists 
-eaa975bb8fe7: Layer already exists 
-94e760ec3074: Layer already exists 
-799edc77eb3d: Layer already exists 
-2e53cb234c59: Layer already exists 
-79dd1f4c855c: Layer already exists 
-1.0.0: digest: sha256:ef866b071c1c3cf885b968bb6b61cb65187b69a311a19e0bbf9b2165aeabd357 size: 2416
+d6640276e454: Pushed 
+f62b6dfbf99d: Pushed 
+5ea081e32161: Pushed 
+10a6c85f97d0: Pushed 
+f7480f8af43a: Pushed 
+96ba38b51c4a: Pushed 
+6239b5ae5fda: Pushed 
+b02b147e872f: Pushed 
+611cae45bc2c: Pushed 
+29df493baa13: Pushed 
+1.0.0: digest: sha256:724276aff654a30160294759047bf11137ca8085523daa59f5af7a6dd5df6981 size: 2414
 User service image pushed
 building product-service
 Building and pushing Product service image
 script dir = /home/ubuntu/Downloads/Projeto_final/k8s/services/product-service
 Project root = /home/ubuntu/Downloads/Projeto_final
-[+] Building 0.5s (12/12) FINISHED                                                                                                                                                docker:default
- => [internal] load build definition from Dockerfile                                                                                                                                        0.0s
- => => transferring dockerfile: 1.10kB                                                                                                                                                      0.0s
- => [internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                         0.3s
- => [internal] load .dockerignore                                                                                                                                                           0.0s
- => => transferring context: 2B                                                                                                                                                             0.0s
- => [1/7] FROM docker.io/library/python:3.11-slim@sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834                                                                   0.1s
- => => resolve docker.io/library/python:3.11-slim@sha256:9a7765b36773a37061455b332f18e265e7f58f6fea9c419a550d2a8b0e9db834                                                                   0.1s
- => [internal] load build context                                                                                                                                                           0.0s
- => => transferring context: 8.57kB                                                                                                                                                         0.0s
- => CACHED [2/7] RUN apt-get update && apt-get install -y     curl     default-libmysqlclient-dev     build-essential     pkg-config     && rm -rf /var/lib/apt/lists/*     && apt-get cle  0.0s
- => CACHED [3/7] WORKDIR /product-service                                                                                                                                                   0.0s
- => CACHED [4/7] COPY requirements.txt ./requirements.txt                                                                                                                                   0.0s
- => CACHED [5/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir setuptools==79.0.1 wheel==0.46.3 &&     pip install --no-cache-dir -r requirements.txt &&   0.0s
- => CACHED [6/7] COPY . .                                                                                                                                                                   0.0s
- => CACHED [7/7] RUN addgroup --system app && adduser --system --group app &&     chown -R app:app /product-service                                                                         0.0s
- => exporting to image                                                                                                                                                                      0.0s
- => => exporting layers                                                                                                                                                                     0.0s
- => => writing image sha256:cc3a1050f43c5dc9ba6c08dadc73a842783c6384ab29284f3f024a3b93871040                                                                                                0.0s
- => => naming to docker.io/library/product-service:1.0.0                                                                                                                                    0.0s
+[+] Building 53.1s (12/12) FINISHED                                                                                                                                              docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                       0.0s
+ => => transferring dockerfile: 1.36kB                                                                                                                                                     0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-alpine                                                                                                                      0.6s
+ => [internal] load .dockerignore                                                                                                                                                          0.0s
+ => => transferring context: 2B                                                                                                                                                            0.0s
+ => CACHED [1/7] FROM docker.io/library/python:3.11-alpine@sha256:8b5bfdb1fd2d78aa94e21c4d61be52487693f54be7f1021647751ff365795703                                                         0.0s
+ => [internal] load build context                                                                                                                                                          0.0s
+ => => transferring context: 113.06kB                                                                                                                                                      0.0s
+ => [2/7] RUN apk update && apk upgrade &&     apk add --no-cache     curl     gcc     musl-dev     mariadb-dev     pkgconfig     build-base                                              21.7s
+ => [3/7] WORKDIR /product-service                                                                                                                                                         0.0s 
+ => [4/7] COPY requirements.txt ./requirements.txt                                                                                                                                         0.0s 
+ => [5/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir -r requirements.txt &&     rm -rf /usr/local/lib/python3.11/site-packages/setuptools/_vendor/ja  28.1s 
+ => [6/7] COPY . .                                                                                                                                                                         0.0s 
+ => [7/7] RUN addgroup -S app && adduser -S app -G app &&     chown -R app:app /product-service                                                                                            0.4s 
+ => exporting to image                                                                                                                                                                     2.3s 
+ => => exporting layers                                                                                                                                                                    2.3s 
+ => => writing image sha256:2b7be3e2a43f4b660dfe361ab2098f2b40d0091e4d08034df2f244a81034429e                                                                                               0.0s
+ => => naming to docker.io/library/product-service:1.0.0                                                                                                                                   0.0s
 Infer repository core for addon registry
 Addon core/registry is already enabled
 The push refers to repository [localhost:32000/product-service]
-de350cd66a18: Layer already exists 
-68fb1235b4a6: Layer already exists 
-1dfa54b21e22: Layer already exists 
-19452f10ad4e: Layer already exists 
-4f6c42edfcc1: Layer already exists 
-c40b329e2d2f: Layer already exists 
-94e760ec3074: Layer already exists 
-799edc77eb3d: Layer already exists 
-2e53cb234c59: Layer already exists 
-79dd1f4c855c: Layer already exists 
-1.0.0: digest: sha256:73415b3c8a8ecb937893692f1bced2ad266878379a109d3784ee8a526c5d49d1 size: 2416
+29a8341db2c5: Pushed 
+5ec6928d4edf: Pushed 
+64196a34ed41: Pushed 
+336d06296d1b: Pushed 
+3078827ff693: Pushed 
+8ce762ce691d: Pushed 
+6239b5ae5fda: Mounted from user-service 
+b02b147e872f: Mounted from user-service 
+611cae45bc2c: Mounted from user-service 
+29df493baa13: Mounted from user-service 
+1.0.0: digest: sha256:a74f5599e12bc61523d129c188ad3f43f4c440dcc0fb16524a53a7442ca2d868 size: 2414
 Product service pushed
 build completed
 Applying Kubernetes manifests
@@ -826,35 +779,36 @@ TLS secret created
 Deploying ingress...
 ingress.networking.k8s.io/app-ingress created
 Waiting for pods to be ready
- Waiting for pods to be ready(0 seconds)
- Waiting for pods to be ready(5 seconds)
- Waiting for pods to be ready(10 seconds)
- Waiting for pods to be ready(15 seconds)
- Waiting for pods to be ready(20 seconds)
- Waiting for pods to be ready(25 seconds)
- Waiting for pods to be ready(30 seconds)
-All pods are ready after 35 seconds!
+Waiting for MySQL to be ready
+pod/mysql-user-0 condition met
+pod/mysql-product-0 condition met
+Waiting for services to be ready
+pod/user-service-5d48f847ff-c9cpn condition met
+pod/user-service-5d48f847ff-gsk2c condition met
+pod/product-service-6b4b55749d-8bbxm condition met
+pod/product-service-6b4b55749d-bdllb condition met
+All pods are ready
 
 =========================================
 Final status:
 =========================================
 NAME                               READY   STATUS    RESTARTS   AGE
-mysql-product-0                    1/1     Running   0          48s
-mysql-user-0                       1/1     Running   0          49s
-product-service-6b4b55749d-lv4jq   1/1     Running   0          45s
-product-service-6b4b55749d-prj2w   1/1     Running   0          45s
-user-service-5d48f847ff-478pp      1/1     Running   0          46s
-user-service-5d48f847ff-9xhs5      1/1     Running   0          46s
+mysql-product-0                    1/1     Running   0          55s
+mysql-user-0                       1/1     Running   0          56s
+product-service-6b4b55749d-8bbxm   1/1     Running   0          51s
+product-service-6b4b55749d-bdllb   1/1     Running   0          51s
+user-service-5d48f847ff-c9cpn      1/1     Running   0          54s
+user-service-5d48f847ff-gsk2c      1/1     Running   0          54s
 
 NAME              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
-mysql-product     ClusterIP   None             <none>        3306/TCP   47s
-mysql-user        ClusterIP   None             <none>        3306/TCP   49s
-product-service   ClusterIP   10.152.183.103   <none>        5002/TCP   44s
-user-service      ClusterIP   10.152.183.197   <none>        5001/TCP   46s
+mysql-product     ClusterIP   None             <none>        3306/TCP   54s
+mysql-user        ClusterIP   None             <none>        3306/TCP   56s
+product-service   ClusterIP   10.152.183.123   <none>        5002/TCP   50s
+user-service      ClusterIP   10.152.183.50    <none>        5001/TCP   53s
 
 NAME                  REFERENCE                    TARGETS                        MINPODS   MAXPODS   REPLICAS   AGE
-product-service-hpa   Deployment/product-service   <unknown>/80%, <unknown>/80%   2         5         2          43s
-user-service-hpa      Deployment/user-service      <unknown>/70%, <unknown>/80%   2         5         2          45s
+product-service-hpa   Deployment/product-service   <unknown>/80%, <unknown>/80%   2         5         2          50s
+user-service-hpa      Deployment/user-service      <unknown>/70%, <unknown>/80%   2         5         2          51s
 
 Deployment completed successfully!
 
@@ -868,27 +822,13 @@ Entries already exist in /etc/hosts
    Product Service: https://product.local.prod/health
 
  Test the endpoints:
-   curl https://user.local.prod/health
-   curl https://product.local.prod/health
+   curl -k https://user.local.prod/health
+   curl -k https://product.local.prod/health
 =========================================
-=========================================
-Configuring services accessibility
-=========================================
-Entries already exist in /etc/hosts
 
- Available Endpoints:
-   User Service:    https://user.local.prod/health
-   Product Service: https://product.local.prod/health
-
- Test the endpoints:
-   curl https://user.local.prod/health
-   curl https://product.local.prod/health
-
-
-=========================================
 (.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl get secret inventory-tls -n projeto-final
 NAME            TYPE                DATA   AGE
-inventory-tls   kubernetes.io/tls   2      7m1s
+inventory-tls   kubernetes.io/tls   2      15m
 
 (.venv) ubuntu@ubuntu-2204:~/Downloads/Projeto_final$ microk8s kubectl describe secret inventory-tls -n projeto-final
 Name:         inventory-tls
@@ -916,9 +856,9 @@ Rules:
   Host                Path  Backends
   ----                ----  --------
   user.local.prod     
-                      /   user-service:5001 (10.1.131.96:5001,10.1.131.97:5001)
+                      /   user-service:5001 (10.1.131.75:5001,10.1.131.76:5001)
   product.local.prod  
-                      /   product-service:5002 (10.1.131.98:5002,10.1.131.99:5002)
+                      /   product-service:5002 (10.1.131.77:5002,10.1.131.78:5002)
 Annotations:          nginx.ingress.kubernetes.io/force-ssl-redirect: true
                       nginx.ingress.kubernetes.io/ssl-redirect: true
 Events:               <none>
