@@ -68,30 +68,31 @@ echo "Waiting for pods to be ready"
 
 wait_for_pods() {
     local namespace="projeto-final"
-    local timeout=300  # 5 minutos
-    local interval=5
-    local elapsed=0
     
-    while [ $elapsed -lt $timeout ]; do
-        # Contar pods não prontos
-        NOT_READY=$(microk8s kubectl get pods -n "$namespace" --no-headers 2>/dev/null | grep -v "Running" | grep -v "Completed" | wc -l || echo "0")
-        
-        if [ "$NOT_READY" -eq 0 ]; then
-            # Verificar se todos os pods têm READY 1/1
-            ALL_READY=$(microk8s kubectl get pods -n "$namespace" --no-headers 2>/dev/null | awk '{print $2}' | grep -v "1/1" | wc -l || echo "0")
-            if [ "$ALL_READY" -eq 0 ]; then
-                echo "All pods are ready after $elapsed seconds!"
-                return 0
-            fi
-        fi
-        
-        echo " Waiting for pods to be ready($elapsed seconds)"
-        sleep $interval
-        elapsed=$((elapsed + interval))
-    done
+    echo "Waiting for MySQL to be ready"
+    microk8s kubectl wait --for=condition=ready pod \
+        -l app=mysql-user \
+        -n "$namespace" \
+        --timeout=300s 2>/dev/null || true
     
-    echo " timeout reached while waiting for pods to be ready! $timeout seconds "
-    return 1
+    microk8s kubectl wait --for=condition=ready pod \
+        -l app=mysql-product \
+        -n "$namespace" \
+        --timeout=300s 2>/dev/null || true
+
+    echo "Waiting for services to be ready"
+    microk8s kubectl wait --for=condition=ready pod \
+        -l app=user-service \
+        -n "$namespace" \
+        --timeout=300s
+
+    microk8s kubectl wait --for=condition=ready pod \
+        -l app=product-service \
+        -n "$namespace" \
+        --timeout=300s
+
+    echo "All pods are ready"
+    return 0
 }
 
 
