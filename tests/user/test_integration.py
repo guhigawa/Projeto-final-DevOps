@@ -1,7 +1,7 @@
 import pytest, requests, time, os, sys
 from datetime import datetime
 
-sys.path.insert(0, '/home/ubuntu/Downloads/Projeto_final/user-service')
+sys.path.insert(0, '/home/ubuntu/Downloads/DevOps/Inventory/user-service')
 
 from helpers.test_helpers import TestHelpers
 from helpers.evidence_logger import EvidenceLogger

@@ -55,7 +55,7 @@ Os serviços interagem da seguinte forma:
 ## 2. REPOSITÓRIO
 
 O projeto está hospedado em um repositório **público** no GitHub:
-[https://github.com/guhigawa/Projeto-final-DevOps.git](https://github.com/guhigawa/Projeto-final-DevOps.git)
+[https://github.com/guhigawa/Inventory.git](https://github.com/guhigawa/Inventory.git)
 
 ### Justificativa para a Startup
 - **Acesso imediato**: Qualquer membro da equipe pode clonar e começar a trabalhar
@@ -158,8 +158,8 @@ Antes de começar, certifique-se de ter instalado:
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/guhigawa/Projeto-final-DevOps.git
-cd Projeto-final-DevOps
+git clone https://github.com/guhigawa/Inventory.git
+cd Inventory
 
 # 2. Criar ambiente virtual e instalar dependências
 make setup
@@ -1092,7 +1092,7 @@ O deploy em produção utiliza um **self-hosted runner** configurado na VM com M
 mkdir -p ~/actions-runner && cd ~/actions-runner
 curl -o actions-runner-linux-x64-2.323.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.323.0/actions-runner-linux-x64-2.323.0.tar.gz
 tar xzf ./actions-runner-linux-x64-2.323.0.tar.gz
-./config.sh --url https://github.com/guhigawa/Projeto-final-DevOps --token <TOKEN>
+./config.sh --url https://github.com/guhigawa/Inventory --token <TOKEN>
 sudo ./svc.sh install
 sudo ./svc.sh start
 ```
