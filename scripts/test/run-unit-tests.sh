@@ -2,7 +2,7 @@
 #Run unit tests 
 echo "Running unit tests"
 
-cd /home/ubuntu/Downloads/Projeto_final
+cd /home/ubuntu/Downloads/DevOps/Inventory
 
 #User-service
 pytest tests/user/test_unit.py tests/user/test_validators.py -v

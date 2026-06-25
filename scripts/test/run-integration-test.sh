@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "Running integration tests"
 
-cd /home/ubuntu/Downloads/Projeto_final
+cd /home/ubuntu/Downloads/DevOps/Inventory
 
 pytest tests/user/test_integration.py -v
 USER_INT=$?
